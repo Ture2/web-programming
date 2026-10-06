@@ -1,0 +1,106 @@
+/* ==========================================================================
+   Git simulator (js/tools/git-sim.js). Tokens from styles.css; the dark
+   theme follows automatically. Shared tool classes are in tools.css.
+   ========================================================================== */
+
+.gs { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.gs-modes { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.gs-modes-label { margin: 0; font-size: .82rem; font-weight: 700; color: var(--muted); }
+.gs-modes .tl-challenges { margin: 0; }
+
+.gs-goal { margin: 0; }
+.gs-goal.is-solved { border-left-color: var(--ok); }
+.gs-goal p { margin: 0 0 8px; }
+.gs-goal p:last-child { margin-bottom: 0; }
+.gs-goal-title { color: var(--ink); }
+.gs-done { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; color: var(--ok); font-weight: 700; font-size: .88rem; vertical-align: -2px; }
+.gs-done svg { width: 16px; height: 16px; }
+.gs-goal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.gs-hint { padding: 8px 10px; background: var(--surface); border: 1px dashed var(--rule-strong); }
+
+.gs-main { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 980px) { .gs-main { grid-template-columns: minmax(0, 1fr); } }
+.gs-term { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+.gs-log { margin-top: 0; height: 300px; max-height: 300px; border: 1px solid var(--rule-strong); }
+.gs-entry + .gs-entry { margin-top: 6px; }
+.gs-cmd { color: var(--console-cmd); font-weight: 700; }
+.gs-note { color: var(--console-muted); }
+.gs-solved { color: var(--console-ok); font-weight: 700; }
+.gs-log .lr-line + .lr-line { border-top: 0; }
+
+.gs-prompt { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.gs-dollar { font: 700 1rem var(--mono); color: var(--muted); }
+.gs-input { flex: 1; min-width: 0; font-family: var(--mono); }
+.gs-keys { margin: 0; }
+.gs-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.gs-chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gs-explain { margin: 0; }
+
+/* The four places your work lives */
+.gs-areas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; min-width: 0; }
+@media (max-width: 520px) { .gs-areas { grid-template-columns: minmax(0, 1fr); } }
+.gs-area { min-width: 0; padding: 8px 10px; background: var(--tint); border: 1px solid var(--rule); border-top: 3px solid var(--rule-strong); }
+.gs-area-work { border-top-color: var(--h5); }
+.gs-area-stage { border-top-color: var(--h1); }
+.gs-area-repo { border-top-color: var(--h2); }
+.gs-area-remote { border-top-color: var(--h4); }
+.gs-area h4 { margin: 0; font-size: .92rem; color: var(--ink); }
+.gs-area-sub { margin: 0 0 6px; color: var(--muted); font-size: .76rem; }
+.gs-empty { margin: 0; color: var(--muted); font-size: .84rem; }
+.gs-files, .gs-commits, .gs-branches { margin: 0; padding: 0; list-style: none; }
+.gs-file { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 3px 0; font-size: .84rem; }
+.gs-file + .gs-file { border-top: 1px solid var(--rule); }
+.gs-ico {
+  flex: none; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 3px;
+  background: var(--rule); color: var(--ink); font: 700 var(--fs-2xs) var(--mono);
+}
+.gs-fname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); }
+.gs-ftag { flex: none; color: var(--muted); font-size: var(--fs-2xs); }
+.gs-untracked .gs-ico { background: var(--h7s); color: var(--h7); }
+.gs-modified .gs-ico, .gs-st-modified .gs-ico { background: var(--h5s); color: var(--h5); }
+.gs-deleted .gs-ico, .gs-st-deleted .gs-ico { background: var(--bad-bg); color: var(--bad); }
+.gs-clean .gs-ico { background: var(--ok-bg); color: var(--ok); }
+.gs-st-new .gs-ico { background: var(--ok-bg); color: var(--ok); }
+.gs-conflicted .gs-ico { background: var(--bad); color: var(--on-status); }
+.gs-conflicted .gs-ftag { color: var(--bad); font-weight: 700; }
+
+.gs-branch { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; font-size: .84rem; }
+.gs-branch.is-head .gs-bname { font-weight: 700; color: var(--ink); }
+.gs-headmark { font: 700 var(--fs-2xs) var(--mono); color: var(--h3); }
+.gs-ab { margin: 4px 0; font-size: .78rem; color: var(--muted); }
+.gs-commit { padding: 2px 0; font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gs-commit code, .gs-branch code, .gs-rbranch code { color: var(--muted); font-size: .76rem; }
+.gs-commits { margin-top: 4px; }
+.gs-more { color: var(--muted); font-size: .76rem; }
+.gs-url { margin: 0 0 4px; font: .76rem var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.gs-rbranch { margin: 4px 0 0; font-weight: 700; font-size: .84rem; color: var(--ink); }
+.gs-new { display: inline-block; padding: 0 6px; border-radius: 999px; background: var(--h4s); color: var(--h4); font-size: var(--fs-2xs); font-weight: 700; }
+
+/* Commit graph */
+.gs-graph { margin: 0; min-width: 0; }
+.gs-graph figcaption { margin-bottom: 4px; font-weight: 700; color: var(--ink); font-size: .92rem; }
+.gs-graph-scroll { overflow-x: auto; padding: 4px 0; background: var(--tint); border: 1px solid var(--rule); }
+.gs-graph-scroll > .gs-empty { padding: 10px 12px; }
+.gs-svg { display: block; }
+.gs-edge { fill: none; stroke-width: 2.5; }
+.gs-node circle { fill: var(--surface); stroke-width: 2.5; }
+.gs-node.is-head > circle:first-of-type { fill: currentColor; }
+.gs-node .gs-inner { fill: currentColor; stroke: none; }
+.gs-node.is-head .gs-inner { fill: var(--surface); }
+.gs-id { font: 10px var(--mono); fill: var(--muted); stroke: none; }
+.gs-lane0 { color: var(--h2); stroke: var(--h2); }
+.gs-lane1 { color: var(--h1); stroke: var(--h1); }
+.gs-lane2 { color: var(--h3); stroke: var(--h3); }
+.gs-lane3 { color: var(--h4); stroke: var(--h4); }
+.gs-lane4 { color: var(--h5); stroke: var(--h5); }
+.gs-lane5 { color: var(--h6); stroke: var(--h6); }
+.gs-node circle { stroke: currentColor; }
+.gs-label rect { stroke-width: 1.4; }
+.gs-label text { font: 700 11px var(--mono); stroke: none; }
+.gs-label-head rect { fill: var(--ink); stroke: var(--ink); }
+.gs-label-head text { fill: var(--on-ink); }
+.gs-label-local rect { fill: var(--surface); stroke: var(--ink); }
+.gs-label-local text { fill: var(--ink); }
+.gs-label-remote rect { fill: var(--surface); stroke: var(--brand-turquoise); stroke-dasharray: 3 2; }
+.gs-label-remote text { fill: var(--text); }

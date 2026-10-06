@@ -1,0 +1,264 @@
+/* ==========================================================================
+   Shared styles for interactive tools, "Try it" boxes, the home page and
+   practice pages. Tool-specific styles: tools-layout.css (CSS tools),
+   tools-code.css (web/HTML/JS/DOM tools), tools-git.css (Git simulator).
+   Tokens come from styles.css (:root); never hard-code brand hexes here.
+   ========================================================================== */
+
+/* ---- Tool frame ---------------------------------------------------------- */
+
+.tool, .live-box {
+  clear: both;
+  margin-top: 18px; padding: 14px 16px 16px;
+  background: var(--surface); border: 1px solid var(--rule); border-top: 3px solid var(--brand-turquoise);
+  border-radius: var(--r-control);
+}
+.tool-full { margin-top: 8px; }
+.tool-head, .lr-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
+.tool-badge {
+  display: inline-block; padding: 2px 8px; border-radius: var(--r-pill);
+  background: var(--h1s); color: var(--h8); font-size: var(--fs-2xs); font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+}
+.tool-title { margin: 0; font-size: var(--fs-lg); color: var(--ink); flex: 1; min-width: 12ch; }
+.tool-open { font-size: var(--fs-sm); color: var(--ink); font-weight: 600; }
+.tool-body { min-width: 0; }
+.tool label, .live-box label { font-weight: 600; color: var(--ink); }
+
+/* Controls shared by tools */
+.tl-row { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-end; margin: 0 0 12px; }
+.tl-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tl-field > span, .tl-field > label { font-size: var(--fs-xs); font-weight: 600; color: var(--muted); }
+.tl-input, .tl-select, .tl-code {
+  min-height: 40px; padding: 7px 10px;
+  border: 1.5px solid var(--rule-strong); border-radius: var(--r-control);
+  background: var(--surface); color: var(--text); font: inherit;
+}
+.tool .tl-input { width: 100%; }
+.tl-code { width: 100%; font: var(--fs-sm)/1.5 var(--mono); resize: vertical; tab-size: 2; white-space: pre; overflow-x: auto; }
+.tl-input[aria-invalid="true"], .tl-code[aria-invalid="true"] { border-color: var(--bad); }
+.tl-input:focus-visible, .tl-select:focus-visible, .tl-code:focus-visible, .lr-code:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+/* Toggle groups: separate buttons that wrap cleanly on narrow screens. */
+.tl-seg { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.tl-seg button {
+  min-height: 36px; padding: 6px 10px; border: 1.5px solid var(--rule-strong); border-radius: var(--r-control);
+  background: var(--surface); color: var(--ink); font: 600 var(--fs-sm) var(--mono); cursor: pointer;
+}
+.tl-seg button:hover:not([aria-pressed="true"]) { background: var(--hover); }
+.tl-seg button:disabled { opacity: .4; cursor: not-allowed; }
+.tl-seg-text button { font-family: var(--sans); }
+/* Small rounded buttons for presets and suggestions. */
+.tl-chip {
+  min-height: 34px; padding: 4px 10px; border: 1.5px solid var(--rule-strong); border-radius: var(--r-pill);
+  background: var(--surface); color: var(--ink); font: 600 var(--fs-xs) var(--mono); cursor: pointer;
+}
+.tl-chip:hover:not([aria-pressed="true"]) { background: var(--hover); }
+.tl-chip code { font-size: inherit; }
+/* A checkbox with its label. */
+.tl-check { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.tl-check input { width: 18px; height: 18px; accent-color: var(--ink); }
+.tl-range { width: 100%; accent-color: var(--ink); }
+.tl-rangefield { flex: 1 1 180px; max-width: 320px; }
+.tl-val { font: 600 var(--fs-xs) var(--mono); color: var(--ink); }
+.tool .tl-num { width: 7em; }
+.tl-out { margin: 10px 0 0; padding: 10px 12px; background: var(--tint); border: 1px solid var(--rule); font: var(--fs-sm)/1.5 var(--mono); white-space: pre-wrap; overflow-x: auto; }
+.tl-explain { margin: 10px 0 0; padding: 8px 12px; background: var(--tint); border-left: 3px solid var(--brand-turquoise); }
+/* The goal of a challenge or exercise. */
+.tl-goal { margin: 0 0 12px; padding: 10px 14px; background: var(--tint); border-left: 4px solid var(--accent); }
+.tl-goal > :first-child { margin-top: 0; }
+.tl-goal > :last-child { margin-bottom: 0; }
+.tl-ok { color: var(--ok); font-weight: 700; }
+.tl-bad { color: var(--bad); font-weight: 700; }
+.tl-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 760px) { .tl-cols { grid-template-columns: minmax(0, 1fr); } }
+.tl-frame { width: 100%; min-height: 180px; border: 1px solid var(--rule-strong); background: var(--preview-bg); }
+.small-btn { min-height: 34px; padding: 4px 12px; font-size: var(--fs-sm); }
+
+/* Challenges (Flexbox, Grid, Git, JS exercises) */
+.tl-challenges { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; padding: 0; list-style: none; }
+.tl-challenges button {
+  min-width: 40px; min-height: 36px; padding: 4px 10px; border: 1.5px solid var(--rule-strong); border-radius: var(--r-control);
+  background: var(--surface); color: var(--ink); font-weight: 700; cursor: pointer;
+}
+.tl-challenges button.is-done { border-color: var(--ok); }
+.tl-challenges button.is-done::after { content: " ✓"; color: var(--ok); }
+.tl-challenges button[aria-pressed="true"].is-done::after { color: var(--on-ink); }
+
+/* ---- "Try it" boxes (js/live-runner.js) ------------------------------------ */
+
+.lr-title { margin: 0; flex: 1; color: var(--muted); font-size: var(--fs-md); }
+.lr-grid { display: grid; gap: 10px; }
+.lr-grid.lr-n2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.lr-grid.lr-n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 760px) { .lr-grid.lr-n2, .lr-grid.lr-n3 { grid-template-columns: minmax(0, 1fr); } }
+.lr-pane { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.lr-label { margin: 0; font-size: var(--fs-xs); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.lr-code {
+  width: 100%; padding: 8px 10px; border: 1.5px solid var(--rule-strong); border-radius: var(--r-control);
+  background: var(--tint); color: var(--text); font: var(--fs-sm)/1.5 var(--mono); resize: vertical; tab-size: 2; white-space: pre;
+}
+.lr-hint { margin: 4px 0 0; }
+.lr-preview-wrap { margin-top: 10px; }
+.lr-preview { display: block; width: 100%; height: 220px; margin-top: 4px; border: 1px solid var(--rule-strong); background: var(--preview-bg); resize: vertical; overflow: auto; }
+.lr-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 10px 0 0; }
+.lr-console {
+  margin-top: 10px; padding: 8px 12px; min-height: 2.4em; max-height: 280px; overflow: auto;
+  background: var(--console-bg); color: var(--console-text); border-radius: var(--r-control); font: var(--fs-sm)/1.5 var(--mono);
+}
+.lr-console .muted { color: var(--console-muted); }
+.lr-line { margin: 0; white-space: pre-wrap; word-break: break-word; }
+.lr-line + .lr-line { border-top: 1px solid var(--console-rule); }
+.lr-warn { color: var(--console-warn); }
+.lr-error { color: var(--console-error); }
+/* React boxes: a compile error points at the line; the last good preview stays, dimmed. */
+.lr-frame { margin: 6px 0 0; padding: 0; background: none; color: var(--console-text); font: inherit; white-space: pre; overflow-x: auto; }
+.lr-preview-wrap.is-stale .lr-preview { opacity: .45; }
+
+/* ---- Practice pages ----------------------------------------------------------- */
+
+.practice-head h2 { margin: 0 0 6px; font: 700 var(--fs-h2)/1.2 var(--display); }
+.practice-head h2:focus { outline: none; }
+.practice-head .summary { margin: 0 0 6px; font-weight: 600; max-width: 75ch; }
+
+/* ---- Home page ---------------------------------------------------------------
+   Hero (headline, next step, topics to review), then the course map. */
+
+.home { padding: 0 0 32px; }
+.home-hero {
+  display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px 56px; align-items: start;
+  padding: 44px 0 40px;
+}
+.home-hero h1 {
+  max-width: 13ch; margin: 0 0 18px; color: var(--ink); text-wrap: balance;
+  font: 700 clamp(2.3rem, 5vw, 3.5rem)/1.04 var(--sans); letter-spacing: -.025em;
+}
+.home-hero h1:focus { outline: none; }
+.home-lead { max-width: 56ch; margin: 0; font-size: var(--fs-lg); line-height: 1.55; }
+.home-side { display: grid; gap: 12px; }
+.home-next {
+  display: flex; gap: 18px; align-items: flex-start; padding: 20px;
+  background: var(--surface); border: 1px solid var(--rule); border-top: 3px solid var(--accent);
+}
+.home-next .pring { flex: none; }
+.home-next .pring-text { font-size: 1.15rem; }
+.home-next h2, .home-review h2 { margin: 2px 0 4px; font-size: var(--fs-lg); line-height: 1.25; }
+.home-next p { margin: 0 0 14px; font-size: var(--fs-md); line-height: 1.4; }
+.home-review { padding: 16px 20px; background: var(--surface); border: 1px solid var(--rule); }
+.home-review p { margin: 0; color: var(--muted); font-size: var(--fs-md); line-height: 1.4; }
+.home-review p + p { margin-top: 8px; }
+.home-review p a { color: var(--ink); font-weight: 700; }
+.home-review ol { margin: 6px 0 0; padding: 0; list-style: none; }
+.home-review li + li { border-top: 1px solid var(--rule); }
+.home-review li a {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 12px; align-items: center; padding: 8px 4px;
+  color: var(--ink); text-decoration: none;
+}
+.home-review li a:hover { background: var(--hover); }
+.hr-topic { font-weight: 700; font-size: var(--fs-md); }
+.hr-sec { grid-row: 2; color: var(--muted); font-size: var(--fs-xs); }
+.hr-score { grid-row: 1 / 3; grid-column: 2; padding: 2px 8px; border-radius: var(--r-pill); background: var(--bad-bg); color: var(--bad); font-size: var(--fs-xs); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ---- Topic map (js/course-map.js): Browser, HTTP, Server, Database; version control underneath ---- */
+
+.home-map { padding-top: 32px; border-top: 1.5px solid var(--ink); }
+.home-map h2 { margin: 0; font-size: var(--fs-h2); line-height: 1.15; }
+.home-map-lead { max-width: 66ch; margin: 6px 0 0; color: var(--muted); }
+.home-map .cm { margin-top: 22px; }
+
+.cm-zones { display: grid; grid-template-columns: minmax(0, 1.6fr) 168px minmax(0, 1.1fr) 84px minmax(0, .9fr); align-items: stretch; }
+.cm-zone {
+  display: flex; flex-direction: column; gap: 12px; padding: 14px;
+  background: var(--surface); border: 1px solid var(--rule); border-top: 4px solid var(--zone);
+}
+.cm-browser { --zone: var(--h1); }
+.cm-server { --zone: var(--h2); }
+.cm-database { --zone: var(--h5); }
+.cm-zone-head h3 { margin: 0; font-size: var(--fs-lg); }
+.cm-zone-head p { margin: 2px 0 0; color: var(--muted); font-size: var(--fs-sm); }
+.cm-nodes { display: grid; gap: 8px; }
+
+.cm-node {
+  display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--rule-strong); border-radius: var(--r-card);
+  background: var(--surface); color: var(--text); text-decoration: none;
+}
+.cm-node:hover { border-color: var(--ink); background: var(--hover); }
+.cm-node[aria-current] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.cm-node-name { display: flex; align-items: center; gap: 8px; color: var(--ink); font-size: var(--fs-base); font-weight: 700; line-height: 1.2; }
+.cm-node-name .rail-icon { width: 18px; height: 18px; }
+.cm-role, .cm-meta { padding-left: 26px; }
+.cm-role { color: var(--muted); font-size: var(--fs-xs); line-height: 1.3; }
+.cm-meta { display: flex; align-items: center; gap: 12px; margin-top: 6px; color: var(--muted); font-size: var(--fs-xs); }
+.cm-cards { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cm-tools { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; }
+.cm-tools .rail-icon { width: 15px; height: 15px; }
+.cm-ring { display: flex; margin-left: auto; }
+
+/* The browser runs layers on top of each other. */
+.cm-browser > .cm-nodes { gap: 0; }
+.cm-browser > .cm-nodes > .cm-node { border-radius: 0; }
+.cm-browser > .cm-nodes > .cm-node + .cm-node { margin-top: -1px; }
+.cm-browser > .cm-nodes > .cm-node:first-child { border-radius: var(--r-card) var(--r-card) 0 0; }
+.cm-browser > .cm-nodes > .cm-node:last-child { border-radius: 0 0 var(--r-card) var(--r-card); }
+.cm-browser > .cm-nodes > .cm-node:hover, .cm-browser > .cm-nodes > .cm-node[aria-current] { position: relative; }
+.cm-soon { margin: 0; padding: 10px 12px; border: 1.5px dashed var(--rule-strong); border-radius: var(--r-card); color: var(--muted); font-size: var(--fs-sm); }
+
+/* On the server, Express runs inside Node and Auth inside Express. */
+.cm-box { display: grid; gap: 8px; }
+.cm-box-express, .cm-box-auth { margin-left: 14px; padding: 8px; background: var(--tint); border: 1px solid var(--rule); border-radius: var(--r-card); }
+.cm-box-auth { background: var(--surface); }
+/* In the browser, the front-end application runs on top of the web standards. */
+.cm-box-app { margin-top: 4px; padding: 8px; background: var(--tint); border: 1px solid var(--rule); border-radius: var(--r-card); }
+.cm-box-h { margin: 0 0 8px; color: var(--ink); font-size: var(--fs-sm); font-weight: 700; }
+.cm-box-app .cm-nodes { grid-template-columns: repeat(auto-fill, minmax(min(100%, 136px), 1fr)); }
+.cm-box-app .cm-node { min-width: 0; padding: 8px 10px; }
+.cm-box-app .cm-node-name { align-items: flex-start; }
+.cm-box-app .cm-role, .cm-box-app .cm-meta { padding-left: 0; }
+.cm-box-app .cm-meta { gap: 8px; }
+
+/* Wires between zones: one arrow each way. */
+.cm-wire { display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 0 10px; }
+.cm-wire-h { margin: 0; color: var(--ink); font-size: var(--fs-sm); font-weight: 700; text-align: center; }
+.cm-wire .cm-node { padding: 8px 10px; }
+.cm-wire .cm-role, .cm-wire .cm-meta { padding-left: 0; }
+.cm-arrow { position: relative; margin: 0; padding-bottom: 12px; color: var(--muted); font-size: var(--fs-2xs); font-weight: 700; text-align: center; }
+.cm-arrow::after { content: ""; position: absolute; left: 4px; right: 4px; bottom: 4px; border-top: 2px solid var(--rule-strong); }
+.cm-arrow::before { content: ""; position: absolute; bottom: 0; border: 5px solid transparent; }
+.cm-out::before { right: 0; border-left: 8px solid var(--rule-strong); border-right: 0; }
+.cm-back::before { left: 0; border-right: 8px solid var(--rule-strong); border-left: 0; }
+
+/* Version control: a band under everything, since the code of every zone is committed. */
+.cm-git {
+  display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 16px 28px; align-items: center; margin-top: 16px; padding: 14px;
+  background: var(--surface); border: 1px solid var(--rule); border-top: 4px solid var(--h3);
+}
+.cm-git-note { margin: 0; max-width: 70ch; color: var(--muted); font-size: var(--fs-sm); }
+.cm-legend { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 10px 0 0; color: var(--muted); font-size: var(--fs-xs); }
+.cm-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.cm-legend .rail-icon { width: 15px; height: 15px; }
+
+@media (max-width: 900px) {
+  .home-hero { grid-template-columns: minmax(0, 1fr); padding: 28px 0 32px; }
+  .home-side { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); align-items: start; }
+  /* The zones stack in the order a request travels; arrows point down and up. */
+  .cm-zones { grid-template-columns: minmax(0, 1fr); }
+  .cm-wire { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; padding: 12px 0; }
+  .cm-wire .cm-back { grid-row: 1; grid-column: 2; }
+  .cm-wire-h, .cm-wire .cm-nodes { grid-column: 1 / -1; }
+  .cm-http .cm-nodes { grid-template-columns: 1fr 1fr; }
+  .cm-arrow { padding: 0; }
+  .cm-arrow::after { display: none; }
+  .cm-arrow::before { position: static; border: 0; }
+  .cm-out::before { content: "\2193  "; }
+  .cm-back::before { content: "\2191  "; }
+  .cm-browser > .cm-nodes { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cm-browser > .cm-nodes > .cm-node, .cm-browser > .cm-nodes > .cm-node:first-child, .cm-browser > .cm-nodes > .cm-node:last-child { border-radius: var(--r-card); }
+  .cm-browser > .cm-nodes > .cm-node + .cm-node { margin-top: 0; }
+  .cm-git { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  /* iOS zooms into inputs below 16px; this beats the smaller per-tool sizes (.fl-code, .ab-hrow .tl-input…). */
+  .tl-input, .tl-select, .tl-code, .lr-code { font-size: 16px !important; }
+  .home-next { padding: 16px; }
+  .home-next .pring { width: 64px; height: 64px; }
+  .home-map h2 { font-size: var(--fs-2xl); }
+  .cm-browser > .cm-nodes, .cm-http .cm-nodes { grid-template-columns: minmax(0, 1fr); }
+}

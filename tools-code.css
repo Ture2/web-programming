@@ -1,0 +1,180 @@
+/* ==========================================================================
+   Styles of the web, HTML, JavaScript and DOM tools:
+   web-tools.js (ua-, hx-), semantic-outline.js (so-), js-playground.js (pg-),
+   js-visual.js (tt-, vr-), loop-tracer.js (lt-), dom-tools.js (dt-, ep-).
+   Colours come from the tokens in styles.css: --hN is a strong colour and
+   --hNs its soft tint, swapped in dark mode, so "text --hN on --hNs" works in both.
+   ========================================================================== */
+
+.tool .tl-sub { margin: 18px 0 8px; font-size: .98rem; color: var(--ink); }
+.tool .tl-sub:first-child { margin-top: 0; }
+.tool table .is-hit > * { background: var(--h5s); }
+.tool .src caption { caption-side: top; text-align: left; padding: 0 0 6px; color: var(--muted); font-size: .84rem; }
+.tool .scroll > .src { min-width: min(100%, 360px); }
+.tool .checks { margin-top: 6px; }
+
+/* ---- URL anatomy (ua-) ----------------------------------------------------------- */
+
+.ua-presets, .ua-rels { margin-top: 10px; gap: 6px; }
+.ua-url { margin: 14px 0 10px; padding: 12px; background: var(--tint); border: 1px solid var(--rule); font: 600 1rem/1.9 var(--mono); overflow-wrap: anywhere; }
+.ua-seg { padding: 3px 2px; border-bottom: 3px solid; }
+.ua-seg.is-implicit { color: var(--muted); background: var(--tint); border-style: dashed; font-style: italic; }   /* no opacity: keeps 4.5:1 */
+.ua-scheme { color: var(--text); background: var(--h1s); border-color: var(--h1); }
+.ua-user { color: var(--text); background: var(--h7s); border-color: var(--h7); }
+.ua-host { color: var(--text); background: var(--h2s); border-color: var(--h2); }
+.ua-port { color: var(--text); background: var(--h7s); border-color: var(--h7); }
+.ua-path { color: var(--text); background: var(--h3s); border-color: var(--h3); }
+.ua-query { color: var(--text); background: var(--h4s); border-color: var(--h4); }
+.ua-fragment { color: var(--text); background: var(--h5s); border-color: var(--h5); }
+.ua-list { display: grid; gap: 8px; margin: 0 0 12px; }
+.ua-item dt { font-weight: 700; color: var(--ink); }
+.ua-item dt code { font-weight: 400; }
+.ua-item dd { margin: 2px 0 0 22px; }
+.ua-dot { display: inline-block; width: 12px; height: 12px; margin-right: 8px; border-radius: 2px; border: 0; vertical-align: -1px; }
+.ua-dot.ua-scheme { background: var(--h1); } .ua-dot.ua-host { background: var(--h2); } .ua-dot.ua-port { background: var(--h7); }
+.ua-dot.ua-path { background: var(--h3); } .ua-dot.ua-query { background: var(--h4); } .ua-dot.ua-fragment { background: var(--h5); } .ua-dot.ua-user { background: var(--h7); }
+.ua-result { margin: 10px 0 0; overflow-wrap: anywhere; }
+.ua-params { min-width: 260px; }
+.ua-result code { font-weight: 700; }
+
+/* ---- HTTP explorer (hx-) --------------------------------------------------------- */
+
+.hx-pathf { flex: 1 1 220px; }
+.hx-pair { margin-top: 4px; }
+.hx-title { margin: 0 0 6px; font-weight: 700; color: var(--ink); }
+.hx-raw { border: 1px solid var(--rule-strong); background: var(--surface); }
+.hx-part { position: relative; padding: 6px 10px 18px; border-left: 4px solid; }
+.hx-part + .hx-part { border-top: 1px dashed var(--rule); }
+.hx-part pre { margin: 0; font: .82rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); }
+.hx-tag { position: absolute; right: 8px; bottom: 2px; color: var(--muted); font-size: var(--fs-2xs); }
+.hx-first { border-color: var(--h1); background: var(--h1s); }
+.hx-headers { border-color: var(--h2); background: var(--h2s); }
+.hx-blank { border-color: var(--h7); background: var(--h7s); padding-bottom: 14px; }
+.hx-body { border-color: var(--h3); background: var(--h3s); }
+.hx-tables { margin-top: 14px; }
+
+/* ---- Semantic outline (so-) ------------------------------------------------------ */
+
+.so-frame { height: 360px; resize: vertical; }
+.so-out { margin-top: 16px; }
+.so-map { display: grid; gap: 6px; }
+.so-box { padding: 6px 8px; border: 2px solid var(--h6); background: var(--h6s); display: grid; gap: 6px; }
+.so-name { font: 700 .8rem var(--mono); color: var(--h6); }
+.so-header, .so-footer { border-color: var(--h1); background: var(--h1s); } .so-header > .so-name, .so-footer > .so-name { color: var(--h1); }
+.so-nav { border-color: var(--h4); background: var(--h4s); } .so-nav > .so-name { color: var(--h4); }
+.so-main { border-color: var(--h2); background: var(--h2s); } .so-main > .so-name { color: var(--h2); }
+.so-aside { border-color: var(--h5); background: var(--h5s); } .so-aside > .so-name { color: var(--h5); }
+.so-form { border-color: var(--h3); background: var(--h3s); } .so-form > .so-name { color: var(--h3); }
+.so-outline { margin: 0; padding: 0; list-style: none; font-size: .92rem; }
+.so-h { padding: 3px 0; }
+.so-h code { color: var(--muted); }
+.so-l2 { padding-left: 18px; } .so-l3 { padding-left: 36px; } .so-l4 { padding-left: 54px; } .so-l5 { padding-left: 72px; } .so-l6 { padding-left: 90px; }
+.so-h.is-skip { color: var(--bad); }
+
+/* ---- JS playground (pg-) ------------------------------------------------------------ */
+
+.pg-goal p { margin: 0 0 6px; }
+.pg-task-title { font-weight: 700; color: var(--ink); }
+.pg-hint summary { cursor: pointer; color: var(--ink); font-weight: 600; }
+.pg-hint p { margin: 6px 0 0; }
+.pg-code { min-height: 160px; }
+.pg-tests { margin: 12px 0 0; }
+.pg-score { margin: 0; }
+.pg-console-h { margin-top: 12px; }
+
+/* ---- Truthy table (tt-) ----------------------------------------------------------------- */
+
+.tt-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.tt-chip { min-width: 44px; border-width: 2px; border-radius: 2px; color: var(--text); }
+.tt-chip.is-falsy { border-color: var(--h3); }
+.tt-chip.is-truthy { border-color: var(--h2); }
+.tt-chip code { color: inherit; }
+.tt-verdict { margin: 12px 0 8px; font-size: 1.05rem; }
+.tt-verdict.is-falsy strong { color: var(--h3); }
+.tt-verdict.is-truthy strong { color: var(--h2); }
+.tt-table { margin-bottom: 10px; }
+
+/* ---- Value vs reference (vr-) and loop tracer code listing ------------------------------- */
+
+.vr-buttons { margin: 0; align-self: flex-end; gap: 8px; }
+.vr-code { margin: 0 0 10px; padding: 8px 0; background: var(--tint); border: 1px solid var(--rule); list-style: none; counter-reset: ln; font: .86rem/1.6 var(--mono); overflow-x: auto; }
+.vr-code li { counter-increment: ln; padding: 0 10px; white-space: pre; border-left: 4px solid transparent; }
+.vr-code li::before { content: counter(ln); display: inline-block; width: 2ch; margin-right: 12px; color: var(--muted); text-align: right; }
+.vr-code li.is-current { background: var(--h5s); border-left-color: var(--h5); font-weight: 700; }
+.vr-code code { font: inherit; }
+.vr-mem { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 36px; }
+.vr-col { min-width: 0; }
+.vr-col + .vr-col { padding-right: 30px; }
+.vr-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; position: relative; z-index: 1; }
+.vr-var { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; background: var(--surface); border: 1.5px solid var(--rule-strong); }
+.vr-name { font: 700 .9rem var(--mono); color: var(--ink); }
+.vr-prim { font-weight: 700; }
+.vr-ref { padding: 1px 6px; border-radius: 999px; font: 700 .78rem var(--mono); white-space: nowrap; }
+.vr-obj { padding: 6px 8px; border: 2px solid; display: grid; gap: 4px; }
+.vr-id { font: 700 .8rem var(--mono); }
+.vr-body { font-size: .84rem; overflow-wrap: anywhere; }
+.vr-entry.is-changed { background: var(--h5s); outline: 2px solid var(--h5); }
+.vr-c1 { border-color: var(--h1); background: var(--h1s); color: var(--h1); }
+.vr-c2 { border-color: var(--h4); background: var(--h4s); color: var(--h4); }
+.vr-c3 { border-color: var(--h6); background: var(--h6s); color: var(--h6); }
+.vr-c4 { border-color: var(--h3); background: var(--h3s); color: var(--h3); }
+.vr-obj code { color: var(--text); }
+.vr-arrows { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 2; }
+.vr-line { fill: none; stroke: var(--ink); stroke-width: 1.6; opacity: .75; }
+.vr-head { fill: var(--ink); }
+@media (max-width: 520px) { .vr-mem { grid-template-columns: minmax(0, 1fr); gap: 22px; } }
+
+/* ---- Loop tracer (lt-) -------------------------------------------------------------------------- */
+
+.lt-words { flex: 1 1 220px; }
+.lt-controls { align-items: center; gap: 8px; }
+.lt-warn { border-left-color: var(--bad); }
+.lt-phase { margin-top: 0; }
+.lt-vars { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.lt-vars div { display: flex; gap: 6px; padding: 4px 8px; background: var(--h2s); border: 1px solid var(--rule); }
+.lt-vars dt, .lt-vars dd { margin: 0; }
+.lt-vars dd code { font-weight: 700; color: var(--h2); }
+.lt-history { margin-top: 12px; max-height: 300px; overflow: auto; }
+
+/* ---- DOM tree (dt-) --------------------------------------------------------------------------- */
+
+.dt-opts { margin: 10px 0 4px; align-items: center; }
+.dt-first .tl-out { margin-top: 2px; }
+.dt-tree, .dt-tree ul { margin: 0; padding-left: 18px; list-style: none; font: .84rem/1.6 var(--mono); }
+.dt-tree { padding: 8px 10px; background: var(--tint); border: 1px solid var(--rule); overflow-x: auto; }
+.dt-tree ul { border-left: 1px dashed var(--rule-strong); margin-left: 6px; }
+.dt-tree summary { cursor: pointer; }
+.dt-tag { color: var(--h2); font-weight: 700; }
+.dt-attr { color: var(--h4); font-weight: 400; }
+.dt-val { color: var(--h8); font-weight: 400; }
+.dt-kind { color: var(--muted); font-style: italic; }
+.dt-text code { color: var(--text); }
+.dt-text.is-ws code { color: var(--muted); }
+.dt-leaf { padding-left: 14px; }
+.dt-el.is-match > details > summary, .dt-el.dt-leaf.is-match { background: var(--h5s); outline: 2px solid var(--h5); }
+.dt-hit { padding: 0 6px; border-radius: 999px; background: var(--h5); color: var(--on-h); font-size: var(--fs-2xs); font-weight: 700; }
+
+/* ---- Event propagation (ep-) ------------------------------------------------------------------------ */
+
+.ep-table td { text-align: center; }
+.ep-table input { width: 20px; height: 20px; accent-color: var(--ink); }
+.ep-stop { max-width: 340px; margin-bottom: 12px; }
+.ep-box { padding: 26px 12px 12px; border: 2px solid; position: relative; transition: box-shadow .15s; }
+.ep-outer { border-color: var(--h1); background: var(--h1s); }
+.ep-middle { border-color: var(--h4); background: var(--h4s); display: flex; flex-wrap: wrap; gap: 8px; }
+.ep-label { position: absolute; top: 4px; left: 8px; font: 700 .76rem var(--mono); color: var(--text); }
+.ep-inner {
+  min-height: 44px; padding: 8px 16px; border: 2px solid var(--h2); border-radius: 2px;
+  background: var(--surface); color: var(--h2); font-weight: 700; cursor: pointer;
+}
+.ep-inner[data-ep-added] { border-style: dashed; }
+.ep-flash { box-shadow: 0 0 0 4px var(--accent); }
+.ep-log { min-height: 120px; max-height: 320px; overflow: auto; margin: 0; padding: 8px 8px 8px 30px; background: var(--tint); border: 1px solid var(--rule); font-size: .86rem; }
+.ep-log li { padding: 3px 0; }
+.ep-log li + li { border-top: 1px solid var(--rule); }
+.ep-log .ep-empty { list-style: none; margin-left: -22px; }
+.ep-phase { display: inline-block; min-width: 7.5em; padding: 0 6px; border-radius: 2px; font-size: .76rem; font-weight: 700; }
+.ep-p1 { background: var(--h6s); color: var(--h6); }
+.ep-p2 { background: var(--h5s); color: var(--h5); }
+.ep-p3 { background: var(--h1s); color: var(--h1); }
+
