@@ -13,24 +13,33 @@ DATA.en.STYLING_GROUPS = [
   { key: 'scoping', label: 'Scoping styles', icon: 'brush' },
   { key: 'approaches', label: 'Approaches, themes and layout', icon: 'levels' },
   { key: 'basics', label: 'Tests and tooling', icon: 'pyramid' },
-  { key: 'components', label: 'Testing components', icon: 'component' },
+  { key: 'queries', label: 'Finding elements', icon: 'semantic' },
+  { key: 'interactions', label: 'Interactions and async UI', icon: 'component' },
 ];
 
 DATA.en.STYLING_CONCEPTS = [
   /* ---- 1. Scoping styles ---------------------------------------------------------------- */
   { id: 'global-css-collides', hub: 'scoping', topic: 'scoping',
     title: 'Why global CSS collides in a component app',
-    summary: 'In a component app every CSS file you import ends up in **one global stylesheet**. A class called `.title` in one component\'s file also styles every other `.title` on the page, and the cascade decides which rule wins.',
-    body: [
-      'Importing `./TaskCard.css` from `TaskCard.jsx` feels like the styles now belong to the card. They do not: the build tool (Vite) simply adds the file to the page as an ordinary stylesheet. Once on the page, CSS has no idea which component a rule came from, and a selector matches **any** element in the document. Two components written by two people, each with a `.title` class, now share one name, and the page follows [the cascade](#/browser/css/cascade): with the same [specificity](#/browser/css/specificity), the rule loaded **last** wins, for both components.',
-      'Which file loads last depends on the order in which components are imported, so a style can change because someone added an import in a file you never opened. That is what makes CSS bugs in large apps feel random: the cause is far away from the symptom. The more components, the more generic names collide: `.button`, `.card`, `.active`, `.error`, `.title`.',
-      'Every approach in this section solves the same problem in a different way: give each component\'s classes a **unique name**. By a naming convention ([BEM](#/browser/styling-testing/css-per-component)), by a tool that renames classes ([CSS Modules](#/browser/styling-testing/css-modules)), or by not inventing names at all ([utility classes](#/browser/styling-testing/utility-first), [CSS-in-JS](#/browser/styling-testing/css-in-js)).',
+    summary: 'In a component app every imported CSS file joins **one global stylesheet**, so a class such as `.title` from one component also styles every other `.title` on the page.',
+    html: [
+      '<p>Importing <code>./TaskCard.css</code> from <code>TaskCard.jsx</code> only tells the build tool to add the file to the page. Once there, CSS no longer knows which component a rule came from: a selector matches <strong>any</strong> element in the document, and with the same <a href="#/browser/css/specificity">specificity</a> the rule loaded <strong>last</strong> wins (<a href="#/browser/css/cascade">the cascade</a>).</p>',
+      '<ul><li><strong>Order follows imports:</strong> which file loads last depends on the import order, so a style can change because someone added an import in a file you never opened. The cause is far from the symptom.</li><li><strong>Generic names collide most:</strong> <code>.button</code>, <code>.card</code>, <code>.active</code>, <code>.error</code>, <code>.title</code>.</li></ul>',
+      '<h3>Every approach in this section gives each class a unique name</h3>',
+      '<dl><dt><a href="#/browser/styling-testing/css-per-component">BEM</a></dt><dd>A naming convention you keep by hand.</dd><dt><a href="#/browser/styling-testing/css-modules">CSS Modules</a></dt><dd>The build tool renames each class per file.</dd><dt><a href="#/browser/styling-testing/utility-first">Utility classes</a></dt><dd>No component names to invent at all.</dd><dt><a href="#/browser/styling-testing/css-in-js">CSS-in-JS</a></dt><dd>A library generates the names.</dd></dl>',
     ],
-    points: [
-      'Imported CSS is **global**: the import says "load this", not "only for this component".',
-      'Same specificity → the **later** rule wins, for every element that matches.',
-      'The fix is **unique names**, not heavier selectors.',
-    ],
+    diagram: {
+      kind: 'branch',
+      title: 'Two files, one stylesheet: the later .title rule wins for both cards.',
+      desc: 'TaskCard.css sets .title to orange and ProfileCard.css, loaded later, sets .title to blue. Both files end up in one global stylesheet, where the later rule wins, so every .title on the page is blue, in both cards.',
+      nodes: [
+        { id: 'task', label: '`TaskCard.css`', note: '`.title`: orange' },
+        { id: 'profile', label: '`ProfileCard.css`', note: '`.title`: blue, loaded later' },
+        { id: 'sheet', label: 'One stylesheet', note: 'the later rule wins', key: true },
+        { id: 'titles', label: 'Every `.title`', note: 'blue in both cards' },
+      ],
+      edges: [['task', 'sheet'], ['profile', 'sheet'], ['sheet', 'titles']],
+    },
     live: { kind: 'react', code: `function TaskCard() {
   return (
     <article className="card">
@@ -67,11 +76,13 @@ export default function App() {
 
   { id: 'css-per-component', hub: 'scoping', topic: 'scoping',
     title: 'One CSS file per component, and BEM names',
-    summary: 'The simplest discipline: each component gets its own CSS file next to it, and every class in it starts with the component\'s name, following a convention such as **BEM** (Block, Element, Modifier): `.task-card`, `.task-card__title`, `.task-card--done`.',
-    body: [
-      'A naming convention is a namespace you maintain by hand, like surnames in a school: there may be many students called Ana, but only one Ana Ruiz. If every class in `TaskCard.css` starts with `task-card`, it cannot collide with `profile-card__title`. Nothing enforces it; the team agrees on it, and code review checks it.',
-      '**BEM** names three kinds of class. The **block** is the standalone component (`task-card`). An **element** is a part that only makes sense inside the block, joined with two underscores (`task-card__title`, `task-card__button`). A **modifier** is a variant or a state, joined with two hyphens (`task-card--done`, `task-card__title--large`). Each selector is one class, so specificity stays (0, 1, 0) almost everywhere and the order of the files stops mattering.',
-      'Keep the files together: `TaskCard.jsx` and `TaskCard.css` side by side, the CSS imported once at the top of the component. Deleting the component then deletes its styles too. What is truly global (a reset, `box-sizing`, the body font, [design tokens](#/browser/styling-testing/design-tokens)) goes in a single `index.css` imported once in `main.jsx`.',
+    summary: 'The simplest discipline: each component gets its own CSS file next to it, and every class in it starts with the component\'s name, following a convention such as **BEM**: `.task-card`, `.task-card__title`, `.task-card--done`.',
+    html: [
+      '<p>A naming convention is a namespace you keep by hand: if every class in <code>TaskCard.css</code> starts with <code>task-card</code>, it cannot collide with <code>profile-card__title</code>. Nothing enforces it; the team agrees on it and code review checks it.</p>',
+      '<dl><dt>Block: <code>task-card</code></dt><dd>The standalone component.</dd><dt>Element: <code>task-card__title</code></dt><dd>A part that only makes sense inside the block, joined with two underscores.</dd><dt>Modifier: <code>task-card--done</code></dt><dd>A variant or a state, joined with two hyphens (also <code>task-card__title--large</code>).</dd></dl>',
+      '<p>Each selector is one class, so specificity stays (0, 1, 0) almost everywhere and the order of the files stops mattering.</p>',
+      '<h3>Where the files go</h3>',
+      '<ul><li><strong>Side by side:</strong> <code>TaskCard.jsx</code> and <code>TaskCard.css</code>, the CSS imported once at the top of the component. Deleting the component deletes its styles too.</li><li><strong>One global file:</strong> what is truly global (a reset, <code>box-sizing</code>, the body font, <a href="#/browser/styling-testing/design-tokens">design tokens</a>) goes in <code>index.css</code>, imported once in <code>main.jsx</code>.</li></ul>',
     ],
     code: `src/
   components/
@@ -80,6 +91,7 @@ export default function App() {
     ProfileCard.jsx
     ProfileCard.css   /* only .profile-card… classes */
   index.css           /* reset, fonts, tokens: imported once in main.jsx */`,
+    dialect: 'Folder tree',
     live: { kind: 'react', code: `import { useState } from 'react';
 import './TaskCard.css';
 
@@ -115,13 +127,26 @@ export default function App() {
 
   { id: 'css-modules', hub: 'scoping', topic: 'scoping',
     title: 'CSS Modules: class names scoped to one file',
-    summary: 'A **CSS Module** is a CSS file named `*.module.css`. When a component imports it, the build tool renames every class to a unique name and hands you an object that maps your names to the real ones: `styles.title` → `"_title_1hy3p_5"`.',
-    body: [
-      'Think of CSS Modules as BEM done by the machine. You write short, natural names (`.card`, `.title`, `.done`); the build tool makes them unique per file, so `.title` in `TaskCard.module.css` and `.title` in `ProfileCard.module.css` can never meet. Vite supports it with no set-up: the `.module.css` file name is the switch.',
-      'In the component, `import styles from \'./TaskCard.module.css\'` gives you an object, and you use its properties as class names: `className={styles.title}`. Several classes are joined into one string, for example `[styles.card, styles.done].join(\' \')` (see [Conditional classes](#/browser/styling-testing/conditional-classes)). Names with a dash need brackets, `styles[\'is-done\']`, which is why many teams write camelCase in module files (`.isDone` → `styles.isDone`).',
-      'Only **classes** (and ids, and animation names) are renamed. A tag selector such as `h2 { … }` in a module is still global, so keep module selectors class-based. Two extras: `composes: base;` inside a rule reuses another class of the same file (or `composes: card from \'./Card.module.css\'` from another file), and `:global(.dark) .card { … }` refers on purpose to a global class, for example a theme class set on `<html>`.',
-      'In the "Try it" boxes of this site there is no build step, so `styles.title` is simply `"title"`: the CSS pane can style it with `.title`. In a real Vite app the same code produces hashed names, and the behaviour is otherwise identical.',
+    summary: 'A **CSS Module** is a CSS file named `*.module.css`: the build tool renames every class in it to a unique name and hands the component an object that maps your names to the real ones, `styles.title` → `"_title_1hy3p_5"`.',
+    html: [
+      '<p>CSS Modules are BEM done by the machine. You write short names (<code>.card</code>, <code>.title</code>, <code>.done</code>) and the build tool makes them unique per file, so <code>.title</code> in two modules can never meet. In Vite there is nothing to set up: the <code>.module.css</code> file name is the switch.</p>',
+      '<ul><li><strong>Read names from the object:</strong> <code>import styles from \'./TaskCard.module.css\'</code>, then <code>className={styles.title}</code>.</li><li><strong>Several classes</strong> are joined into one string: <code>[styles.card, styles.done].join(\' \')</code> (see <a href="#/browser/styling-testing/conditional-classes">Conditional classes</a>).</li><li><strong>Dashes need brackets,</strong> <code>styles[\'is-done\']</code>, which is why many teams write camelCase in modules: <code>.isDone</code> → <code>styles.isDone</code>.</li></ul>',
+      '<h3>What is not renamed, and two extras</h3>',
+      '<ul><li><strong>Only classes</strong> (and ids and animation names) are renamed. A tag selector such as <code>h2 { … }</code> in a module is still global, so keep module selectors class-based.</li><li><strong><code>composes: base;</code></strong> inside a rule reuses another class of the same file, or of another one: <code>composes: card from \'./Card.module.css\'</code>.</li><li><strong><code>:global(.dark) .card { … }</code></strong> refers on purpose to a global class, for example a theme class on <code>&lt;html&gt;</code>.</li></ul>',
+      '<p>The Try it boxes of this site have no build step, so <code>styles.title</code> is simply <code>"title"</code> and the CSS pane styles it with <code>.title</code>. In a real Vite app the same code produces hashed names and behaves the same way.</p>',
     ],
+    diagram: {
+      kind: 'branch',
+      title: 'One short name in, one unique name out, shared by the CSS and the JSX.',
+      desc: 'You write .title in TaskCard.module.css. Vite renames it to a unique name, such as _title_1hy3p_5, in the page\'s stylesheet, and gives the component the same name as styles.title for its className.',
+      nodes: [
+        { id: 'src', label: '`.title`', note: 'in `TaskCard.module.css`' },
+        { id: 'vite', label: 'Vite renames it', key: true },
+        { id: 'css', label: '`._title_1hy3p_5`', note: 'the rule in the page' },
+        { id: 'jsx', label: '`styles.title`', note: 'the same name, for JSX' },
+      ],
+      edges: [['src', 'vite'], ['vite', 'css'], ['vite', 'jsx']],
+    },
     live: { kind: 'react', code: `import { useState } from 'react';
 import styles from './TaskCard.module.css';
 
@@ -156,11 +181,11 @@ export default function App() {
 
   { id: 'conditional-classes', hub: 'scoping', topic: 'scoping',
     title: 'Conditional classes: the state picks the class',
-    summary: 'To change how a component looks when its state changes, compute the `className` from the state: add a class when a condition is true. The CSS describes each look; React only switches between them.',
-    body: [
-      'This is the [declarative idea](#/browser/components/declarative-ui) applied to styling: for this data, the element has these classes. The visual rules stay in CSS, where hover, transitions and media queries work; the component only decides **which** rules apply. You never set colours one by one from JavaScript.',
-      'Three common ways to build the string. A ternary for two cases: `className={done ? \'task done\' : \'task\'}`. An array for several optional classes: `[styles.task, done && styles.done, urgent && styles.urgent].filter(Boolean).join(\' \')`, where `filter(Boolean)` drops the `false` entries. Or the tiny `clsx` package, which does the same with an object: `clsx(styles.task, { [styles.done]: done })`.',
-      'When the state has a meaning, prefer an **attribute** over a class: `disabled`, `aria-pressed="true"`, `aria-invalid="true"`, `aria-current="page"`. CSS can select it (`[aria-invalid="true"] { border-color: … }`), a screen reader announces it, and a test can check it. One source of truth for the look, the accessibility and the tests (see [Interaction states](#/browser/styling-testing/interaction-states)).',
+    summary: 'To change how a component looks when its state changes, compute the `className` from the state; the CSS describes each look and React only switches between them.',
+    html: [
+      '<p>This is the <a href="#/browser/components/declarative-ui">declarative idea</a> applied to styling: for this data, the element has these classes. The visual rules stay in CSS, where hover, transitions and media queries work; you never set colours one by one from JavaScript.</p>',
+      '<table><caption>Three ways to build the class string</caption><thead><tr><th scope="col">Case</th><th scope="col">Code</th></tr></thead><tbody><tr><th scope="row">Two cases</th><td><code>className={done ? \'task done\' : \'task\'}</code></td></tr><tr><th scope="row">Several optional classes</th><td><code>[styles.task, done &amp;&amp; styles.done, urgent &amp;&amp; styles.urgent].filter(Boolean).join(\' \')</code>: <code>filter(Boolean)</code> drops the <code>false</code> entries</td></tr><tr><th scope="row">The <code>clsx</code> package</th><td><code>clsx(styles.task, { [styles.done]: done })</code></td></tr></tbody></table>',
+      '<p><strong>When the state has a meaning, use an attribute instead of a class:</strong> <code>disabled</code>, <code>aria-pressed="true"</code>, <code>aria-invalid="true"</code>, <code>aria-current="page"</code>. CSS can select it, a screen reader announces it and a test can check it: one source of truth (see <a href="#/browser/styling-testing/interaction-states">Interaction states</a>).</p>',
     ],
     live: { kind: 'react', code: `import { useState } from 'react';
 import styles from './Task.module.css';
@@ -196,11 +221,12 @@ button[aria-pressed="true"] { background: #1a1f6c; color: #fff; }` },
 
   { id: 'inline-styles', hub: 'scoping', topic: 'scoping',
     title: 'Inline styles: style={{ }} for values computed at runtime',
-    summary: 'The `style` prop takes a JavaScript object with camelCase properties, such as `style={{ width: \'40%\' }}`. It is the right tool for values that come from data (a width, a position, a colour the user picked); for everything else, classes are better.',
-    body: [
-      'An inline style is the most local styling there is: it applies to one element and wins the cascade against any class rule. That makes it perfect for a number that changes at runtime and poor as a styling system: there is no `:hover`, no `:focus-visible`, no media query, no `::before`, no reuse, and the JSX fills up with presentation.',
-      'The object follows the [JSX rules](#/browser/components/jsx-rules): camelCase names (`backgroundColor`, `marginTop`), values as strings (`\'40%\'`, `\'#1a1f6c\'`) or numbers, and React adds `px` to numbers for length properties (`marginTop: 8` means `8px`), but not to unitless ones (`lineHeight: 1.5`, `opacity: 0.5`, `zIndex: 2`).',
-      'The best of both worlds: pass the runtime value as a **CSS custom property** and keep the rule in CSS. `style={{ \'--progress\': \'40%\' }}` sets a variable on the element; the stylesheet uses `width: var(--progress)` and keeps its transitions, hover styles and media queries. More on custom properties in [Design tokens](#/browser/styling-testing/design-tokens).',
+    summary: 'The `style` prop takes a JavaScript object with camelCase properties, `style={{ width: \'40%\' }}`: the right tool for values that come from data, and classes for everything else.',
+    html: [
+      '<p>An inline style applies to one element and wins the cascade against any class rule. That makes it perfect for a number that changes at runtime and poor as a styling system: no <code>:hover</code>, no <code>:focus-visible</code>, no media query, no <code>::before</code>, no reuse, and JSX full of presentation.</p>',
+      '<ul><li><strong>camelCase names:</strong> <code>backgroundColor</code>, <code>marginTop</code> (the <a href="#/browser/components/jsx-rules">JSX rules</a>).</li><li><strong>Values</strong> are strings (<code>\'40%\'</code>, <code>\'#1a1f6c\'</code>) or numbers.</li><li><strong>Numbers get <code>px</code></strong> for length properties (<code>marginTop: 8</code> is 8px), but not for unitless ones (<code>lineHeight: 1.5</code>, <code>opacity: 0.5</code>, <code>zIndex: 2</code>).</li></ul>',
+      '<h3>The best of both: a custom property</h3>',
+      '<p>Pass the runtime value as a CSS custom property and keep the rule in CSS: <code>style={{ \'--progress\': \'40%\' }}</code> on the element, <code>width: var(--progress)</code> in the stylesheet, which keeps its transitions, hover styles and media queries (more in <a href="#/browser/styling-testing/design-tokens">Design tokens</a>).</p>',
     ],
     live: { kind: 'react', code: `import { useState } from 'react';
 
@@ -237,12 +263,14 @@ export default function App() {
   /* ---- 2. Approaches, themes and layout ------------------------------------------------------ */
   { id: 'utility-first', hub: 'approaches', topic: 'approaches',
     title: 'Utility-first CSS: Tailwind',
-    summary: 'In **utility-first** CSS you do not write a class per component. You combine many tiny classes that each set one property, directly in the markup: `className="flex items-center gap-2 p-4 rounded-lg"`. **Tailwind CSS** is the best-known framework of this kind.',
-    body: [
-      'Instead of naming things ("is this a `task-card__header` or a `task-card__top`?") you describe how they look with a fixed vocabulary taken from a design scale. Utility classes are ordinary CSS classes: `.p-4 { padding: 1rem }`. Tailwind\'s build step scans your source files for class names and generates **only** the ones you use, so the final CSS stays small however big the vocabulary is.',
-      'Reading the vocabulary takes a day; the table below covers most of a typical screen. Spacing uses a scale where 1 step is 0.25rem: `p-4` is 1rem of padding, `gap-2` is 0.5rem. **Variants** are prefixes that apply a class under a condition: `hover:bg-blue-700`, `focus-visible:outline-2`, `disabled:opacity-50`, `dark:bg-slate-900`, and breakpoints such as `md:grid-cols-2` ("from the `md` width, 48rem, upwards": mobile-first, like a `min-width` media query).',
-      'Pros: no names to invent, no collisions, no dead CSS left behind, a consistent spacing and colour scale, and the styles are visible where you read the markup. Cons: long class strings, a vocabulary to learn, and every visual change is a markup change. Repetition is solved with **components**, not new CSS classes: if twelve buttons share the same twelve classes, write one `<Button>` component.',
-      'Set-up (Tailwind v4 with Vite): `npm install tailwindcss @tailwindcss/vite`, add `tailwindcss()` to the `plugins` of `vite.config.js`, and put `@import "tailwindcss";` in your main CSS file. The "Try it" boxes here cannot run Tailwind; the box below writes a few utilities by hand to show that they are plain CSS.',
+    summary: 'In **utility-first** CSS you combine many tiny classes, each setting one property, directly in the markup (`className="flex items-center gap-2 p-4"`); **Tailwind CSS** is the best-known framework of this kind.',
+    html: [
+      '<p>Instead of naming things ("is this a <code>task-card__header</code> or a <code>task-card__top</code>?") you describe how they look with a fixed vocabulary taken from a design scale. A utility is an ordinary class, <code>.p-4 { padding: 1rem }</code>; Tailwind\'s build step scans your files and generates <strong>only</strong> the classes you use, so the CSS stays small.</p>',
+      '<ul><li><strong>The spacing scale:</strong> one step is 0.25rem, so <code>p-4</code> is 1rem of padding and <code>gap-2</code> is 0.5rem.</li><li><strong>Variants</strong> are prefixes that apply a class under a condition: <code>hover:bg-blue-700</code>, <code>focus-visible:outline-2</code>, <code>disabled:opacity-50</code>, <code>dark:bg-slate-900</code>.</li><li><strong>Breakpoints</strong> are mobile-first prefixes: <code>md:grid-cols-2</code> applies from the <code>md</code> width (48rem) upwards, like a <code>min-width</code> media query.</li></ul>',
+      '<dl><dt>Pros</dt><dd>No names to invent, no collisions, no dead CSS left behind, one spacing and colour scale, and the styles are visible where you read the markup.</dd><dt>Cons</dt><dd>Long class strings, a vocabulary to learn, and every visual change is a markup change. Repetition is solved with components, not new CSS: if twelve buttons share twelve classes, write one <code>&lt;Button&gt;</code>.</dd></dl>',
+      '<h3>Set-up (Tailwind v4 with Vite)</h3>',
+      '<ol><li><code>npm install tailwindcss @tailwindcss/vite</code></li><li>Add <code>tailwindcss()</code> to the <code>plugins</code> of <code>vite.config.js</code>.</li><li>Put <code>@import "tailwindcss";</code> in your main CSS file.</li></ol>',
+      '<p>The Try it boxes cannot run Tailwind; the one on this card writes a few utilities by hand, to show that they are plain CSS.</p>',
     ],
     table: { caption: 'Common Tailwind utilities and the CSS they stand for', head: ['Class', 'CSS'], rows: [
       ['`flex` · `grid` · `hidden`', '`display: flex` · `display: grid` · `display: none`'],
@@ -299,11 +327,13 @@ export default function App() {
 
   { id: 'css-in-js', hub: 'approaches', topic: 'approaches',
     title: 'CSS-in-JS: styles written in JavaScript',
-    summary: '**CSS-in-JS** libraries such as **styled-components** let you write real CSS inside JavaScript and get back a component with those styles attached. The library generates a unique class name and inserts the CSS into the page, usually while the app runs.',
-    body: [
-      'Here the component and its styles are one object. `styled.button` followed by CSS between backticks is a **tagged template**: when `<Button>` renders, the library turns the CSS text into a class with a generated name (such as `sc-a1b2c3`), inserts the rule into a `<style>` tag in the page, and renders `<button class="sc-a1b2c3">`. Scoping is automatic, and because it is JavaScript, a style can depend on props: `${(p) => (p.$primary ? \'navy\' : \'white\')}`.',
-      'The price is **runtime work**. A runtime library is extra JavaScript to download, and it parses CSS, computes class names and inserts rules **in the browser, during rendering**, again whenever a prop changes the CSS. Styles cannot arrive before the JavaScript does. For these reasons the React team recommends generating CSS at build time rather than injecting it at runtime, and styled-components itself was put in maintenance mode by its maintainers in 2025.',
-      '**Zero-runtime** CSS-in-JS (vanilla-extract, Linaria, Panda CSS) keeps the idea of writing styles next to the component in JavaScript or TypeScript, but extracts plain CSS files at build time, like CSS Modules. You will still meet styled-components in many existing codebases, so it is worth being able to read it.',
+    summary: '**CSS-in-JS** libraries such as **styled-components** let you write real CSS inside JavaScript and get back a component with those styles attached, under a generated class name.',
+    html: [
+      '<p>The component and its styles are one object. <code>styled.button</code> followed by CSS between backticks is a <strong>tagged template</strong>: when <code>&lt;Button&gt;</code> renders, the library turns the CSS into a class with a generated name (such as <code>sc-a1b2c3</code>), inserts the rule in a <code>&lt;style&gt;</code> tag and renders <code>&lt;button class="sc-a1b2c3"&gt;</code>. Scoping is automatic, and a style can depend on props.</p>',
+      '<h3>The price: work in the browser</h3>',
+      '<ul><li><strong>Extra JavaScript</strong> to download.</li><li><strong>Work during rendering:</strong> the library parses CSS, computes class names and inserts rules while the app runs, again whenever a prop changes the CSS.</li><li><strong>Styles wait for the JavaScript:</strong> they cannot arrive before it.</li></ul>',
+      '<p>So the React team recommends generating CSS at build time, and styled-components was put in maintenance mode by its maintainers in 2025. You will still meet it in many existing codebases, so learn to read it.</p>',
+      '<dl><dt>Runtime CSS-in-JS</dt><dd>styled-components: CSS produced in the browser.</dd><dt>Zero-runtime CSS-in-JS</dt><dd>vanilla-extract, Linaria, Panda CSS: styles written next to the component in JavaScript or TypeScript, extracted as plain CSS files at build time, like CSS Modules.</dd></dl>',
     ],
     code: `import styled from 'styled-components';
 
@@ -332,11 +362,12 @@ export function Actions() {
 
   { id: 'choosing-approach', hub: 'approaches', topic: 'approaches',
     title: 'Choosing one styling approach',
-    summary: 'Plain CSS with a naming convention, CSS Modules, utility classes and CSS-in-JS all solve the same problem, scoping. Pick **one** for a project, add one global file for the reset and the design tokens, and keep inline styles for values computed at runtime.',
-    body: [
-      'The approaches differ in two questions: **where does a class name come from** (you, a convention, the build tool, a library) and **when is the CSS produced** (written by hand, at build time, or at runtime in the browser). The table compares them on what usually decides the choice.',
-      'Consistency matters more than the "best" option. With one approach, every component is styled the same way, so anyone knows where to look and how to change it. A sensible default for a new Vite + React project is CSS Modules (nothing to install, plain CSS knowledge) or Tailwind (if the team wants a design scale); both cost nothing at runtime.',
-      'Whatever you pick, the project needs a small **global layer**: `index.css` with the reset (`box-sizing: border-box`), the body font, the [design tokens](#/browser/styling-testing/design-tokens) as custom properties, and a visible focus style. Component styles build on it.',
+    summary: 'Every styling approach solves the same problem, scoping: pick **one** per project, add one global file for the reset and the design tokens, and keep inline styles for values computed at runtime.',
+    html: [
+      '<p>The approaches answer two questions differently: <strong>where does a class name come from</strong> (you, a convention, the build tool, a library) and <strong>when is the CSS produced</strong> (by hand, at build time, at runtime in the browser).</p>',
+      '<p>Consistency matters more than the "best" option: with one approach, anyone knows where a style lives and how to change it. A sensible default for a new Vite + React project is CSS Modules (nothing to install, plain CSS) or Tailwind (when the team wants a design scale); neither costs anything at runtime.</p>',
+      '<h3>The global layer every project needs</h3>',
+      '<ul><li><strong>A reset:</strong> <code>box-sizing: border-box</code>.</li><li><strong>The body font.</strong></li><li><strong>The <a href="#/browser/styling-testing/design-tokens">design tokens</a></strong> as custom properties.</li><li><strong>A visible focus style.</strong></li></ul>',
     ],
     table: { caption: 'Styling approaches compared', head: ['Approach', 'Scoping', 'Dynamic styles', 'Runtime cost', 'Good fit'], rows: [
       ['Plain CSS + BEM', 'by convention (discipline)', 'classes, attributes, custom properties', 'none', 'small apps; teams fluent in CSS'],
@@ -350,13 +381,25 @@ export function Actions() {
 
   { id: 'design-tokens', hub: 'approaches', topic: 'approaches',
     title: 'Design tokens and themes with CSS custom properties',
-    summary: 'A **design token** is a named design decision: the primary colour, the spacing step, the corner radius. In CSS you store tokens as **custom properties** (`--color-primary: #1a1f6c`) and use them with `var(--color-primary)`. A theme, such as dark mode, is the same names with different values.',
-    body: [
-      'Components refer to names, not values: "use the surface colour", not "#fff". Change a value in one place and every component follows. Custom properties are real CSS properties: they are **inherited** down the tree and resolved by the browser while the page runs. You can redefine them for a theme or for one part of the page without rebuilding anything (unlike Sass variables, which disappear when the CSS is built).',
-      'Define the tokens on `:root` (the `<html>` element) so that everything inherits them, and read them with `var(--name)`, optionally with a fallback, `var(--radius, 6px)`. A custom property can also be set from React, `style={{ \'--accent\': color }}`, and the CSS below that element sees the new value.',
-      'Two ways to switch themes, usually combined. Follow the operating system with `@media (prefers-color-scheme: dark) { :root { … } }`. Let the user choose with an attribute, `:root[data-theme="dark"] { … }`, that React sets with `document.documentElement.dataset.theme = theme` (and remembers with [useLocalStorage](#/browser/state-effects/use-local-storage)). Add `color-scheme: light dark` so form controls and scrollbars follow too.',
-      'Tokens work with every approach: a CSS Module uses `var(--color-primary)` like any CSS file, and Tailwind v4 defines its own theme as custom properties (the `@theme` block), so your tokens and its utilities can share values.',
+    summary: 'A **design token** is a named design decision (the primary colour, the spacing step, the corner radius), stored as a CSS **custom property** such as `--color-primary` and read with `var(--color-primary)`.',
+    html: [
+      '<p>Components refer to names, not values: "use the surface colour", not "#fff". Change a value in one place and every component follows. Custom properties are real CSS properties, <strong>inherited</strong> down the tree and resolved while the page runs, so a theme can redefine them without rebuilding anything (unlike Sass variables, which disappear at build time).</p>',
+      '<ul><li><strong>Define them on <code>:root</code></strong> (the <code>&lt;html&gt;</code> element) so everything inherits them; read them with <code>var(--name)</code>, optionally with a fallback: <code>var(--radius, 6px)</code>.</li><li><strong>Set one from React:</strong> <code>style={{ \'--accent\': color }}</code>; the CSS below that element sees the new value.</li></ul>',
+      '<h3>Switching themes</h3>',
+      '<ul><li><strong>Follow the operating system:</strong> <code>@media (prefers-color-scheme: dark) { :root { … } }</code>.</li><li><strong>Let the user choose:</strong> <code>:root[data-theme="dark"] { … }</code>, set from React with <code>document.documentElement.dataset.theme = theme</code> and remembered with <a href="#/browser/state-effects/use-local-storage">useLocalStorage</a>.</li><li><strong>Form controls too:</strong> add <code>color-scheme: light dark</code> so inputs and scrollbars follow.</li></ul>',
+      '<p>Tokens work with every approach: a CSS Module uses <code>var(--color-primary)</code> like any CSS file, and Tailwind v4 defines its theme as custom properties (the <code>@theme</code> block).</p>',
     ],
+    diagram: {
+      kind: 'layers',
+      title: 'Components use names; a theme only changes the values.',
+      desc: 'Three layers. Component rules use var(--color-primary). The dark theme, :root[data-theme="dark"], redefines the same names with new values. Below them, :root holds the default token values.',
+      nodes: [
+        { id: 'rules', label: 'Component rules', note: '`var(--color-primary)`' },
+        { id: 'dark', label: 'Dark theme', note: '`:root[data-theme="dark"]`' },
+        { id: 'root', label: 'Token values', note: '`:root { --color-primary: … }`', key: true },
+      ],
+      edges: [],
+    },
     live: { kind: 'react', code: `import { useEffect, useState } from 'react';
 
 function ThemeToggle() {
@@ -408,11 +451,11 @@ body { background: var(--color-bg); color: var(--color-text); }
 
   { id: 'responsive-component', hub: 'approaches', topic: 'approaches',
     title: 'A responsive component: breakpoints in its own CSS',
-    summary: 'A component can carry its own breakpoint: a media query (or a **container query**) in the component\'s CSS changes its layout above a width, mobile-first. The rules are those of plain CSS; what changes is where they live.',
-    body: [
-      'Everything from [Media queries and breakpoints](#/browser/css/media-queries) still applies; in a component app the query simply sits next to the component it changes, in its CSS file or module. Mobile-first: the base rules describe the narrow layout, and `@media (min-width: 48rem) { … }` adds the wider one. The viewport `<meta>` tag from [Responsive foundations](#/browser/css/responsive-foundations) is already in Vite\'s `index.html`.',
-      'A media query asks about the **viewport**. A component, however, does not know where it will be placed: the same task list may fill the page or sit in a narrow sidebar on a wide screen. A **container query** asks about the space the component actually gets: mark a wrapper with `container-type: inline-size`, then write `@container (min-width: 30rem) { … }`. All current browsers support it, and it is often the better fit for reusable components.',
-      'Inside a CSS Module, `@media` and `@container` work as usual. In Tailwind, breakpoints are prefixes (`md:grid-cols-2`) and container queries are `@container` plus `@md:…`. Inline styles cannot express either, one more reason to keep layout in CSS.',
+    summary: 'A component can carry its own breakpoint: a media query, or a **container query**, in the component\'s CSS changes its layout above a width, mobile-first.',
+    html: [
+      '<p>Everything from <a href="#/browser/css/media-queries">Media queries and breakpoints</a> still applies; the query now sits next to the component it changes, in its CSS file or module. The base rules describe the narrow layout, a <code>min-width</code> query adds the wider one, and the viewport <code>&lt;meta&gt;</code> tag from <a href="#/browser/css/responsive-foundations">Responsive foundations</a> is already in Vite\'s <code>index.html</code>.</p>',
+      '<table><caption>Media query or container query</caption><thead><tr><th scope="col"></th><th scope="col">Media query</th><th scope="col">Container query</th></tr></thead><tbody><tr><th scope="row">Asks about</th><td>The viewport</td><td>The space the component actually gets</td></tr><tr><th scope="row">Set-up</th><td>None</td><td><code>container-type: inline-size</code> on a wrapper</td></tr><tr><th scope="row">Syntax</th><td><code>@media (min-width: 48rem) { … }</code></td><td><code>@container (min-width: 30rem) { … }</code></td></tr><tr><th scope="row">Best for</th><td>The page layout</td><td>Reusable components that may sit in a page or a narrow sidebar</td></tr></tbody></table>',
+      '<p>Both work inside a CSS Module. In Tailwind, breakpoints are prefixes (<code>md:grid-cols-2</code>) and container queries are <code>@container</code> plus <code>@md:…</code>. Inline styles can express neither, one more reason to keep layout in CSS.</p>',
     ],
     live: { kind: 'react', code: `const tasks = ['Buy milk', 'Call Ana', 'Write the report', 'Book the dentist'];
 
@@ -449,11 +492,11 @@ export default function App() {
 
   { id: 'interaction-states', hub: 'approaches', topic: 'approaches',
     title: 'Hover, focus and disabled: interaction states',
-    summary: 'Every interactive component needs visible styles for its states: `:hover` (pointer over it), `:focus-visible` (focused from the keyboard), `:disabled`, and "this one is selected", best expressed with attributes such as `[aria-pressed="true"]` or `[aria-current="page"]`.',
-    body: [
-      'A state style is feedback: "you can click this", "you are here", "this is the active one". Keyboard users rely on the focus ring the way mouse users rely on the pointer, so removing it leaves them lost on the page. The selectors are the [pseudo-classes](#/browser/css/pseudo-classes) you already know; in a component app they go in each component\'s CSS.',
-      '`:focus-visible` matches when the browser decides the focus should be shown, typically when it came from the keyboard and not from a mouse click on a button. You can keep a strong ring for keyboard users without it flashing on every click. Give it contrast against the background (at least 3:1) and take its colour from a token.',
-      'Style "selected" states through the attributes the component already sets for accessibility: `a[aria-current="page"]` for the current link in a navigation bar (router libraries usually set it for you on the active link), `button[aria-pressed="true"]` for a toggle, `[aria-invalid="true"]` for a field with an error. One piece of state then drives the look, what a screen reader says, and what a test checks.',
+    summary: 'Every interactive component needs a visible style for each state: hover, keyboard focus, disabled and "selected", the last one best expressed with attributes such as `[aria-pressed="true"]`.',
+    html: [
+      '<p>A state style is feedback: "you can click this", "you are here", "this is the active one". Keyboard users rely on the focus ring the way mouse users rely on the pointer, so removing it leaves them lost. The selectors are the <a href="#/browser/css/pseudo-classes">pseudo-classes</a> you already know, written in each component\'s CSS.</p>',
+      '<dl><dt><code>:hover</code></dt><dd>The pointer is over the element.</dd><dt><code>:focus-visible</code></dt><dd>The browser decides the focus should be shown, typically when it came from the keyboard and not from a click. Give the ring contrast against the background (at least 3:1) and take its colour from a token.</dd><dt><code>:disabled</code></dt><dd>A control that cannot be used: make it look unavailable.</dd><dt>Selected states</dt><dd>Style the attributes the component already sets for accessibility: <code>a[aria-current="page"]</code> for the current link (router libraries set it on the active link), <code>button[aria-pressed="true"]</code> for a toggle, <code>[aria-invalid="true"]</code> for a field with an error.</dd></dl>',
+      '<p>One piece of state then drives the look, what a screen reader says and what a test checks.</p>',
     ],
     live: { kind: 'react', code: `import { useState } from 'react';
 
@@ -486,11 +529,11 @@ export default function App() {
   /* ---- 3. Tests and tooling ------------------------------------------------------------------- */
   { id: 'why-test', hub: 'basics', topic: 'basics',
     title: 'Why automated tests',
-    summary: 'An **automated test** is code that runs your code and checks the result, so that everything can be checked again in seconds after every change. Tests catch **regressions** (something that used to work breaks) and give you the confidence to **refactor**.',
-    body: [
-      'A test is a promise about behaviour, written down so that a machine can check it again and again. Checking by hand, clicking through every screen after each change, takes minutes, and people skip screens they did not touch: that is exactly where regressions hide. Automated tests re-check all of them whenever you save (watch mode) and whenever anyone pushes (continuous integration).',
-      'What they give you: a regression is caught the moment you cause it, while the change is fresh in your head; you can **refactor** (change how code works inside without changing what it does) and the tests confirm the outside still behaves; the test names document the intended behaviour ("disables Reset at zero"); and code that is hard to test is often doing too much, so tests nudge the design.',
-      'What they cannot do: prove there are no bugs. A test only checks what someone thought of. Good tests check the behaviour that matters to users, not every line. The vocabulary (test runner, test, assertion) is the same as for server tests, see [Automated API tests](#/http/api-design/automated-tests); the next cards apply it to the browser.',
+    summary: 'An **automated test** is code that runs your code and checks the result, so everything can be checked again in seconds after every change.',
+    html: [
+      '<p>A test is a promise about behaviour, written so that a machine can check it again and again. Checking by hand after each change takes minutes, and people skip the screens they did not touch: that is where <strong>regressions</strong> (something that used to work breaks) hide. Tests re-check everything when you save (watch mode) and when anyone pushes (continuous integration).</p>',
+      '<dl><dt>Regressions caught at once</dt><dd>While the change is still fresh in your head.</dd><dt>Safe refactoring</dt><dd><strong>Refactoring</strong> changes how code works inside without changing what it does; the tests confirm the outside still behaves.</dd><dt>Documentation</dt><dd>Test names state the intended behaviour: "disables Reset at zero".</dd><dt>Better design</dt><dd>Code that is hard to test is often doing too much.</dd></dl>',
+      '<p>Tests cannot prove there are no bugs: they check only what someone thought of. Test the behaviour that matters to users, not every line. The vocabulary (test runner, test, assertion) is the one of <a href="#/http/api-design/automated-tests">Automated API tests</a>; this group applies it to the browser.</p>',
     ],
     code: `// tasks.js
 export function remaining(tasks) {
@@ -516,11 +559,10 @@ describe('remaining', () => {
 
   { id: 'testing-pyramid', hub: 'basics', topic: 'basics',
     title: 'The testing pyramid: unit, component, end-to-end',
-    summary: 'Tests come in sizes. **Unit** tests check one function on its own; **component** (or integration) tests render a component with its children and interact with it; **end-to-end** (E2E) tests drive the whole app in a real browser against a real server. The pyramid says: many small, fast tests at the bottom, a few broad, slow ones at the top.',
-    body: [
-      'The trade-off is confidence against cost. A bigger test catches more kinds of problems (wiring between components, the real network, CSS that hides a button), but it is slower, more likely to fail for random reasons (timing, data) and harder to debug: "the checkout flow failed" says less than "`validateTask` accepted an empty title".',
-      'Component tests run in **jsdom**, a JavaScript implementation of the DOM that runs in Node without a real browser. It is fast and good enough for elements, events and attributes, but it does no layout and no real rendering: a component test cannot tell you that a button is off-screen or the wrong colour. That is a job for E2E tests or a person looking.',
-      'Many front-end teams draw a **trophy** instead of a pyramid: most of the effort in component tests, because they resemble how the app is used while staying fast. Whatever the shape, a healthy mix is: unit tests for logic (validation, formatting, reducers), component tests for each important behaviour of a screen, and a handful of E2E tests for the critical flows (log in, create a task).',
+    summary: 'Tests come in sizes, **unit**, **component** and **end-to-end**, and the pyramid says: many small, fast tests at the bottom, a few broad, slow ones at the top.',
+    html: [
+      '<p>The trade-off is confidence against cost. A bigger test catches more kinds of problems (wiring between components, the real network, CSS that hides a button) but is slower, fails more often for random reasons (timing, data) and is harder to debug: "the checkout flow failed" says less than "<code>validateTask</code> accepted an empty title".</p>',
+      '<ul><li><strong>jsdom:</strong> component tests run in jsdom, a JavaScript implementation of the DOM that runs in Node without a real browser. It is fast and handles elements, events and attributes, but does no layout or real rendering: it cannot tell you a button is off-screen or the wrong colour.</li><li><strong>The trophy:</strong> many front-end teams put most of their effort in component tests, because they resemble real use while staying fast.</li><li><strong>A healthy mix:</strong> unit tests for logic (validation, formatting, reducers), component tests for each important behaviour of a screen, a handful of end-to-end tests for the critical flows (log in, create a task).</li></ul>',
     ],
     table: { caption: 'Three levels of tests for a React app', head: ['Level', 'What it covers', 'Tools', 'Speed', 'When it fails, you learn'], rows: [
       ['Unit', 'one pure function: `validateTask`, `formatDue`, a reducer', 'Vitest', 'milliseconds', 'exactly which function is wrong'],
@@ -532,12 +574,14 @@ describe('remaining', () => {
 
   { id: 'vitest-basics', hub: 'basics', topic: 'basics',
     title: 'Vitest: describe, it, expect',
-    summary: '**Vitest** is a test runner made for Vite projects: it finds the `*.test.js` and `*.test.jsx` files, runs them and reports each test as passed or failed. A file groups tests with `describe`, defines each one with `it` (or `test`) and checks values with `expect(value).matcher(expected)`.',
-    body: [
-      'Vitest reuses your Vite configuration, so tests compile JSX and resolve imports exactly as the app does. Its API is compatible with **Jest**, the runner many Node projects use: if you have written server tests with Jest, you already know it.',
-      'A test follows **Arrange, Act, Assert**: prepare the data (or render the component), do the thing, check the result. `describe(\'TaskList\', () => { … })` groups related tests; `it(\'shows the empty message\', () => { … })` is one case, named as a sentence about behaviour; `beforeEach(() => { … })` runs before every test of the group, so each test starts from a clean state.',
-      '**Matchers** say how to compare. `toBe` uses `Object.is`, right for strings, numbers and booleans; `toEqual` compares contents, right for objects and arrays; `toContain`, `toHaveLength`, `toBeNull`, `toBeTruthy`, `toThrow` cover the rest, and `.not` negates any of them. **Mock functions** record their calls: `vi.fn()` creates one, `vi.spyOn(object, \'method\')` wraps an existing one, and `expect(mock).toHaveBeenCalledWith(…)` checks how it was called.',
-      'Running: `npx vitest` starts **watch mode** (it reruns the affected tests every time you save); `npx vitest run` runs once, as a CI server does. Add `"test": "vitest"` to the `scripts` of `package.json` and `npm test` does the same. A failure shows the test name, the expected and received values and the line.',
+    summary: '**Vitest** is the test runner made for Vite projects: it finds the `*.test.js` and `*.test.jsx` files, runs them and reports each test as passed or failed.',
+    html: [
+      '<p>Vitest reuses your Vite configuration, so tests compile JSX and resolve imports exactly as the app does. Its API is compatible with <strong>Jest</strong>, the runner many Node projects use. Each test follows <strong>Arrange, Act, Assert</strong>: prepare the data, do the thing, check the result.</p>',
+      '<h3>Set it up and run it</h3>',
+      '<ol><li>Install it: <code>npm install -D vitest</code>.</li><li>Add <code>"test": "vitest"</code> to the <code>scripts</code> of <code>package.json</code>.</li><li>Run <code>npm test</code> (or <code>npx vitest</code>): <strong>watch mode</strong>, which reruns the affected tests on every save. <code>npx vitest run</code> runs once, as a CI server does.</li></ol>',
+      '<p>Component tests need a simulated page and Testing Library on top: see <a href="#/browser/styling-testing/rtl-philosophy">Testing Library</a>.</p>',
+      '<dl><dt><code>describe(\'TaskList\', () =&gt; { … })</code></dt><dd>Groups related tests.</dd><dt><code>it(\'shows the empty message\', () =&gt; { … })</code></dt><dd>One test, named as a sentence about behaviour (<code>test</code> is the same).</dd><dt><code>beforeEach(() =&gt; { … })</code></dt><dd>Runs before every test of the group, so each one starts clean.</dd><dt><code>expect(value).matcher(expected)</code></dt><dd>Checks a value; a failure shows the test name, the expected and received values and the line.</dd></dl>',
+      '<table><caption>Matchers you will use most</caption><thead><tr><th scope="col">Matcher</th><th scope="col">Passes when</th></tr></thead><tbody><tr><th scope="row"><code>toBe(x)</code></th><td>The same value (<code>Object.is</code>): strings, numbers, booleans</td></tr><tr><th scope="row"><code>toEqual(x)</code></th><td>The same contents: objects and arrays</td></tr><tr><th scope="row"><code>toContain</code>, <code>toHaveLength</code></th><td>An item is in the array or string; it has that length</td></tr><tr><th scope="row"><code>toBeNull</code>, <code>toBeTruthy</code>, <code>toThrow</code></th><td>The value is null; truthy; the function throws</td></tr><tr><th scope="row"><code>.not.…</code></th><td>Negates any matcher</td></tr><tr><th scope="row"><code>toHaveBeenCalledWith(…)</code></th><td>A <strong>mock function</strong> was called with these arguments: <code>vi.fn()</code> creates one, <code>vi.spyOn(object, \'method\')</code> wraps an existing one</td></tr></tbody></table>',
     ],
     code: `import { describe, it, expect, vi } from 'vitest';
 import { addTask } from './tasks';
@@ -562,11 +606,10 @@ describe('addTask', () => {
 
   { id: 'dev-tooling', hub: 'basics', topic: 'basics',
     title: 'Tooling cheat-sheet: ESLint, Prettier, React DevTools',
-    summary: 'Three tools catch problems before tests do: **ESLint** finds bugs and risky patterns in the code (with the **react-hooks** plugin, broken hook rules), **Prettier** formats the code automatically, and **React DevTools** shows the component tree, props and state in the browser.',
-    body: [
-      'Each one acts at a different moment. Prettier when you save: formatting stops being a matter of taste or a review comment. ESLint while you type: red underlines for unused variables, hooks called conditionally or missing effect dependencies. DevTools while the app runs: why is this prop `undefined`, what is in this state, why does this component render so often.',
-      'The React template of Vite ships an `eslint.config.js` with `eslint-plugin-react-hooks`, whose two rules matter most: **rules-of-hooks** ([no hooks in conditions or loops](#/browser/state-effects/rules-of-hooks)) and **exhaustive-deps** (every value an effect uses is in its dependency array, which prevents [stale closures](#/browser/state-effects/stale-closures)). For tests, `eslint-plugin-testing-library` and `eslint-plugin-jest-dom` flag the patterns the [What not to test](#/browser/styling-testing/implementation-details) card warns about; the "Advice" panel of the test runner here imitates a few of their rules.',
-      'React DevTools is a browser extension. The **Components** tab shows the tree; selecting a component shows its props, state and hooks, which you can edit live. "Highlight updates when components render" flashes every re-render, and the **Profiler** tab records what rendered and for how long. The ordinary **Elements** tab still matters: it shows the real class names (the hashed ones of CSS Modules) and the computed styles.',
+    summary: 'Three tools catch problems before tests do: **ESLint** finds bugs and broken hook rules, **Prettier** formats the code, and **React DevTools** shows the component tree, props and state.',
+    html: [
+      '<p>Each acts at a different moment. Prettier when you save: formatting stops being a matter of taste. ESLint while you type: red underlines for unused variables, conditional hooks or missing effect dependencies. DevTools while the app runs: why is this prop <code>undefined</code>, why does this component render so often.</p>',
+      '<ul><li><strong>ESLint\'s react-hooks rules</strong> ship with Vite\'s React template: <strong>rules-of-hooks</strong> (<a href="#/browser/state-effects/rules-of-hooks">no hooks in conditions or loops</a>) and <strong>exhaustive-deps</strong> (every value an effect uses is in its dependency array, which prevents <a href="#/browser/state-effects/stale-closures">stale closures</a>).</li><li><strong>Testing plugins:</strong> <code>eslint-plugin-testing-library</code> and <code>eslint-plugin-jest-dom</code> flag the patterns of <a href="#/browser/styling-testing/implementation-details">What not to test</a>; the "Advice" panel of the test runner here imitates a few of their rules.</li><li><strong>React DevTools</strong> (a browser extension): the Components tab shows the tree and lets you edit a component\'s props, state and hooks live; "Highlight updates when components render" flashes every re-render; the Profiler records what rendered and for how long.</li><li><strong>The Elements tab</strong> still matters: it shows the real class names (the hashed ones of CSS Modules) and the computed styles.</li></ul>',
     ],
     table: { caption: 'Tooling cheat-sheet', head: ['Tool', 'Catches', 'Run it', 'Tip'], rows: [
       ['ESLint + react-hooks', 'bugs, unused code, broken hook rules, missing effect dependencies', '`npm run lint` (`eslint .`); editor extension', 'fix warnings; do not silence exhaustive-deps'],
@@ -578,14 +621,17 @@ describe('addTask', () => {
     example: 'ESLint underlines an effect: "React Hook useEffect has a missing dependency: \'taskId\'. Either include it or remove the dependency array." Adding `taskId` to the array fixes a real bug: without it, the effect kept loading the first task after the user opened another one.',
     mistake: 'Silencing a warning instead of understanding it: `// eslint-disable-next-line react-hooks/exhaustive-deps` above the dependency array. The warning disappears, the stale-value bug it was pointing at stays. Fix the effect (move the function inside it, add the dependency, or use an updater function).' },
 
-  /* ---- 4. Testing components --------------------------------------------------------------- */
-  { id: 'rtl-philosophy', hub: 'components', topic: 'queries',
+  /* ---- 4. Finding elements ------------------------------------------------------------------ */
+  { id: 'rtl-philosophy', hub: 'queries', topic: 'queries',
     title: 'Testing Library: test what the user sees',
-    summary: '**React Testing Library** renders a component into a simulated page and gives you ways to find things the way a person does: by role, label and text. Its guiding principle: the more your tests resemble the way your software is used, the more confidence they can give you.',
-    body: [
-      'Imagine describing the test to someone who can only see the screen, or hear it through a screen reader: "there is a button called Increment; after clicking it, the text says Count: 1". No state variables, no component instances, no class names. A test that reads like that survives any refactor that keeps the screen the same, and fails exactly when a user would notice something different.',
-      'The pieces: `render(<Counter />)` mounts the component with the real React into `document.body` (provided by jsdom in Vitest). `screen` holds the queries for the whole page (`screen.getByRole(…)`). `@testing-library/user-event` performs realistic clicks and typing. `@testing-library/jest-dom` adds matchers about the DOM: `toBeInTheDocument`, `toHaveTextContent`, `toBeDisabled`, `toHaveValue`. After each test the component is unmounted, so tests do not leak into each other.',
-      'A useful side effect: if you cannot find an element by its role or label, a screen-reader user cannot either. Tests written this way push your markup towards [semantic HTML](#/browser/html/semantic-why) and proper `<label>`s. What you cannot do, on purpose, is read a component\'s state or call its functions: the test sees only what the user sees.',
+    summary: '**React Testing Library** renders a component into a simulated page and finds things the way a person does, by role, label and text: the more a test resembles real use, the more confidence it gives.',
+    html: [
+      '<p>Describe the test as someone who can only see the screen, or hear it through a screen reader: "there is a button called Increment; after clicking it, the text says Count: 1". No state variables, no component instances, no class names. A test like that survives any refactor that keeps the screen the same, and fails exactly when a user would notice a difference.</p>',
+      '<h3>Setting it up</h3>',
+      '<ol><li>Install the tools as development dependencies: <code>npm install -D vitest jsdom @testing-library/react @testing-library/dom @testing-library/user-event @testing-library/jest-dom</code>. <code>@testing-library/dom</code> is listed because current versions of the React package expect you to install it yourself.</li><li>In <code>vite.config.js</code>, set <code>environment: \'jsdom\'</code> (tests get a <code>document</code>), <code>globals: true</code> (<code>describe</code>, <code>it</code> and <code>expect</code> without imports, and automatic clean-up after each test) and a <code>setupFiles</code> entry.</li><li>In that setup file, load the DOM matchers once: <code>import \'@testing-library/jest-dom/vitest\';</code>.</li></ol>',
+      '<pre><code>// vite.config.js\nimport { defineConfig } from \'vite\';\nimport react from \'@vitejs/plugin-react\';\n\nexport default defineConfig({\n  plugins: [react()],\n  test: {\n    environment: \'jsdom\',\n    globals: true,\n    setupFiles: \'./src/setupTests.js\',\n  },\n});\n\n// src/setupTests.js\nimport \'@testing-library/jest-dom/vitest\';</code></pre>',
+      '<dl><dt><code>render(&lt;Counter /&gt;)</code></dt><dd>Mounts the component with the real React into <code>document.body</code>, provided by jsdom. After each test it is unmounted, so tests do not leak into each other.</dd><dt><code>screen</code></dt><dd>Holds the queries for the whole page: <code>screen.getByRole(…)</code>.</dd><dt><code>userEvent</code></dt><dd>Performs realistic clicks and typing (see <a href="#/browser/styling-testing/user-events">Simulating the user</a>).</dd><dt>jest-dom matchers</dt><dd>Assertions about the DOM: <code>toBeInTheDocument</code>, <code>toHaveTextContent</code>, <code>toBeDisabled</code>, <code>toHaveValue</code>.</dd></dl>',
+      '<p>A side effect: if you cannot find an element by its role or label, a screen-reader user cannot either, so these tests push the markup towards <a href="#/browser/html/semantic-why">semantic HTML</a> and real <code>&lt;label&gt;</code>s. What you cannot do, on purpose, is read a component\'s state or call its functions.</p>',
     ],
     code: `import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -602,13 +648,13 @@ test('the count goes up when the user clicks Increment', async () => {
     example: 'Read the test aloud: "render the counter; click the button named Increment; the text Count: 1 is on the page". It mentions nothing a user could not see. If `Counter` is rewritten with `useReducer`, split into two components and moved to CSS Modules, the test stays green as long as the screen behaves the same.',
     mistake: 'Looking for the state: wanting to check that `count` is 1, or reaching for a library that exposes component internals. State is a means; the behaviour is what the screen shows. Assert on the text, the attributes and the callbacks, and the test keeps working when the state is reorganised.' },
 
-  { id: 'queries', hub: 'components', topic: 'queries',
+  { id: 'queries', hub: 'queries', topic: 'queries',
     title: 'Finding elements: by role, label and text',
-    summary: 'Queries find elements in the rendered page. Prefer, in this order: `getByRole` (with `name`), `getByLabelText` for form fields, `getByPlaceholderText`, `getByText` for non-interactive text, `getByDisplayValue`, `getByAltText` / `getByTitle`, and only as a last resort `getByTestId`.',
-    body: [
-      'The order follows how a person finds things. The **role** says what an element is (button, link, heading, textbox, checkbox, list, alert), and every HTML element has an implicit one: `<button>` is a button, `<h2>` a heading, `<input type="text">` a textbox, `<ul>` a list (the table lists the common ones). The **accessible name** is what a screen reader announces for it: the text of a button, the `<label>` of an input, its `aria-label`, the `alt` of an image.',
-      '`screen.getByRole(\'button\', { name: \'Add task\' })` finds the one button named "Add task". The `name` can be a regular expression, `{ name: /add/i }`; headings take `{ level: 2 }`; toggles and checkboxes take `{ pressed: true }` or `{ checked: true }`. When nothing matches, the error lists every role and name on the page: read it, it usually shows the typo or the missing label.',
-      'Text matching is exact by default, after trimming and collapsing spaces: `getByText(\'Count: 1\')` does not match "Count: 10". Pass `{ exact: false }` for a case-insensitive substring, or a regular expression. `getByText` looks at each element\'s **own** text, so `<p>Count: <strong>1</strong></p>` is two pieces and `getByText(\'Count: 1\')` finds neither. To search inside one part of the page, use `within(element).getByRole(…)`.',
+    summary: 'Queries find elements in the rendered page; prefer the ones a person would use, role and name first and test ids last.',
+    html: [
+      '<p>The <strong>role</strong> says what an element is (button, link, heading, textbox, checkbox, list, alert); every HTML element has an implicit one, listed in the table. The <strong>accessible name</strong> is what a screen reader announces for it: the text of a button, the <code>&lt;label&gt;</code> of an input, its <code>aria-label</code>, the <code>alt</code> of an image.</p>',
+      '<ol><li><code>getByRole</code>, with <code>name</code></li><li><code>getByLabelText</code>, for form fields</li><li><code>getByPlaceholderText</code></li><li><code>getByText</code>, for non-interactive text</li><li><code>getByDisplayValue</code></li><li><code>getByAltText</code>, <code>getByTitle</code></li><li><code>getByTestId</code>, only as a last resort</li></ol>',
+      '<ul><li><strong>Options:</strong> <code>screen.getByRole(\'button\', { name: \'Add task\' })</code>; the name can be a regular expression, <code>{ name: /add/i }</code>; headings take <code>{ level: 2 }</code>; toggles and checkboxes take <code>{ pressed: true }</code> or <code>{ checked: true }</code>.</li><li><strong>Read the error:</strong> when nothing matches, it lists every role and name on the page, which usually shows the typo or the missing label.</li><li><strong>Text is exact</strong> after trimming: <code>getByText(\'Count: 1\')</code> does not match "Count: 10". Pass <code>{ exact: false }</code> for a case-insensitive substring, or a regular expression.</li><li><strong>Each element\'s own text:</strong> <code>&lt;p&gt;Count: &lt;strong&gt;1&lt;/strong&gt;&lt;/p&gt;</code> is two pieces, so <code>getByText(\'Count: 1\')</code> finds neither.</li><li><strong>Inside one part of the page:</strong> <code>within(element).getByRole(…)</code>.</li></ul>',
     ],
     table: { caption: 'Implicit roles of common elements', head: ['Element', 'Role', 'Accessible name from'], rows: [
       ['`<button>`, `<input type="submit">`', 'button', 'its text, or `value`'],
@@ -626,13 +672,12 @@ test('the count goes up when the user clicks Increment', async () => {
     example: 'For a task form: `screen.getByLabelText(\'Task title\')` finds the input through its `<label>`; `screen.getByRole(\'button\', { name: \'Add task\' })` finds the submit button; after an empty submit, `screen.getByRole(\'alert\')` finds the error message. None of them depends on a class, an id or the order of the elements.',
     mistake: 'Switching to `getByPlaceholderText` or a test id because `getByRole(\'textbox\', { name: \'Title\' })` fails. The failure is telling you something: the input has only a placeholder and **no label**, so a screen reader announces it as "edit text" with no name. Fix the markup with a `<label htmlFor>`, and the role query passes.' },
 
-  { id: 'get-query-find', hub: 'components', topic: 'queries',
+  { id: 'get-query-find', hub: 'queries', topic: 'queries',
     title: 'getBy, queryBy, findBy: present, absent, later',
-    summary: 'Every query comes in three flavours. `getBy…` returns the element or **throws** (it must be there now); `queryBy…` returns **null** when there is none (to check that something is absent); `findBy…` returns a **promise** that resolves when the element appears (for things that show up later). The `…AllBy…` versions return arrays.',
-    body: [
-      'The three ask three different questions: "is it here?", "is it gone?" and "will it come?". Choosing the right one makes the test say what you mean, and makes the failure message useful: a failed `getBy` prints the whole page so you can see what was there instead.',
-      '`findBy…` is `getBy…` retried: it tries every 50 ms for up to 1 s (change it with `findByText(\'…\', {}, { timeout: 3000 })`) and resolves with the element as soon as it exists, so you must `await` it in an `async` test. While it waits, React keeps rendering, so data that arrives from a fetch has time to appear.',
-      'To check absence: `expect(screen.queryByRole(\'alert\')).not.toBeInTheDocument()` (or `.toBeNull()`). To wait until something disappears, such as a loading message: `await waitForElementToBeRemoved(() => screen.queryByText(\'Loading…\'))`, or wrap any assertion in `await waitFor(() => …)`.',
+    summary: 'Every query comes in three flavours: `getBy…` returns the element or **throws**, `queryBy…` returns **null** when it is absent, and `findBy…` returns a **promise** that resolves when it appears.',
+    html: [
+      '<p>The three ask three questions: "is it here?", "is it gone?" and "will it come?". Choosing the right one makes the test say what you mean and the failure useful: a failed <code>getBy</code> prints the whole page, so you see what was there instead. The <code>…AllBy…</code> versions return arrays.</p>',
+      '<ul><li><strong><code>findBy…</code> is <code>getBy…</code> retried</strong> every 50 ms for up to 1 s (change it with <code>findByText(\'…\', {}, { timeout: 3000 })</code>). <code>await</code> it in an <code>async</code> test; while it waits, React keeps rendering, so data from a fetch has time to appear.</li><li><strong>Absence:</strong> <code>expect(screen.queryByRole(\'alert\')).not.toBeInTheDocument()</code> (or <code>.toBeNull()</code>).</li><li><strong>Waiting for something to go:</strong> <code>await waitForElementToBeRemoved(() =&gt; screen.queryByText(\'Loading…\'))</code>, or any assertion inside <code>await waitFor(() =&gt; …)</code>.</li></ul>',
     ],
     table: { caption: 'Which query, for which question', head: ['Query', '0 matches', '1 match', 'More than 1', 'Waits?', 'Use it for'], rows: [
       ['`getBy…`', 'throws', 'the element', 'throws', 'no', 'it is there now'],
@@ -646,14 +691,30 @@ test('the count goes up when the user clicks Increment', async () => {
     example: 'A form with validation: before submitting, `expect(screen.queryByRole(\'alert\')).not.toBeInTheDocument()`; after an empty submit, `expect(screen.getByRole(\'alert\')).toHaveTextContent(\'Title is required\')`. A list that loads: `expect(await screen.findByText(\'Buy milk\')).toBeInTheDocument()`, then `expect(screen.getAllByRole(\'listitem\')).toHaveLength(5)`.',
     mistake: 'Checking absence with `getBy`: `expect(screen.getByText(\'Loading…\')).not.toBeInTheDocument()`. `getBy` throws **before** `expect` runs, so the test fails with "Unable to find an element" precisely when the loading message is correctly gone. Absence needs `queryBy`.' },
 
-  { id: 'user-events', hub: 'components', topic: 'interactions',
+  /* ---- 5. Interactions and async UI -------------------------------------------------------- */
+  { id: 'user-events', hub: 'interactions', topic: 'interactions',
     title: 'Simulating the user: userEvent and mock callbacks',
-    summary: '`@testing-library/user-event` simulates complete interactions: `await user.click(button)`, `await user.type(input, \'Buy milk\')`, the keyboard, select boxes. Combine it with `vi.fn()` to check what a component tells its parent through callback props.',
-    body: [
-      'A real click is not one event. The browser sends pointer and mouse "down" events, moves the focus, sends the "up" events and finally `click`; typing one key sends `keydown`, changes the value, sends `input` and `keyup`, character by character. `fireEvent.click(button)` dispatches only the `click`; `userEvent` plays the whole sequence the way a browser does, so it catches bugs that `fireEvent` misses (a disabled button that should not react, a handler on `keydown`, focus that moves).',
-      'Create the user at the start of the test, `const user = userEvent.setup()`, and **await** every action: they are asynchronous. `user.type(el, \'Call Ana{Enter}\')` types and presses Enter; `user.clear(el)` empties a field; `user.selectOptions(select, \'done\')` picks an option; `user.keyboard(\'{Escape}\')` presses keys on the focused element; `user.tab()` moves the focus.',
-      'A component often does not decide what happens next: a form calls `onAdd(title)` and the parent saves the task. In the test, pass a **mock function**, `const onAdd = vi.fn()`, and assert on its calls: `toHaveBeenCalledWith(\'Buy milk\')`, `toHaveBeenCalledTimes(1)`, `not.toHaveBeenCalled()`. You test the component\'s contract without the parent.',
+    summary: '`@testing-library/user-event` simulates complete interactions (`await user.click(button)`, `await user.type(input, \'Buy milk\')`), and `vi.fn()` checks what a component tells its parent through callback props.',
+    html: [
+      '<p>A real click is not one event: the browser sends pointer and mouse "down" events, moves the focus, sends the "up" events and finally <code>click</code>. Typing sends <code>keydown</code>, <code>input</code> and <code>keyup</code> for every character. <code>fireEvent.click(button)</code> dispatches only the <code>click</code>; <code>userEvent</code> plays the whole sequence, so it catches what <code>fireEvent</code> misses: a disabled button that should not react, a handler on <code>keydown</code>, focus that moves.</p>',
+      '<dl><dt><code>const user = userEvent.setup()</code></dt><dd>At the start of the test. Every action returns a promise: <code>await</code> each one.</dd><dt><code>user.type(el, \'Call Ana{Enter}\')</code></dt><dd>Types, then presses Enter. <code>user.clear(el)</code> empties a field.</dd><dt><code>user.selectOptions(select, \'done\')</code></dt><dd>Picks an option.</dd><dt><code>user.keyboard(\'{Escape}\')</code>, <code>user.tab()</code></dt><dd>Presses keys on the focused element; moves the focus.</dd></dl>',
+      '<h3>Checking callbacks with a mock function</h3>',
+      '<p>A component often does not decide what happens next: a form calls <code>onAdd(title)</code> and the parent saves the task. Pass a mock, <code>const onAdd = vi.fn()</code>, and assert on its calls: <code>toHaveBeenCalledWith(\'Buy milk\')</code>, <code>toHaveBeenCalledTimes(1)</code>, <code>not.toHaveBeenCalled()</code>. You test the component\'s contract without the parent.</p>',
     ],
+    diagram: {
+      kind: 'flow',
+      numbered: true,
+      title: 'One user click is five events; fireEvent sends only the last.',
+      desc: 'A real click in the browser, in order: pointerdown, mousedown, focus moves to the element, pointerup and mouseup, and finally click. userEvent plays all five; fireEvent.click dispatches only the click.',
+      nodes: [
+        { id: 'pd', label: '`pointerdown`' },
+        { id: 'md', label: '`mousedown`' },
+        { id: 'focus', label: 'Focus moves' },
+        { id: 'up', label: '`mouseup`', note: 'and `pointerup`' },
+        { id: 'click', label: '`click`', note: 'all `fireEvent` sends', key: true },
+      ],
+      edges: [['pd', 'md'], ['md', 'focus'], ['focus', 'up'], ['up', 'click']],
+    },
     code: `import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
@@ -675,14 +736,26 @@ test('adds a trimmed task and clears the field', async () => {
     example: 'The test types into the field found by its label, clicks the button found by its role and name, and checks the two visible effects of a successful submit: the parent received the trimmed title, and the field is empty again. If the form forgot to trim, the failure reads `expected "spy" to be called with arguments: [ \'Buy milk\' ]` and lists the actual call, `[ \'  Buy milk \' ]`.',
     mistake: 'Forgetting `await`: `user.click(button); expect(onAdd).toHaveBeenCalled();`. The click is still in progress when the assertion runs, so the test fails, or worse, passes by luck and fails later on a slower machine. Every `user.…` call returns a promise: `await` it (the ESLint rule `testing-library/await-async-events` reminds you).' },
 
-  { id: 'async-ui', hub: 'components', topic: 'interactions',
+  { id: 'async-ui', hub: 'interactions', topic: 'interactions',
     title: 'Testing async UI: waiting and mocking fetch',
-    summary: 'A component that loads data first shows "Loading…" and the data later. Its tests must **wait** (`await screen.findBy…`) and must **control the network**: replace `fetch` with a mock that answers what each test needs (data, an empty list, a 500, a network failure).',
-    body: [
-      'In a test there is no server, and you do not want one: a real API makes tests slow, dependent on its data, and red whenever it is down. Instead each test decides what the "server" answers and checks that the screen shows the matching state: the four states of [loading, error, empty and success](#/browser/data-fetching/request-states) are four tests.',
-      'With Vitest, replace the global `fetch` for one test: `vi.spyOn(globalThis, \'fetch\').mockResolvedValue(Response.json([{ id: 1, title: \'Buy milk\' }]))` for data, `new Response(null, { status: 500 })` for a server error, `.mockRejectedValue(new TypeError(\'Failed to fetch\'))` for no connection. Undo it after each test with `vi.restoreAllMocks()` in `afterEach` (or `restoreMocks: true` in the config). You can also check the request: `expect(fetch).toHaveBeenCalledTimes(1)`.',
-      'Two other levels are common. If your components call one [API client module](#/browser/data-fetching/api-client), mock that module (`vi.mock(\'./api/client\')`) and return plain data. Or use **MSW** (Mock Service Worker), which answers requests at the network level, so the component\'s real `fetch` code, URL and headers included, runs in the test. In the [test runner](#/browser/styling-testing/practice/component-tests) here, a small fake API plays that role for `/api/tasks`.',
+    summary: 'A component that loads data shows "Loading…" first and the data later, so its tests must **wait** (`await screen.findBy…`) and **control the network** with a mocked `fetch`.',
+    html: [
+      '<p>In a test there is no server, and you do not want one: a real API makes tests slow, dependent on its data and red whenever it is down. Each test decides what the "server" answers and checks the matching screen, so the four states of <a href="#/browser/data-fetching/request-states">loading, error, empty and success</a> are four tests.</p>',
+      '<table><caption>Making fetch answer, one test at a time</caption><thead><tr><th scope="col">The test needs</th><th scope="col">Code</th></tr></thead><tbody><tr><th scope="row">Data</th><td><code>vi.spyOn(globalThis, \'fetch\').mockResolvedValue(Response.json([{ id: 1, title: \'Buy milk\' }]))</code></td></tr><tr><th scope="row">A server error</th><td><code>.mockResolvedValue(new Response(null, { status: 500 }))</code></td></tr><tr><th scope="row">No connection</th><td><code>.mockRejectedValue(new TypeError(\'Failed to fetch\'))</code></td></tr><tr><th scope="row">The request itself</th><td><code>expect(fetch).toHaveBeenCalledTimes(1)</code></td></tr><tr><th scope="row">Clean-up</th><td><code>vi.restoreAllMocks()</code> in <code>afterEach</code> (or <code>restoreMocks: true</code> in the config)</td></tr></tbody></table>',
+      '<dl><dt>Mock the API client</dt><dd>If components call one <a href="#/browser/data-fetching/api-client">API client module</a>, mock it with <code>vi.mock(\'./api/client\')</code> and return plain data.</dd><dt>Mock the network: MSW</dt><dd>Mock Service Worker answers requests at the network level, so the component\'s real <code>fetch</code> code, URL and headers included, runs in the test. In the <a href="#/browser/styling-testing/practice/component-tests">test runner</a> here, a small fake API plays that role for <code>/api/tasks</code>.</dd></dl>',
     ],
+    diagram: {
+      kind: 'flow',
+      title: 'The test controls the answer, then waits exactly as long as needed.',
+      desc: 'The test mocks fetch with the answer it needs, renders the component, which shows Loading, then waits with findBy, which retries for up to one second, until the data is on screen to assert on.',
+      nodes: [
+        { id: 'mock', label: 'Mocked `fetch`', note: 'the answer the test needs' },
+        { id: 'render', label: '`render()`', note: 'shows "Loading"' },
+        { id: 'find', label: '`findBy…` waits', note: 'retries up to 1 s', key: true },
+        { id: 'data', label: 'Data on screen', note: 'assert on it' },
+      ],
+      edges: [['mock', 'render'], ['render', 'find'], ['find', 'data']],
+    },
     code: `import { render, screen } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 import TaskList from './TaskList';
@@ -707,13 +780,15 @@ test('tells the user when the server fails', async () => {
     example: 'The first test checks both moments: right after `render` the status says "Loading" (a plain `getBy`, it is there now), and `findByText` then waits for the mocked answer to be rendered. Change `findByText` to `getByText` and the test fails, because the promise from `fetch` has not resolved yet when the line runs.',
     mistake: 'Waiting with a fixed sleep: `await new Promise((r) => setTimeout(r, 2000))`. Every test now takes two seconds, and it still fails on a slow machine where the data needs 2.1. `findBy…` and `waitFor` wait **exactly** as long as needed, up to a timeout, and report what was on the page if it never came.' },
 
-  { id: 'implementation-details', hub: 'components', topic: 'interactions',
+  { id: 'implementation-details', hub: 'interactions', topic: 'interactions',
     title: 'What not to test: implementation details',
-    summary: 'An **implementation detail** is anything the user cannot see or use: state variable names, internal functions, CSS class names, the structure of the markup. Tests that check them break when you refactor (false alarms) and pass when the user-facing behaviour breaks (false confidence).',
-    body: [
-      'Brittle tests fail in two directions. **False alarm**: the counter\'s class moves from `.counter__inc` to a CSS Module; nothing changed for users, but the test that used `container.querySelector(\'.counter__inc\')` turns red. After a few of these, people stop trusting red tests. **False confidence**: a toggle test checks that the class `toggle--on` is added, but the code forgot to update `aria-pressed`; a screen-reader user cannot tell the button is on, and the test is green.',
-      'Avoid: finding elements by class, id or position (`container.querySelector`, `firstChild`); asserting on class names or inline styles to mean a state; reading `.textContent` or `.className` yourself; test ids when a role or a label exists; snapshots of whole components (huge diffs that get approved without reading); testing React itself ("setState re-renders").',
-      'Aim for **inputs → outputs**. Inputs: props, user events, network answers. Outputs: what is on the screen (text, roles, `disabled`, `aria-pressed`, `aria-invalid`), the callbacks called, the requests sent. A refactor that keeps the outputs keeps the tests green. When a style matters to the user (an element is hidden), test the effect with `toBeVisible` or presence, not the class that causes it.',
+    summary: 'An **implementation detail** is anything the user cannot see or use (state names, internal functions, class names, the structure of the markup), and tests that check them fail in both directions.',
+    html: [
+      '<p>Aim for <strong>inputs → outputs</strong>. Inputs: props, user events, network answers. Outputs: what is on the screen (text, roles, <code>disabled</code>, <code>aria-pressed</code>, <code>aria-invalid</code>), the callbacks called, the requests sent. A refactor that keeps the outputs keeps the tests green.</p>',
+      '<dl><dt>False alarm</dt><dd>A class moves from <code>.counter__inc</code> to a CSS Module; nothing changed for users, but a test using <code>container.querySelector(\'.counter__inc\')</code> turns red. After a few of these, people stop trusting red tests.</dd><dt>False confidence</dt><dd>A toggle test checks that the class <code>toggle--on</code> is added, but the code forgot <code>aria-pressed</code>: a screen-reader user cannot tell the button is on, and the test is green.</dd></dl>',
+      '<h3>Avoid</h3>',
+      '<ul><li>Finding elements by class, id or position (<code>container.querySelector</code>, <code>firstChild</code>).</li><li>Asserting on class names or inline styles to mean a state; reading <code>.textContent</code> or <code>.className</code> yourself.</li><li>Test ids when a role or a label exists.</li><li>Snapshots of whole components: huge diffs that get approved without reading.</li><li>Testing React itself ("setState re-renders").</li></ul>',
+      '<p>When a style matters to the user (an element is hidden), test the effect with <code>toBeVisible</code> or presence, not the class that causes it.</p>',
     ],
     table: { caption: 'From brittle to robust', head: ['Brittle', 'Robust'], rows: [
       ['`container.querySelector(\'.btn-primary\')`', '`screen.getByRole(\'button\', { name: \'Save\' })`'],
@@ -727,31 +802,14 @@ test('tells the user when the server fails', async () => {
     example: 'The toggle story in code: the brittle test `expect(container.firstChild.className).toBe(\'toggle toggle--on\')` breaks when the styles move to a CSS Module (the class becomes `toggle on`) and still passes when `aria-pressed` is stuck at `false`. The robust one, `expect(screen.getByRole(\'button\', { name: \'Mute\', pressed: true })).toBeInTheDocument()`, survives the refactor and catches the bug.',
     mistake: '"More assertions make a better test": checking every class, every attribute and the exact markup of a component. Each one is a reason for the test to fail on a harmless change, and none adds confidence about behaviour. Assert what the test\'s name promises, and stop.' },
 
-  { id: 'first-component-test', hub: 'components', topic: 'interactions',
+  { id: 'first-component-test', hub: 'interactions', topic: 'interactions',
     title: 'A first component test, end to end',
-    summary: 'From a Vite project to a green test: install Vitest, jsdom and the Testing Library packages, tell Vitest to use jsdom, load the jest-dom matchers once, write `TodoForm.test.jsx` next to the component, run `npx vitest`, and read the first failure.',
-    body: [
-      'Install the tools as development dependencies: `npm install -D vitest jsdom @testing-library/react @testing-library/dom @testing-library/user-event @testing-library/jest-dom`. `@testing-library/dom` is listed separately because current versions of the React package expect you to install it yourself.',
-      'Configure the test environment in `vite.config.js` (code below): `environment: \'jsdom\'` gives tests a `document`; `globals: true` makes `describe`, `it` and `expect` available without imports, and lets Testing Library clean up after each test automatically; `setupFiles` runs a file before every test file, where you load the jest-dom matchers. Add `"test": "vitest"` to the scripts of `package.json`.',
-      'Write the test next to the component, `src/components/TodoForm.test.jsx`, run `npm test`, and watch it go green. Then break it on purpose (change the expected text) to see a failure: the message, the page Testing Library printed, and the line. Reading that output quickly is half of testing. The tool below runs the same kind of test file in your browser against small components, including broken versions of them.',
+    summary: 'A first component test from start to finish: set the tools up once, write the test next to the component, run it, then make it fail on purpose and read the failure.',
+    html: [
+      '<ol><li><strong>Set up once:</strong> install Vitest, jsdom and Testing Library, and configure them (see <a href="#/browser/styling-testing/rtl-philosophy">Testing Library</a>).</li><li><strong>Write the test</strong> next to the component: <code>src/components/TodoForm.test.jsx</code>.</li><li><strong>Run</strong> <code>npm test</code> and watch it go green.</li><li><strong>Break it on purpose</strong> (change the expected text) and read the failure: the message, the page Testing Library printed, the line. Reading that output quickly is half of testing.</li><li><strong>Fix it</strong> and keep watch mode running while you work.</li></ol>',
+      '<p>The component test runner on this card runs the same kind of test file in your browser against small components, including broken versions of them.</p>',
     ],
-    code: `// vite.config.js
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-
-export default defineConfig({
-  plugins: [react()],
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: './src/setupTests.js',
-  },
-});
-
-// src/setupTests.js
-import '@testing-library/jest-dom/vitest';
-
-// src/components/TodoForm.test.jsx
+    code: `// src/components/TodoForm.test.jsx
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import TodoForm from './TodoForm';
@@ -769,6 +827,57 @@ describe('TodoForm', () => {
     widget: 'component-tests',
     example: '`npm test` prints `✓ src/components/TodoForm.test.jsx (1 test)`. Change the label query to `getByLabelText(\'Title\')` in another test and the failure reads "Unable to find a label with the text of: Title", followed by the rendered HTML, where you can see the label actually says "Task title".',
     mistake: 'Forgetting `environment: \'jsdom\'`. Vitest runs tests in plain Node by default, so the first `render` fails with "ReferenceError: document is not defined". And without the setup file, `toBeInTheDocument` fails with "Invalid Chai property": the jest-dom matchers were never loaded.' },
+
+  { id: 'test-wrappers', hub: 'interactions', topic: 'interactions',
+    title: 'Components that need a provider or a router: render with a wrapper',
+    summary: 'A component that reads a context or uses router hooks only works inside its provider or router, so a test renders it with one: `render(ui, { wrapper })`.',
+    html: [
+      '<p>In the app, <code>main.jsx</code> puts the providers and the router above everything. A test renders one component <strong>alone</strong>, so a hook that looks upwards finds nothing: <code>useContext</code> returns the context\'s default value, a custom hook such as <code>useAuth()</code> may throw (see <a href="#/browser/shared-state/use-context-hook">A custom hook for the context</a>), and a router hook throws. The <code>wrapper</code> option rebuilds what the app puts above the component.</p>',
+      '<dl><dt><code>render(ui, { wrapper: Wrapper })</code></dt><dd><code>Wrapper</code> is a component that receives <code>children</code> and renders the providers around them. <code>rerender</code> keeps the same wrapper.</dd><dt><code>&lt;MemoryRouter initialEntries={[\'/tasks/7\']}&gt;</code></dt><dd>A router that keeps its history in memory instead of the address bar, starting at the URL the test chooses (see <a href="#/browser/routing/router-setup">Setting up a router</a>).</dd><dt>A <code>renderWithProviders</code> helper</dt><dd>One function, in a test-utilities file, that wraps every provider the app uses and accepts overrides per test (another user, another URL).</dd></dl>',
+      '<p>Give the context the value each test needs, a logged-in user or none, and test both sides: what a guest sees is behaviour too.</p>',
+    ],
+    diagram: {
+      kind: 'layers',
+      title: 'The wrapper rebuilds, around one component, what the app puts above it.',
+      desc: 'Three layers, outermost first. A MemoryRouter starting at /tasks/7. Inside it, the auth context with a test user. Inside that, TaskPage, the component under test, which can now read the URL and the user.',
+      nodes: [
+        { id: 'router', label: '`MemoryRouter`', note: 'starts at `/tasks/7`' },
+        { id: 'auth', label: 'Auth context', note: 'a test user' },
+        { id: 'page', label: '`TaskPage`', note: 'the component under test', key: true },
+      ],
+      edges: [],
+    },
+    code: `// src/test/renderWithProviders.jsx
+import { render } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
+import { AuthContext } from '../auth/AuthContext';
+
+export function renderWithProviders(ui, { user = { name: 'Ana' }, route = '/' } = {}) {
+  function Wrapper({ children }) {
+    return (
+      <MemoryRouter initialEntries={[route]}>
+        <AuthContext value={{ user }}>{children}</AuthContext>
+      </MemoryRouter>
+    );
+  }
+  return render(ui, { wrapper: Wrapper });
+}
+
+// src/pages/TaskPage.test.jsx
+import { screen } from '@testing-library/react';
+import { Routes, Route } from 'react-router';
+import { renderWithProviders } from '../test/renderWithProviders';
+import TaskPage from './TaskPage';
+
+test('shows the task in the URL to a logged-in user', async () => {
+  renderWithProviders(
+    <Routes><Route path="/tasks/:id" element={<TaskPage />} /></Routes>,
+    { route: '/tasks/7' },
+  );
+  expect(await screen.findByRole('heading', { name: /task 7/i })).toBeInTheDocument();
+});`,
+    example: 'A settings page shows "Log in to see your settings" to guests. `renderWithProviders(<Settings />, { user: null })` checks that message; `renderWithProviders(<Settings />)` checks that Ana\'s email is shown. Same component, two contexts, two tests, and neither needs a real log-in.',
+    mistake: 'Rendering a page that calls `useNavigate` or `useParams` with a bare `render(<TaskPage />)`. The test fails before any assertion with "`useNavigate() may be used only in the context of a <Router> component`". The component is fine: the test forgot what the app puts above it. Wrap it in a `MemoryRouter`.' },
 ];
 
 DATA.en.STYLING_QUIZ = [
@@ -902,4 +1011,11 @@ DATA.en.STYLING_QUIZ = [
     answer: 1, why: 'By default Vitest runs tests in plain Node; jsdom provides `document` and the rest of the DOM.' },
   { type: 'fib', topic: 'interactions', q: 'jest-dom\'s matchers are loaded once, in a setup file, with `import \'@testing-library/jest-dom/___\';` when using Vitest.',
     accept: ['vitest'], why: 'The `/vitest` entry point registers `toBeInTheDocument` and the other DOM matchers with Vitest\'s `expect`.' },
+  { type: 'mc', topic: 'interactions', q: '`render(<TaskPage />)` fails with "useNavigate() may be used only in the context of a <Router> component". What is the fix?',
+    choices: ['Mock `useNavigate` to return nothing', 'Render it inside a router: `render(<TaskPage />, { wrapper: MemoryRouter })` or a wrapper that includes one', 'Add `environment: \'jsdom\'`', 'Call `useNavigate` in the test file'],
+    answer: 1, why: 'In the app a router sits above the page; a test renders the page alone, so the wrapper has to put the router back. A `MemoryRouter` keeps its history in memory.' },
+  { type: 'fib', topic: 'interactions', q: 'Testing Library\'s `render(ui, { ___: Wrapper })` renders `ui` inside the `Wrapper` component, for example to add a context provider.',
+    accept: ['wrapper'], why: 'The `wrapper` option takes a component that receives `children` and renders the providers around them; `rerender` keeps it.' },
+  { type: 'tf', topic: 'interactions', q: 'A component that calls `useContext` with no provider above it in a test gets the default value passed to `createContext`.',
+    answer: true, why: 'The default is used only when there is no provider. Wrap the component with the provider and the value each test needs, or a custom hook that throws will make the missing provider obvious.' },
 ];
