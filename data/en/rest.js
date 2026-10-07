@@ -1,9 +1,9 @@
 'use strict';
 /* Designing APIs: concept cards, rail groups, self-check quiz and the status-chooser scenarios
-   (REST over HTTP as the main style, Express 4 for code samples). See site/README.md for the
-   data contract. Builds on the HTTP cards of "How the web works" (request/response anatomy,
-   methods, status families, JSON, statelessness) without repeating them.
-   `hub` and `topic` keys match REST_QUIZ_TOPICS and REST_GROUPS. */
+   (REST over HTTP as the main style, Express 4 for code samples). Cards explain with `html`
+   blocks and `diagram` specs (js/concept-section.js, js/diagram.js). Builds on "How the web
+   works" and "Routes and middleware" and links them instead of repeating them.
+   `hub` and `topic` keys match REST_QUIZ_TOPICS and REST_GROUPS (one topic per group). */
 
 DATA.en.REST_QUIZ_TOPICS = {
   rest: 'What REST is',
@@ -12,6 +12,7 @@ DATA.en.REST_QUIZ_TOPICS = {
   status: 'Status codes and errors',
   contract: 'The API contract',
   build: 'Building and testing',
+  beyond: 'Documenting and other API styles',
 };
 
 DATA.en.REST_GROUPS = [
@@ -21,43 +22,56 @@ DATA.en.REST_GROUPS = [
   { key: 'status', label: 'Status codes and errors', icon: 'table' },
   { key: 'contract', label: 'The API contract', icon: 'doc' },
   { key: 'build', label: 'Building and testing', icon: 'code' },
+  { key: 'beyond', label: 'Documenting and other API styles', icon: 'web' },
 ];
 
 DATA.en.REST_CONCEPTS = [
   /* ---- 1. What REST is ----------------------------------------------------------------- */
-  { id: 'rest-what', hub: 'rest', topic: 'rest', 
+  { id: 'rest-what', hub: 'rest', topic: 'rest',
     title: 'What REST is',
-    summary: '**REST** (Representational State Transfer) is a style of designing HTTP APIs: the server exposes **resources** at URLs, and clients read and change them by exchanging **representations** (usually JSON) through the same few HTTP methods, with every request standing on its own.',
-    body: [
-      'Think of a well-run library. Every book has a fixed shelf mark, and the same small set of actions works on any book: look at it, add a new one, replace it, correct a detail, remove it. Nobody needs a special procedure per book. REST applies that idea to an API: every **thing** the API knows about (one task, the list of all tasks, the tasks of one user) has its own URL, and the same HTTP methods mean the same thing on all of them. Once you have used one endpoint, you can guess the others.',
-      'The name has three parts. A **resource** is anything the API lets you name with a URL: one task (`/api/tasks/7`), the collection of tasks (`/api/tasks`). A **representation** is what actually travels: not the task itself (a row in a database) but a description of it in an agreed format, usually JSON: `{"id":7,"title":"Study","done":false}`. **State transfer**: the client learns the current state of a resource by receiving a representation (GET) and changes it by sending one (POST, PUT, PATCH).',
-      'REST is a list of **constraints** (rules), defined by Roy Fielding in 2000, not a library or a protocol. The four that shape everyday API design: **client-server** (front end and back end are separate programs that only talk over HTTP), a **uniform interface** (methods, status codes and headers mean the same thing on every resource), **stateless** requests (next card) and **cacheable** responses (a GET answer may be reused). An API that follows them is called **RESTful**.',
-      'There is nothing to install. Express does not "do REST": it lets you write any route at all. REST is the set of design decisions you make while writing those routes, which is why two Express APIs can be very RESTful or not at all.',
+    summary: '**REST** (Representational State Transfer) is a way of designing HTTP APIs: every thing the API knows about has its own URL, and the same few HTTP methods read and change all of them.',
+    html: [
+      '<p>Once every task, user and list has its own URL, and <code>GET</code>, <code>POST</code>, <code>PATCH</code> and <code>DELETE</code> mean the same thing on all of them, a client that has used one endpoint can guess the others. REST is that predictability: a set of design rules, not a library. Express lets you write any route at all; REST is the decisions you make while writing them.</p>',
+      '<table><caption>REST vocabulary</caption><thead><tr><th scope="col">Term</th><th scope="col">Meaning</th><th scope="col">Example</th></tr></thead><tbody>'
+        + '<tr><th scope="row">Resource</th><td>A thing the API lets you name with a URL</td><td>a task, a user, the list of tasks</td></tr>'
+        + '<tr><th scope="row">Collection</th><td>The resource that holds many items</td><td><code>/api/tasks</code></td></tr>'
+        + '<tr><th scope="row">Item</th><td>One resource inside a collection</td><td><code>/api/tasks/7</code></td></tr>'
+        + '<tr><th scope="row">Representation</th><td>The resource written in a format and sent over HTTP: not the stored record, a description of it</td><td><code>{"id":7,"title":"Study","done":false}</code></td></tr>'
+        + '<tr><th scope="row">Endpoint</th><td>One method + path pair the API supports</td><td><code>DELETE /api/tasks/:id</code></td></tr>'
+        + '</tbody></table>',
+      '<h3>The rules that shape everyday design</h3>',
+      '<dl><dt>Client-server</dt><dd>The front end and the back end are separate programs that only talk over HTTP.</dd>'
+        + '<dt>Uniform interface</dt><dd>Methods, status codes and headers mean the same on every resource: <code>DELETE</code> always removes, <code>404</code> always means "not there".</dd>'
+        + '<dt>Stateless</dt><dd>Every request carries everything needed to answer it (see <a href="#/http/api-design/statelessness">Stateless requests</a>).</dd>'
+        + '<dt>Cacheable</dt><dd>A <code>GET</code> answer may be reused.</dd></dl>',
+      '<p>An API that follows them is called <strong>RESTful</strong>. The rules were written down by Roy Fielding in 2000.</p>',
     ],
-    table: {
-      caption: 'REST vocabulary',
-      head: ['Term', 'Meaning', 'Example'],
-      rows: [
-        ['Resource', 'A thing the API lets you name', 'a task, a user, a list of tasks'],
-        ['Collection', 'The resource that contains many items', '`/api/tasks`'],
-        ['Item (member)', 'One resource inside a collection', '`/api/tasks/7`'],
-        ['Representation', 'The resource written in a format, sent over HTTP', '`{"id":7,"title":"Study","done":false}`'],
-        ['Endpoint', 'One method + path pair your API supports', '`DELETE /api/tasks/:id`'],
-        ['Uniform interface', 'The same methods and codes mean the same everywhere', '`DELETE` always removes, `404` always means "not there"'],
-      ],
-    },
-    example: 'The same features designed twice. Action style: `POST /getTask` with `{"id":7}`, `POST /markTaskDone?id=7`, `POST /removeTask?id=7`. REST style: `GET /api/tasks/7`, `PATCH /api/tasks/7` with `{"done":true}`, `DELETE /api/tasks/7`. In the REST version a newcomer who has seen `GET /api/users/3` correctly guesses `DELETE /api/users/3`; in the action version they must read the documentation for every single call.',
-    mistake: 'Believing an API is RESTful because it answers JSON. `POST /api/doEverything?action=delete&id=7` answers JSON and breaks every REST rule: the URL names an action, the method is meaningless and the status code tells you nothing. REST is about resources and a uniform interface, not about the format (a REST API could answer XML).',
+    example: 'The same features designed twice. Action style: `POST /getTask` with `{"id":7}`, `POST /markTaskDone?id=7`, `POST /removeTask?id=7`. REST style: `GET /api/tasks/7`, `PATCH /api/tasks/7` with `{"done":true}`, `DELETE /api/tasks/7`. A newcomer who has seen `GET /api/users/3` guesses `DELETE /api/users/3`; the action version needs the documentation for every call.',
+    mistake: 'Believing an API is RESTful because it answers JSON. `POST /api/doEverything?action=delete&id=7` answers JSON and breaks every rule: the URL names an action, the method means nothing and the status code says nothing. REST is about resources and a uniform interface, not the format.',
     practice: { href: '#/http/api-design/practice/api-builder', label: 'Explore a RESTful API in the request builder' } },
 
-  { id: 'statelessness', hub: 'rest', topic: 'rest', 
+  { id: 'statelessness', hub: 'rest', topic: 'rest',
     title: 'Stateless requests',
-    summary: 'In a **stateless** API each request carries everything the server needs to handle it (who is calling, which resource, which options); the server keeps no memory of earlier requests from that client.',
-    body: [
-      'Picture a call centre where you never get the same agent twice. It works because you quote your customer number and your question **every time**: any agent can help you, and an agent going home loses nothing. A stateless server is that call centre: any copy of the server can answer any request, because nothing about "this conversation" is stored inside one copy.',
-      'Stateless does **not** mean "the server remembers nothing". The tasks in the database are **resource state**: they are the whole point of the API and of course they persist. What the server must not keep in its own memory is **conversation state** about one client: "this client is logged in", "this client was looking at page 2", "this client chose the filter done=false". That information travels with each request instead: a token in the `Authorization` header, `?page=2&done=false` in the URL.',
-      'HTTP itself is stateless (see the card **HTTP and HTTPS** in How the web works). REST asks you not to undo that in your design. The pay-off: you can run ten copies of the API behind a **load balancer** (a server that spreads requests over the copies), restart a copy without logging anybody out, and test each request on its own. The cost: every request is a bit bigger and the server checks the identity again each time. The section Authentication and security shows the two usual answers: a session id looked up in a database, or a signed token (JWT) the server can verify without storing anything.',
+    summary: 'In a **stateless** API each request carries everything the server needs to handle it (who is calling, which resource, which options), and the server keeps no memory of that client between requests.',
+    html: [
+      '<p>Because no copy of the server remembers "this conversation", any copy can answer any request. That is what lets you run several copies behind a <strong>load balancer</strong> (a server that spreads requests over them), restart one without logging anybody out, and test each request on its own. HTTP is already stateless (see <a href="#/http/web/http-basics">HTTP and HTTPS</a>); REST asks you not to undo it.</p>',
+      '<dl><dt>Resource state: stored</dt><dd>The tasks themselves. They are the point of the API and they persist, in memory now and in a database later.</dd>'
+        + '<dt>Conversation state: not in the server</dt><dd>"This client is logged in", "this client is on page 2", "this client chose done=false". It travels with each request instead: a token in the <code>Authorization</code> header, <code>?page=2&amp;done=false</code> in the URL.</dd></dl>',
+      '<p>A <strong>token</strong> is a string the server gave the client at log-in; the client sends it back on every request. How tokens and sessions are built is in <a href="#/server/auth/sessions-vs-tokens">Sessions and tokens</a>. The cost of statelessness: every request is a little bigger, and the server checks the identity every time.</p>',
     ],
+    diagram: {
+      kind: 'branch',
+      title: 'The request carries the context, so it does not matter which copy answers.',
+      desc: 'A request carrying a token and its options reaches a load balancer, which may send it to copy A, copy B or copy C of the API. Each copy can answer it, because nothing about the client is stored inside a copy.',
+      nodes: [
+        { id: 'req', label: 'Request', note: 'token + options', key: true },
+        { id: 'lb', label: 'Load balancer' },
+        { id: 'a', label: 'Copy A' },
+        { id: 'b', label: 'Copy B' },
+        { id: 'c', label: 'Copy C' },
+      ],
+      edges: [['req', 'lb'], ['lb', 'a'], ['lb', 'b'], ['lb', 'c']],
+    },
     code: `// ✗ Stateful: the server keeps "who is logged in" in its own memory
 let currentUser = null;
 app.post('/api/login', (req, res) => {
@@ -72,78 +86,64 @@ app.get('/api/my-books', (req, res) => {
 app.get('/api/my-books', requireToken, (req, res) => {
   res.json(books.filter((b) => b.owner === req.user.email));   // req.user set from the token
 });`,
-    example: 'With the stateful code above, Ana logs in, then Leo logs in: `currentUser` is now Leo, and Ana\'s next `GET /api/my-books` returns **Leo\'s** books. Run two copies of the server and it gets worse: Ana logged in on copy A, her next request lands on copy B, where `currentUser` is `null`. In the stateless version each request carries `Authorization: Bearer <token>`, so it does not matter which copy answers or who logged in last.',
-    mistake: 'Thinking "stateless" forbids a database, or forbids remembering a logged-in user. The data lives in the database (resource state), and being logged in is remembered by the **client**, which sends its token with every request. Only per-client memory **inside the server process** is ruled out.' },
-
-  { id: 'rest-vs-graphql', hub: 'rest', topic: 'rest', 
-    title: 'REST, GraphQL and other API styles',
-    summary: '**GraphQL** is an alternative to REST in which the client sends a typed **query** to one endpoint (`/graphql`) and gets exactly the fields it asked for; REST has many URLs, each with a fixed response shape. It is worth recognising; REST is what the examples here build.',
-    body: [
-      'REST is a shop with one counter per product: each URL hands you a fixed package. GraphQL is a single counter with an order form: you write down exactly which items and which details you want, and the package is built to order.',
-      'That solves two REST annoyances. **Over-fetching**: the list screen only needs titles, but `GET /api/tasks` sends every field of every task. **Under-fetching**: one screen needs several requests in a row (`GET /api/users/2`, then `GET /api/users/2/tasks`). A GraphQL query can ask for the user and their task titles in one round trip, and a **schema** (a typed description of every field) documents what can be asked.',
-      'The costs are real. Everything goes to one URL, usually with POST, so HTTP caching by URL no longer works. Errors usually come back as **200 OK** with an `errors` array in the body, the opposite of the REST rule "the status code tells you what happened". And a query that asks for nested data can make the server run one database query for the list plus one per item (the **N+1 problem**).',
-    ],
-    code: `# One request: POST /graphql
-query {
-  user(id: 2) {
-    name
-    tasks(done: false) { title }
-  }
-}
-
-# The answer (status 200 OK, even when part of it failed)
-{ "data": { "user": { "name": "Leo Martín",
-    "tasks": [ { "title": "Return the right status codes" } ] } } }`,
-    dialect: 'GraphQL',
-    table: {
-      caption: 'Other API styles (context only)',
-      head: ['Style', 'How it talks', 'Good for'],
-      rows: [
-        ['REST', 'HTTP methods on resource URLs, usually JSON', 'The default: simple, cacheable, every tool understands it'],
-        ['GraphQL', 'Typed queries to one HTTP endpoint', 'Screens that need data from many resources at once'],
-        ['gRPC', 'Compact binary messages over HTTP/2, typed contracts', 'Fast calls between a company\'s own back-end services'],
-        ['WebSockets', 'One connection that stays open, both sides can send', 'Chat, live notifications, multiplayer games'],
-        ['Webhooks', 'The server calls **your** URL when something happens', '"Tell me when the payment is completed"'],
-      ],
-    },
-    example: 'A dashboard shows a user\'s name and the titles of their unfinished tasks. REST: `GET /api/users/2` and `GET /api/users/2/tasks?done=false`, two requests, each returning all fields. GraphQL: the single query above, returning only `name` and `title`. For a simple client (one list, one resource) the REST version is simpler and the browser can cache it.',
-    mistake: 'Thinking GraphQL is a database or "REST but newer". GraphQL is a query language for an **API**: the server still runs functions (resolvers) that read the database. Most projects start with REST and add GraphQL only where flexible queries pay off.' },
+    example: 'With the stateful code, Ana logs in, then Leo logs in: `currentUser` is now Leo, and Ana\'s next `GET /api/my-books` returns **Leo\'s** books. With two copies it gets worse: Ana logged in on copy A, her next request lands on copy B, where `currentUser` is `null`. In the stateless version each request carries `Authorization: Bearer <token>`, so who logged in last, or which copy answers, no longer matters.',
+    mistake: 'Thinking "stateless" forbids a database, or forbids remembering a logged-in user. The data lives in storage (resource state), and the **client** remembers being logged in by sending its token every time. Only per-client memory **inside the server process** is ruled out.' },
 
   /* ---- 2. Designing URLs ------------------------------------------------------------- */
-  { id: 'resource-naming', hub: 'urls', topic: 'urls', 
+  { id: 'resource-naming', hub: 'urls', topic: 'urls',
     title: 'Naming resources: nouns, plurals, ids and nesting',
-    summary: 'A RESTful URL names a **thing**, never an action: a plural noun for the collection (`/api/tasks`), the collection plus an id for one item (`/api/tasks/7`), and a nested path when a resource lives inside another (`/api/users/2/tasks`).',
-    body: [
-      'Read a URL like a folder path in a filing cabinet: the drawer `tasks`, the folder `7`. Nobody labels a drawer "open-the-drawer": the action is what you do with it, and in HTTP the action is the **method**. So the URL holds nouns and the method holds the verb.',
-      'Use one **plural** noun per resource and keep it for both levels: `/api/tasks` (the collection) and `/api/tasks/7` (an item in it), never `/api/task/7`. The **id goes in the path**, because it identifies the resource; the query string is for options (next card). Write paths in lower case with hyphens between words (`/api/study-groups`): paths are case-sensitive, and `/api/Tasks` is a different URL. The `/api` prefix keeps the API apart from the pages the same Express app may serve (for example a front end in `public/`).',
-      '**Nesting** expresses "belongs to": `/api/users/2/tasks` is the collection of user 2\'s tasks, and `POST /api/users/2/tasks` creates a task for user 2. Keep it to one level: `/api/users/2/tasks/7/comments/3` is hard to build and to read; once an item has its own id, give it its own top-level path (`/api/comments/3`). A filter often gives the same items: `/api/tasks?userId=2`. Nest when the parent is part of the identity; filter when it is one criterion among others that can be combined (`?userId=2&done=false`).',
-      'Actions that are not plain CRUD usually become a **field** or a **resource**: "mark as done" is `PATCH /api/tasks/7` with `{"done":true}`; "log in" can be "create a session", `POST /api/sessions`. Real APIs make a few pragmatic exceptions such as `POST /api/auth/login`; keep them rare and obvious.',
+    summary: 'A RESTful URL names a **thing**, never an action: a plural noun for the collection (`/api/tasks`), the collection plus an id for one item (`/api/tasks/7`), and a nested path when a resource belongs to another (`/api/users/2/tasks`).',
+    html: [
+      '<p>The URL holds the noun; the <strong>method</strong> holds the verb. <code>GET</code>, <code>POST</code>, <code>PATCH</code> and <code>DELETE</code> already say what to do, so a path such as <code>/api/deleteTask</code> says it twice, and differently on every endpoint.</p>',
+      '<ul><li><strong>One plural noun per resource,</strong> for both levels: <code>/api/tasks</code> and <code>/api/tasks/7</code>, never <code>/api/task/7</code>.</li>'
+        + '<li><strong>The id goes in the path,</strong> because it identifies the resource; the query string is for options (see <a href="#/http/api-design/query-params">Filters, sorting and pagination</a>).</li>'
+        + '<li><strong>Lower case with hyphens:</strong> <code>/api/study-groups</code>. Paths are case-sensitive, so <code>/api/Tasks</code> is another URL.</li>'
+        + '<li><strong>An <code>/api</code> prefix</strong> keeps the API apart from pages the same server may serve.</li></ul>',
+      '<h3>Nesting or a filter?</h3>',
+      '<p><code>/api/users/2/tasks</code> and <code>/api/tasks?userId=2</code> can return the same items. Nest when the parent is part of the identity ("user 2\'s tasks"); filter when it is one criterion among others that combine (<code>?userId=2&amp;done=false</code>). Keep nesting to one level: once an item has its own id, give it its own path (<code>/api/comments/3</code>, not <code>/api/users/2/tasks/7/comments/3</code>).</p>',
+      '<p>Actions that are not plain CRUD usually become a <strong>field</strong> or a <strong>resource</strong>: "mark as done" is <code>PATCH /api/tasks/7</code> with <code>{"done":true}</code>. A few pragmatic exceptions such as <code>POST /api/auth/login</code> are fine if they stay rare and obvious.</p>',
+      '<table><caption>From action URLs to resource URLs</caption><thead><tr><th scope="col">Instead of</th><th scope="col">Write</th><th scope="col">Why</th></tr></thead><tbody>'
+        + '<tr><th scope="row"><code>GET /api/getAllTasks</code></th><td><code>GET /api/tasks</code></td><td>The method already says "get"</td></tr>'
+        + '<tr><th scope="row"><code>POST /api/createTask</code></th><td><code>POST /api/tasks</code></td><td>Create = POST on the collection</td></tr>'
+        + '<tr><th scope="row"><code>GET /api/tasks?id=7</code></th><td><code>GET /api/tasks/7</code></td><td>Identity belongs in the path</td></tr>'
+        + '<tr><th scope="row"><code>POST /api/tasks/7/delete</code></th><td><code>DELETE /api/tasks/7</code></td><td>The method is the action</td></tr>'
+        + '<tr><th scope="row"><code>PUT /api/tasks/7/markDone</code></th><td><code>PATCH /api/tasks/7</code> + <code>{"done":true}</code></td><td>Changing a field is an update</td></tr>'
+        + '<tr><th scope="row"><code>GET /api/tasksOfUser?user=2</code></th><td><code>GET /api/users/2/tasks</code> or <code>?userId=2</code></td><td>Nesting or a filter, not a new name</td></tr>'
+        + '</tbody></table>',
     ],
-    table: {
-      caption: 'From action URLs to resource URLs',
-      head: ['Instead of', 'Write', 'Why'],
-      rows: [
-        ['`GET /api/getAllTasks`', '`GET /api/tasks`', 'The method already says "get"'],
-        ['`POST /api/createTask`', '`POST /api/tasks`', 'Create = POST on the collection'],
-        ['`GET /api/task/7`', '`GET /api/tasks/7`', 'One plural noun for collection and items'],
-        ['`GET /api/tasks?id=7`', '`GET /api/tasks/7`', 'Identity belongs in the path'],
-        ['`POST /api/tasks/7/delete`', '`DELETE /api/tasks/7`', 'The method is the action'],
-        ['`PUT /api/tasks/7/markDone`', '`PATCH /api/tasks/7` + `{"done":true}`', 'Changing a field is an update'],
-        ['`GET /api/tasksOfUser?user=2`', '`GET /api/users/2/tasks` or `GET /api/tasks?userId=2`', 'Nesting or a filter, not a new name'],
+    diagram: {
+      kind: 'tree',
+      title: 'Paths read like folders: a collection, its items, and at most one level of nesting.',
+      desc: 'Under /api there are two collections, tasks and users. tasks holds item 7. users holds item 2, and user 2 has a nested collection of its tasks.',
+      nodes: [
+        { id: 'api', label: '`/api`' },
+        { id: 'tasks', label: '`tasks`', note: 'collection', key: true },
+        { id: 't7', label: '`7`', note: 'one task' },
+        { id: 'users', label: '`users`', note: 'collection' },
+        { id: 'u2', label: '`2`', note: 'one user' },
+        { id: 'u2tasks', label: '`tasks`', note: 'user 2\'s tasks' },
       ],
+      edges: [['api', 'tasks'], ['tasks', 't7'], ['api', 'users'], ['users', 'u2'], ['u2', 'u2tasks']],
     },
-    example: 'A book club API: `GET /api/books` (all books), `GET /api/books/12` (one book), `POST /api/books` (add one), `GET /api/books/12/reviews` (the reviews of book 12), `POST /api/books/12/reviews` (review book 12), `DELETE /api/reviews/88` (one review, by its own id). Six endpoints, two nouns, and every method means what it always means.',
-    mistake: 'Adding a verb "because it is clearer", e.g. `GET /api/books/search`. It reads well, but now `/api/books/search` collides with `/api/books/:id` (Express may take `search` as an id) and clients must memorise one more name. A search is a filter on the collection: `GET /api/books?search=dune`.',
+    example: 'A book club API: `GET /api/books` (all books), `GET /api/books/12` (one book), `POST /api/books` (add one), `GET /api/books/12/reviews` (the reviews of book 12), `POST /api/books/12/reviews` (review it), `DELETE /api/reviews/88` (one review, by its own id). Six endpoints, two nouns, and every method means what it always means.',
+    mistake: 'Adding a verb "because it is clearer", such as `GET /api/books/search`. Now `/api/books/search` collides with `/api/books/:id` (Express may read `search` as an id) and clients learn one more name. A search is a filter on the collection: `GET /api/books?search=dune`.',
     practice: { href: '#/http/api-design/practice/api-builder', label: 'Try a verb in a URL in the request builder' } },
 
-  { id: 'query-params', hub: 'urls', topic: 'urls', 
+  { id: 'query-params', hub: 'urls', topic: 'urls',
     title: 'Filters, sorting and pagination: the query string',
     summary: 'The path says **which resource**; the **query string** says **which part of it, in what order and how much**: filters (`?done=false`), search (`?search=css`), sorting (`?sort=createdAt&order=desc`) and pagination (`?page=2&limit=10`).',
-    body: [
-      'The path is the shelf; the query string is the note you hand the librarian: "only the unread ones, newest first, ten at a time". It is still the same resource, just a different view of it, so it gets no new path. Options can be combined in any order and left out, which is exactly what `key=value&key=value` pairs are good at.',
-      'Filter on the **server**. The collection may hold thousands of rows; sending all of them so the browser can throw most away wastes bandwidth and can expose data the user should not see. **Pagination** returns a fixed-size window: `?page=2&limit=10` (items 11–20) or, in offset style, `?offset=10&limit=10` (skip 10, take 10). The two are the same window: offset = (page − 1) × limit. Always sort by something stable (an id, a date) or the boundaries between pages shift, and **clamp** the limit (for example at most 100), because someone will try `?limit=1000000`.',
-      'The client also needs to know how many items there are in total. Two designs: an **envelope** body, `{ "items": [ … ], "page": 2, "limit": 10, "total": 57 }` (a common pagination design), or a plain **array** body with the numbers in headers, `X-Total-Count: 57` and `Link: </api/tasks?page=3&limit=10>; rel="next"`. The request builder uses the headers design, which keeps `GET /api/tasks` returning an array, so clients and tests written for the plain list keep working. Choose one and document it.',
-      'Decide a **policy** for bad parameters: unknown names (`?colour=red`) are usually ignored, malformed values (`?limit=abc`, `?done=maybe`) rejected with **400** and one error per parameter. Never let them crash the server, and never answer **404** for "no matches": an empty list is a valid answer, `200` with `[]`.',
+    html: [
+      '<p>A filtered, sorted or paged list is still the same resource, only a different view of it, so it gets no new path. Options combine in any order and can be left out, which is what <code>key=value&amp;key=value</code> pairs are good at. Every value arrives as a <strong>string</strong> (see <a href="#/server/routes/query-strings">Query strings: req.query</a>).</p>',
+      '<h3>The pagination contract</h3>',
+      '<dl><dt>Request</dt><dd><code>?page=2&amp;limit=10</code>: items 11–20. The same window as offset style, <code>?offset=10&amp;limit=10</code>: offset = (page − 1) × limit.</dd>'
+        + '<dt>Response body</dt><dd>A plain JSON <strong>array</strong> of the items on that page, so <code>GET /api/tasks</code> stays a list.</dd>'
+        + '<dt>Response headers</dt><dd><code>X-Total-Count: 57</code> (how many match in total) and, optionally, <code>Link: &lt;/api/tasks?page=3&amp;limit=10&gt;; rel="next"</code>.</dd>'
+        + '<dt>Order</dt><dd>Always sort by something stable, with a tie-breaker (<code>createdAt</code>, then <code>id</code>), or items move between pages.</dd>'
+        + '<dt>Limits</dt><dd>Default the page size and cap it (at most 100, say): someone will try <code>?limit=1000000</code> (see <a href="#/server/auth/pagination-limits">Limits that protect the API</a>).</dd></dl>',
+      '<p>This is the convention every example on this site follows, including the request builder; the SQL and MongoDB cards show how to fetch one page (<a href="#/database/relational/pagination">LIMIT and OFFSET</a>, <a href="#/database/documents/sort-paginate">sort, skip and limit</a>). Some APIs put the numbers in an <strong>envelope</strong> body instead (<code>{ "items": […], "total": 57 }</code>): both work; pick one and document it.</p>',
+      '<ul><li><strong>Filter on the server,</strong> never by sending everything to the browser: it wastes bandwidth and can expose data the user should not see.</li>'
+        + '<li><strong>Bad parameters:</strong> ignore unknown names (<code>?colour=red</code>); reject malformed values (<code>?limit=abc</code>, <code>?done=maybe</code>) with <strong>400</strong>, one error per parameter.</li>'
+        + '<li><strong>No matches is not an error:</strong> <code>200</code> with <code>[]</code>, never <code>404</code>.</li></ul>',
     ],
     live: { kind: 'js', code: `// req.query in Express holds the same thing: every value is a STRING
 const params = new URLSearchParams('done=false&page=2&limit=500&tag=a&tag=b');
@@ -157,43 +157,43 @@ const limit = Math.min(100, Number(params.get('limit')) || 20);   // clamped
 console.log({ page, limit, offset: (page - 1) * limit });
 
 console.log(params.get('tag'), params.getAll('tag'));   // repeated keys` },
-    example: 'With five tasks of which 2, 3 and 4 are unfinished, `GET /api/tasks?done=false&sort=createdAt&order=desc&limit=2` returns `200` with tasks 4 and 3 (the two newest unfinished ones) and `X-Total-Count: 3`, so the client knows a second page exists. `GET /api/tasks?done=false&page=5&limit=2` returns `200` with `[]`: the page is past the end, not "not found".',
-    mistake: 'Writing `if (req.query.done) list = list.filter((t) => t.done)`. Query values are strings, and `"false"` is a non-empty string, so `?done=false` returns the **finished** tasks. Compare with the string: `req.query.done === "true"`, and reject anything that is neither `"true"` nor `"false"`.',
+    example: 'Five tasks, of which 2, 3 and 4 are unfinished. `GET /api/tasks?done=false&sort=createdAt&order=desc&limit=2` returns `200` with tasks 4 and 3 and `X-Total-Count: 3`, so the client knows a second page exists. `GET /api/tasks?done=false&page=5&limit=2` returns `200` with `[]`: the page is past the end, not "not found".',
+    mistake: 'Paging without a stable order. Sorted only by `createdAt`, two tasks created in the same millisecond can swap places between requests: one appears on page 1 **and** page 2, the other on neither. Add a tie-breaker that is unique, such as the `id`.',
     practice: { href: '#/http/api-design/practice/api-builder', label: 'Filter, sort and paginate in the request builder' } },
 
-  { id: 'versioning', hub: 'urls', topic: 'urls', 
+  { id: 'versioning', hub: 'urls', topic: 'urls',
     title: 'Versioning: changing an API without breaking its clients',
     summary: 'A **version** in the URL (`/api/v1/tasks`) or in a header lets you publish an incompatible change as a new version while existing clients keep using the old one.',
-    body: [
-      'An API is a promise to programs you do not control: a mobile app installed on phones that will not update for months, a partner\'s script, your classmate\'s front end. Think of a textbook: typo fixes go into reprints, but a rewritten chapter is a **second edition**, and the first edition stays valid for whoever owns it.',
-      'Sort every change into one of two kinds. **Non-breaking** (old clients keep working): adding a new endpoint, a new optional query parameter or a new field in a response. **Breaking** (old clients fail): renaming or removing a field, changing a type (`done` from a boolean to `"yes"`/`"no"`), making an optional field required, changing a URL or the status code of a case. Only breaking changes need a new version.',
-      'The most common place for the version is the start of the path: `/api/v1/tasks`, mounted in Express with `app.use("/api/v1/tasks", tasksRouterV1)`. It is visible, easy to test with curl and easy to route. Some APIs put it in a header instead (`Accept: application/vnd.example.v2+json`), which keeps URLs clean but is harder to try in a browser. When a v2 ships, v1 is announced as **deprecated** (still working, scheduled to be switched off) for a while.',
-      'An API with a single client, your own page, can skip the version prefix. The DTO mapping (card **The API contract vs the database row**) is what lets you change the database without ever needing a new API version.',
+    html: [
+      '<p>An API is a promise to programs you do not control: a phone app that will not update for months, a partner\'s script, a front end someone else maintains. So sort every change into one of two kinds, and only one kind needs a new version.</p>',
+      '<table><caption>Which changes break clients</caption><thead><tr><th scope="col">Kind</th><th scope="col">Examples</th><th scope="col">New version?</th></tr></thead><tbody>'
+        + '<tr><th scope="row">Non-breaking</th><td>A new endpoint, a new optional query parameter, a new field in a response</td><td>No</td></tr>'
+        + '<tr><th scope="row">Breaking</th><td>Renaming or removing a field; changing a type (<code>done</code> from a boolean to <code>"yes"</code>); making an optional field required; changing a URL or a status code</td><td>Yes</td></tr>'
+        + '</tbody></table>',
+      '<dl><dt>In the path</dt><dd><code>/api/v1/tasks</code>, mounted with <code>app.use(\'/api/v1/tasks\', tasksRouterV1)</code>. Visible, easy to try with curl, easy to route. The most common choice.</dd>'
+        + '<dt>In a header</dt><dd><code>Accept: application/vnd.example.v2+json</code>. Clean URLs, but harder to try in a browser.</dd>'
+        + '<dt>Deprecated</dt><dd>When v2 ships, v1 keeps working for a while, announced as scheduled to be switched off.</dd></dl>',
+      '<p>An API with a single client, your own front end, can skip the prefix. A mapping between what is stored and what is sent (see <a href="#/http/api-design/dto">The API contract and DTOs</a>) lets you change the storage without ever needing a new version.</p>',
     ],
-    example: 'Version 1 returns `{ "id": 7, "name": "Study" }` and you want the field to be called `title`. A breaking rename would crash every client that reads `task.name`. Instead: in v1, send **both** `name` and `title` (adding is non-breaking); publish `/api/v2/tasks` with only `title`; mark v1 deprecated; switch it off once the clients have moved.',
-    mistake: 'Renaming a field "to tidy up" inside the same version, or creating a new version for every small addition (`/v1` … `/v14`). Additions need no version; only breaking changes do.' },
+    example: 'Version 1 returns `{ "id": 7, "name": "Study" }` and the field should be called `title`. Renaming it would crash every client that reads `task.name`. Instead: in v1 send **both** `name` and `title` (adding is non-breaking); publish `/api/v2/tasks` with only `title`; mark v1 deprecated; switch it off once the clients have moved.',
+    mistake: 'Renaming a field "to tidy up" inside the same version, or creating a version for every small addition (`/v1` … `/v14`). Additions need no version; only breaking changes do.' },
 
   /* ---- 3. Methods and CRUD ----------------------------------------------------------- */
-  { id: 'crud-mapping', hub: 'methods', topic: 'methods', 
+  { id: 'crud-mapping', hub: 'methods', topic: 'methods',
     title: 'CRUD on HTTP: the routes of a resource',
     summary: '**CRUD** (Create, Read, Update, Delete) names the four things almost every API does to its data; REST maps them onto HTTP methods applied to two URLs per resource, the **collection** and the **item**.',
-    body: [
-      'Each resource gets two addresses. The **collection** (`/api/tasks`) is like a drawer: you can look at everything in it or put something new in it. The **item** (`/api/tasks/7`) is like one folder: you can read it, replace it, change part of it or throw it away. A method plus a path is an **endpoint**, and a resource normally has these six.',
-      'The four operations give more than four endpoints because two of them have two flavours: **Read** is "list the collection" or "read one item", and **Update** is "replace the whole item" (PUT) or "change some fields" (PATCH). A basic CRUD API has five endpoints (list, read one, create, replace, delete); most real APIs add PATCH as a sixth.',
-      'The method also decides the success status: reads answer **200**, a create answers **201 Created** with a `Location` header, updates answer **200** with the new version, a delete answers **204 No Content**. Sending a method an endpoint does not support (for example `DELETE /api/tasks`, deleting the whole collection) gets **405 Method Not Allowed**.',
+    html: [
+      '<p>The collection (<code>/api/tasks</code>) is where you list everything or add something new; the item (<code>/api/tasks/7</code>) is where you read, replace, change or remove one thing. Read and Update each come in two flavours (list or one; replace or change some fields), so a resource usually has six endpoints. The method also decides the success status, so the client knows what happened before it reads the body.</p>',
+      '<table><caption>The endpoints of a resource</caption><thead><tr><th scope="col">CRUD</th><th scope="col">Method + path</th><th scope="col">Request body</th><th scope="col">Success</th><th scope="col">Typical failures</th></tr></thead><tbody>'
+        + '<tr><th scope="row">Read (list)</th><td><code>GET /api/tasks</code></td><td>none</td><td>200 + array</td><td>400 bad query value</td></tr>'
+        + '<tr><th scope="row">Read (one)</th><td><code>GET /api/tasks/:id</code></td><td>none</td><td>200 + the item</td><td>404</td></tr>'
+        + '<tr><th scope="row">Create</th><td><code>POST /api/tasks</code></td><td>the new item (no id)</td><td>201 + <code>Location</code> + the item</td><td>400</td></tr>'
+        + '<tr><th scope="row">Update (replace)</th><td><code>PUT /api/tasks/:id</code></td><td>the complete item</td><td>200 + the item</td><td>400, 404</td></tr>'
+        + '<tr><th scope="row">Update (partial)</th><td><code>PATCH /api/tasks/:id</code></td><td>only the changed fields</td><td>200 + the item</td><td>400, 404</td></tr>'
+        + '<tr><th scope="row">Delete</th><td><code>DELETE /api/tasks/:id</code></td><td>none</td><td>204, no body</td><td>404</td></tr>'
+        + '</tbody></table>',
+      '<p>A method an endpoint does not support (<code>DELETE /api/tasks</code>, deleting the whole collection) gets <strong>405 Method Not Allowed</strong> (see <a href="#/http/api-design/status-client-errors">Client errors</a>).</p>',
     ],
-    table: {
-      caption: 'The endpoints of a resource',
-      head: ['CRUD', 'Method + path', 'Request body', 'Success', 'Typical failures'],
-      rows: [
-        ['Read (list)', '`GET /api/tasks`', 'none', '200 + array', '400 bad query value'],
-        ['Read (one)', '`GET /api/tasks/:id`', 'none', '200 + the item', '404'],
-        ['Create', '`POST /api/tasks`', 'the new item (no id)', '201 + `Location` + the item', '400'],
-        ['Update (replace)', '`PUT /api/tasks/:id`', 'the complete item', '200 + the item', '400 · 404'],
-        ['Update (partial)', '`PATCH /api/tasks/:id`', 'only the changed fields', '200 + the item', '400 · 404'],
-        ['Delete', '`DELETE /api/tasks/:id`', 'none', '204, no body', '404'],
-      ],
-    },
     code: `// routes/books.js, mounted in app.js with app.use('/api/books', router)
 router.get('/', listBooks);          // GET    /api/books       200 [ … ]
 router.post('/', createBook);        // POST   /api/books       201 + Location
@@ -201,41 +201,67 @@ router.get('/:id', getBook);         // GET    /api/books/:id   200 | 404
 router.put('/:id', replaceBook);     // PUT    /api/books/:id   200 | 400 | 404
 router.patch('/:id', patchBook);     // PATCH  /api/books/:id   200 | 400 | 404
 router.delete('/:id', deleteBook);   // DELETE /api/books/:id   204 | 404`,
-    example: 'One lifecycle in the request builder below: `GET /api/tasks` lists five tasks (200); `POST /api/tasks` with `{"title":"Study REST"}` answers 201 and `Location: /api/tasks/6`; `GET /api/tasks/6` reads it (200); `PATCH /api/tasks/6` with `{"done":true}` changes one field (200); `DELETE /api/tasks/6` removes it (204); a final `GET /api/tasks/6` answers 404. Six requests, one URL pattern, and the status codes tell the whole story.',
-    mistake: 'Sending updates to the collection, e.g. `PUT /api/tasks` with `{"id":6,"done":true}` in the body. The URL must name the resource being changed, so the id belongs in the path: `PATCH /api/tasks/6`. On a well-designed API the collection version answers 405.',
+    example: 'One lifecycle in the request builder: `GET /api/tasks` lists five tasks (200); `POST /api/tasks` with `{"title":"Study REST"}` answers 201 and `Location: /api/tasks/6`; `GET /api/tasks/6` reads it (200); `PATCH /api/tasks/6` with `{"done":true}` changes one field (200); `DELETE /api/tasks/6` removes it (204); a last `GET /api/tasks/6` answers 404. One URL pattern, and the status codes tell the whole story.',
+    mistake: 'Sending updates to the collection, such as `PUT /api/tasks` with `{"id":6,"done":true}` in the body. The URL must name the resource being changed, so the id belongs in the path: `PATCH /api/tasks/6`. On a well-designed API the collection version answers 405.',
     widget: 'api-builder' },
 
-  { id: 'safe-idempotent', hub: 'methods', topic: 'methods', 
+  { id: 'safe-idempotent', hub: 'methods', topic: 'methods',
     title: 'Safe and idempotent: why retries matter',
-    summary: 'A **safe** method changes nothing on the server (GET); an **idempotent** method leaves the server in the same state whether it is sent once or many times (GET, PUT, DELETE). POST is neither, and PATCH is not guaranteed to be.',
-    body: [
-      'Pressing the lift button five times calls the lift once: that button is **idempotent**. Ordering a coffee five times at the counter gets you five coffees: not idempotent, like POST. Reading the menu changes nothing at all: **safe**, like GET. (The card **HTTP methods** in How the web works introduced the two words; here is why an API designer cares.)',
-      'Networks fail in the middle of requests. A phone on a train sends a request, enters a tunnel and never gets the answer. Did the server do it? With an idempotent method the client can simply **send it again**: done twice is the same as done once. With POST, a retry may create a duplicate: two identical tasks, or two payments. That is why browsers ask "Confirm form resubmission?" before repeating a POST, and why some HTTP libraries retry idempotent requests automatically but never POST.',
-      'Idempotent is about the **state of the server**, not about the response. The first `DELETE /api/tasks/5` answers 204; the second answers 404 because the task is already gone. DELETE is still idempotent: after one call or after two, task 5 does not exist. A good test suite checks exactly this ("a second DELETE → 404").',
-      'PATCH depends on its body. `{"done":true}` gives the same result however often you send it; a PATCH meaning "add one to the counter" does not. HTTP cannot know which kind yours is, so PATCH is listed as not idempotent. To make a POST safe to retry, robust APIs (payment APIs, for example) accept an **idempotency key**: the client invents a unique id for each operation and sends it in a header such as `Idempotency-Key: 6f1c2b…`; the server remembers the keys it has processed and, if the same key arrives again, returns the stored first response instead of creating a second resource.',
+    summary: 'A **safe** method changes nothing on the server (GET); an **idempotent** method leaves the server in the same state whether it is sent once or many times (GET, PUT, DELETE); POST is neither, and PATCH is not guaranteed to be.',
+    html: [
+      '<p>The two words come from <a href="#/http/web/http-methods">HTTP methods</a>; an API designer cares because networks fail mid-request. A phone on a train sends a request, enters a tunnel and never gets the answer. Did the server do it? With an idempotent method the client can simply <strong>send it again</strong>. With POST, the retry may create a duplicate task, or a second payment.</p>',
+      '<table><caption>Retrying after a timeout</caption><thead><tr><th scope="col">Method</th><th scope="col">Safe</th><th scope="col">Idempotent</th><th scope="col">A retry…</th></tr></thead><tbody>'
+        + '<tr><th scope="row"><code>GET</code></th><td>yes</td><td>yes</td><td>is harmless</td></tr>'
+        + '<tr><th scope="row"><code>PUT</code></th><td>no</td><td>yes</td><td>sets the same full version again</td></tr>'
+        + '<tr><th scope="row"><code>DELETE</code></th><td>no</td><td>yes</td><td>leaves it deleted (the retry may answer 404)</td></tr>'
+        + '<tr><th scope="row"><code>PATCH</code></th><td>no</td><td>not guaranteed</td><td>is fine for "set a field to X", not for "add 1"</td></tr>'
+        + '<tr><th scope="row"><code>POST</code></th><td>no</td><td>no</td><td>may create a duplicate, unless an idempotency key is used</td></tr>'
+        + '</tbody></table>',
+      '<ul><li><strong>Idempotent is about the server\'s state,</strong> not the response: the second <code>DELETE /api/tasks/5</code> answers 404, but task 5 is gone either way.</li>'
+        + '<li><strong>An idempotency key</strong> makes a POST safe to retry: the client invents a unique id per operation and sends it in a header (<code>Idempotency-Key: 9b2e…</code>); the server remembers the keys it has processed and answers a repeated key with the stored first response. Payment APIs work this way.</li>'
+        + '<li><strong>Clients know it too:</strong> browsers ask "Confirm form resubmission?" before repeating a POST, and some HTTP libraries retry idempotent requests automatically but never POST.</li></ul>',
     ],
-    table: {
-      caption: 'The five methods and retries',
-      head: ['Method', 'Safe', 'Idempotent', 'Retrying after a timeout…'],
-      rows: [
-        ['`GET`', 'yes', 'yes', 'is harmless'],
-        ['`PUT`', 'no', 'yes', 'sets the same full version again'],
-        ['`DELETE`', 'no', 'yes', 'leaves it deleted (the retry may answer 404)'],
-        ['`PATCH`', 'no', 'not guaranteed', 'is fine for "set field to X", not for "add 1"'],
-        ['`POST`', 'no', 'no', 'may create a duplicate, unless an idempotency key is used'],
+    diagram: {
+      kind: 'sequence',
+      numbered: true,
+      title: 'With the same key on both attempts, the retry gets the first answer instead of a duplicate.',
+      desc: 'The app sends POST /api/tasks with an idempotency key. The server creates task 6, but the answer is lost in a tunnel. The app retries with the same key. The server recognises the key and answers 201 for task 6 again, without creating task 7.',
+      nodes: [{ id: 'app', label: 'Phone app' }, { id: 'api', label: 'API', key: true }],
+      edges: [
+        ['app', 'api', 'POST + `Idempotency-Key`'],
+        ['api', 'api', 'creates task 6'],
+        ['api', 'app', '201, lost in a tunnel'],
+        ['app', 'api', 'same POST, same key'],
+        ['api', 'app', '201 for task 6 again'],
       ],
     },
-    example: 'The train app sends `POST /api/tasks` with `{"title":"Buy tickets"}`, gets no answer and retries: the list now has two "Buy tickets". With the header `Idempotency-Key: 9b2e…` on both attempts, the server sees the key the second time and answers the same `201 Created` with `Location: /api/tasks/6`, without creating task 7.',
+    example: 'The train app sends `POST /api/tasks` with `{"title":"Buy tickets"}`, gets no answer and retries: without a key, the list now has two "Buy tickets". With `Idempotency-Key: 9b2e…` on both attempts, the server recognises the key and answers the same `201 Created` with `Location: /api/tasks/6`, without creating task 7.',
     mistake: '"DELETE is not idempotent, because the second call gets a 404 instead of a 204." Idempotence promises the same **effect on the server**, not the same status code. The response may differ; the state (the task is gone) does not.' },
 
-  { id: 'put-vs-patch', hub: 'methods', topic: 'methods', 
+  { id: 'put-vs-patch', hub: 'methods', topic: 'methods',
     title: 'PUT replaces, PATCH changes',
-    summary: '**PUT** sends the **complete** new version of a resource and replaces it (fields you leave out go back to their defaults, or the request is rejected); **PATCH** sends **only the fields to change** and keeps all the others.',
-    body: [
-      'PUT is handing in a fresh copy of a form to replace the old one: every box you leave empty is empty in the new version. PATCH is a correction slip: "on line 3, change the date". Same goal (update), very different meaning for the fields you do not mention.',
-      'That decides how you validate. **PUT** validates in **full mode**: every required field must be present (a PUT without `title` is a 400) and missing optional fields take their defaults. **PATCH** validates in **partial mode**: only the fields present are checked, and a body with none of the known fields is a 400 ("nothing to change"). In both, the **id comes from the path** and an `id` in the body is ignored. Both answer **200** with the resource as it is now.',
-      'Why have both? PUT is simple and clearly idempotent. PATCH is smaller, and it avoids the **lost update**: if two people edit different fields of the same item at the same time, two PATCHes both survive, while the second PUT overwrites the first person\'s change with the old value it still had. The examples here send PATCH bodies as a plain JSON object of the fields to change (formally called a merge patch).',
+    summary: '**PUT** sends the **complete** new version of a resource and replaces it (fields left out go back to their defaults, or the request is rejected); **PATCH** sends **only the fields to change** and keeps all the others.',
+    html: [
+      '<p>Both update, but they mean opposite things for the fields you do not mention: PUT forgets them, PATCH keeps them. That one difference decides how you validate, and what happens when two people edit at once.</p>',
+      '<table><caption>PUT vs PATCH</caption><thead><tr><th scope="col"></th><th scope="col"><code>PUT</code></th><th scope="col"><code>PATCH</code></th></tr></thead><tbody>'
+        + '<tr><th scope="row">The body</th><td>The complete item</td><td>Only the fields to change (a plain JSON object, formally a "merge patch")</td></tr>'
+        + '<tr><th scope="row">Fields left out</th><td>Back to their defaults; a missing required one is a 400</td><td>Kept as they are</td></tr>'
+        + '<tr><th scope="row">Validation</th><td>Full mode: every required field</td><td>Partial mode: only the fields present; a body with none is a 400</td></tr>'
+        + '<tr><th scope="row">Idempotent</th><td>Yes</td><td>Not guaranteed</td></tr>'
+        + '</tbody></table>',
+      '<p>In both, the <strong>id comes from the path</strong> and an <code>id</code> in the body is ignored; both answer <strong>200</strong> with the resource as it is now. PATCH also avoids the <strong>lost update</strong>: when two people change different fields at the same time, two PATCHes both survive, while a PUT writes back the old values its sender still had.</p>',
     ],
+    diagram: {
+      kind: 'sequence',
+      title: 'A PUT sends every field, so it overwrites a change it never saw.',
+      desc: 'Leo sends PATCH with a new title. A second later Ana, whose screen still shows the old title, sends PUT with the old title and done true. The API stores Ana\'s complete version, so Leo\'s new title is lost.',
+      nodes: [{ id: 'leo', label: 'Leo' }, { id: 'api', label: 'API', key: true }, { id: 'ana', label: 'Ana' }],
+      edges: [
+        ['leo', 'api', 'PATCH: a new title'],
+        ['ana', 'api', 'PUT: old title, done'],
+        ['api', 'api', 'Leo\'s title is lost'],
+      ],
+    },
     live: { kind: 'js', code: `const task = { id: 2, title: 'Add full CRUD', done: false, userId: 1 };
 const body = { done: true };                // what the client sent
 
@@ -254,86 +280,111 @@ for (const key of ['title', 'done', 'userId']) {
   if (key in body) afterPatch[key] = body[key];
 }
 console.log('PATCH', afterPatch);` },
-    example: 'Task 2 is `{ "title": "Add full CRUD", "done": false, "userId": 1 }`. Leo renames it with `PATCH /api/tasks/2` and `{"title":"Add CRUD + tests"}`. One second later Ana, whose screen still shows the old title, ticks it as done with `PUT /api/tasks/2` and `{"title":"Add full CRUD","done":true,"userId":1}`. Leo\'s new title is gone. Had Ana sent `PATCH` with `{"done":true}`, both changes would be kept.',
-    mistake: 'Writing PUT as a merge, e.g. `Object.assign(task, req.body)`. That is PATCH behaviour (fields not sent are kept), so the API no longer has a real PUT, and it also lets the body overwrite `id` or add fields you never meant to store. A PUT builds the new object from the allowed fields only.',
+    example: 'Task 2 is `{ "title": "Add full CRUD", "done": false, "userId": 1 }`. Leo renames it with `PATCH /api/tasks/2` and `{"title":"Add CRUD + tests"}`. A second later Ana, whose screen still shows the old title, ticks it with `PUT /api/tasks/2` and `{"title":"Add full CRUD","done":true,"userId":1}`: Leo\'s title is gone. Had Ana sent `PATCH` with `{"done":true}`, both changes would be kept.',
+    mistake: 'Writing PUT as a merge, such as `Object.assign(task, req.body)`. That is PATCH behaviour (fields not sent are kept), so the API has no real PUT, and the body can also overwrite `id` or add fields you never meant to store. A PUT builds the new object from the allowed fields only.',
     practice: { href: '#/http/api-design/practice/api-builder', label: 'Compare PUT and PATCH in the request builder' } },
 
   /* ---- 4. Status codes and errors --------------------------------------------------- */
-  { id: 'status-success', hub: 'status', topic: 'status', 
+  { id: 'status-success', hub: 'status', topic: 'status',
     title: 'Success codes: 200, 201 and 204',
     summary: 'A successful call answers **200 OK** with a body, **201 Created** with a `Location` header after something was created, or **204 No Content** when there is nothing to send back.',
-    body: [
-      'Think of a shop counter. **200**: "here is what you asked for". **201**: "done, here is your new order and the number to collect it with". **204**: a nod, "done", with nothing to hand over. The client learns what happened from the number before reading a single byte of the body.',
-      '**201 Created** goes with a `Location` header holding the URL of the new resource (a relative URL such as `/api/tasks/6` is fine). The body usually echoes the created resource, including the fields the **server** set (`id`, `createdAt`), so the client does not need another GET. In Express: `res.status(201).location("/api/tasks/" + task.id).json(task)`.',
-      '**204 No Content** has **no body at all**: `res.status(204).end()` or `res.sendStatus(204)`. Express drops any body you pass with a 204, and on the client `await res.json()` on a 204 throws "Unexpected end of JSON input". Updates (PUT, PATCH) answer **200** with the new version in the examples here; some APIs answer 204 instead.',
-      'Two cases that are not errors: a list with no matches is **200** with `[]`, and a filter or a page past the end is **200** with `[]` too. "I found nothing" is a valid answer about a collection that exists.',
+    html: [
+      '<p>The client learns what happened from the number before it reads a single byte of the body (the families and common codes are in <a href="#/http/web/common-status-codes">Common status codes</a>). An API makes the number precise: which success, and what comes with it.</p>',
+      '<table><caption>Which success code</caption><thead><tr><th scope="col">Situation</th><th scope="col">Code</th><th scope="col">Body</th><th scope="col">Header to add</th></tr></thead><tbody>'
+        + '<tr><th scope="row"><code>GET</code> a list or one item</th><td>200 OK</td><td>the data</td><td><code>X-Total-Count</code> for paged lists</td></tr>'
+        + '<tr><th scope="row"><code>POST</code> created something</th><td>201 Created</td><td>the new resource</td><td><code>Location: /api/tasks/6</code></td></tr>'
+        + '<tr><th scope="row"><code>PUT</code> / <code>PATCH</code> updated</th><td>200 OK</td><td>the resource as it is now</td><td></td></tr>'
+        + '<tr><th scope="row"><code>DELETE</code> removed</th><td>204 No Content</td><td>none</td><td></td></tr>'
+        + '<tr><th scope="row">List or search with no matches</th><td>200 OK</td><td><code>[]</code></td><td></td></tr>'
+        + '</tbody></table>',
+      '<dl><dt>201 Created</dt><dd>Goes with <code>Location</code>, the URL of the new resource (relative is fine). The body echoes it, including the fields the server set (<code>id</code>, <code>createdAt</code>), so the client needs no extra GET.</dd>'
+        + '<dt>204 No Content</dt><dd>Has <strong>no body at all</strong>: Express drops one if you pass it, and <code>await res.json()</code> on a 204 throws "Unexpected end of JSON input".</dd></dl>',
     ],
-    table: {
-      caption: 'Which success code',
-      head: ['Situation', 'Code', 'Body', 'Header to add'],
-      rows: [
-        ['`GET` a list or one item', '200 OK', 'the data', '(`X-Total-Count` for lists, if you use it)'],
-        ['`POST` created something', '201 Created', 'the new resource', '`Location: /api/tasks/6`'],
-        ['`PUT` / `PATCH` updated', '200 OK', 'the resource as it is now', ''],
-        ['`DELETE` removed', '204 No Content', 'none', ''],
-        ['List or search with no matches', '200 OK', '`[]`', ''],
-      ],
-    },
     code: `res.json(books);                                            // 200 is the default status
 res.status(201).location(\`/api/books/\${book.id}\`).json(book);  // created
 res.json(updatedBook);                                      // 200 after PUT / PATCH
 res.status(204).end();                                      // deleted, no body`,
-    example: 'Reading `curl -i -X POST http://localhost:3000/api/tasks -H "Content-Type: application/json" -d \'{"title":"Study"}\'`: the first line `HTTP/1.1 201 Created` and the header `Location: /api/tasks/6` already tell the client everything; the JSON body adds the `id` and `createdAt` the server chose.',
+    example: 'With curl (see [curl in five flags](#/server/routes/curl-basics)), `curl -i -X POST http://localhost:3000/api/tasks -H "Content-Type: application/json" -d \'{"title":"Study"}\'` prints `HTTP/1.1 201 Created` and `Location: /api/tasks/6` before the body: the client already knows everything; the JSON adds the `id` and `createdAt` the server chose.',
     mistake: 'Writing `res.status(204).json({ message: "Deleted" })` and expecting the client to show the message. A 204 never has a body: Express silently drops it. Either answer 204 with nothing, or 200 with a body.',
     practice: { href: '#/http/api-design/practice/status-chooser', label: 'Practise choosing status codes' } },
 
-  { id: 'status-client-errors', hub: 'status', topic: 'status', 
+  { id: 'status-client-errors', hub: 'status', topic: 'status',
     title: 'Client errors: choosing the right 4xx',
-    summary: 'A **4xx** code tells the caller that **its request** must change, and each code names a different problem: unreadable or invalid (400), no such resource (404), wrong method (405), a clash with stored data (409), a body in the wrong format (415), or valid-looking data that breaks a rule (422, where an API uses it).',
-    body: [
-      'A well-designed API walks the same checks in the same order for every request, and the **first** check that fails decides the code (the request builder shows this list after every request). Is there a route for this path? If not, **404**. Does it accept this method? If not, **405**, with an `Allow` header listing the methods it does accept. Is the body in a format it reads? If not, **415**; if it says JSON but cannot be parsed, **400**. Does the resource with this id exist? If not, **404**. Are the values valid? If not, **400** (or 422). Does it clash with what is stored, such as an email that is already taken? Then **409**. (Who you are and what you may do, 401 and 403, have their own card.)',
-      '**400 or 422?** 400 Bad Request is the general "your request is wrong". Many APIs, including the examples here, use it for both malformed JSON and failed validation. Some APIs keep 400 for "I cannot read this" and use **422 Unprocessable Content** for "I can read it, but the values break the rules" (empty title, negative price). Both conventions are fine; mixing them at random is not. Follow the convention your API documents.',
-      '**404 or 405?** 404 says the path names nothing; 405 says the path exists but not with this method. Express answers 404 for an unmatched method unless you add a fallback such as `router.route("/").get(listBooks).post(createBook).all((req, res) => res.set("Allow", "GET, POST").status(405).json({ error: "Method not allowed" }))`. **409 Conflict** is for a request that is fine on its own but clashes with the current state: a duplicate unique field, deleting something other data still points to. **415** is about the body you **send** (`Content-Type`); its cousin **406 Not Acceptable** is about the format you **ask for** (`Accept`).',
+    summary: 'A **4xx** code tells the caller that **its request** must change, and each code names a different problem: unreadable or invalid (400), no such resource (404), wrong method (405), a clash with stored data (409), a body in the wrong format (415), or readable data that breaks a rule (422, where an API uses it).',
+    html: [
+      '<p>A well-designed API walks the same checks in the same order for every request, and the <strong>first</strong> check that fails decides the code. The request builder shows this list after every request. Who you are and what you may do (401, 403) are checked first, in <a href="#/http/api-design/status-auth">401, 403 or 404</a>.</p>',
+      '<table><caption>The 4xx codes of a REST API</caption><thead><tr><th scope="col">Code</th><th scope="col">Typical case</th><th scope="col">What the client must fix</th></tr></thead><tbody>'
+        + '<tr><th scope="row">400 Bad Request</th><td>Malformed JSON; a missing <code>title</code> (if the API uses 400 for validation); <code>?limit=abc</code></td><td>The syntax or the values</td></tr>'
+        + '<tr><th scope="row">404 Not Found</th><td><code>GET /api/tasks/999</code>; <code>/api/taks</code></td><td>The id or the path</td></tr>'
+        + '<tr><th scope="row">405 Method Not Allowed</th><td><code>DELETE /api/tasks</code> (the whole collection)</td><td>Use a method from the <code>Allow</code> header</td></tr>'
+        + '<tr><th scope="row">406 Not Acceptable</th><td><code>Accept: text/html</code> on a JSON-only API</td><td>The <code>Accept</code> header (the format it <em>asks for</em>)</td></tr>'
+        + '<tr><th scope="row">409 Conflict</th><td>Fine on its own but clashes with stored data: an email already registered, deleting something other data points to</td><td>Different data, or change the state first</td></tr>'
+        + '<tr><th scope="row">415 Unsupported Media Type</th><td>A JSON body sent without <code>Content-Type: application/json</code></td><td>The <code>Content-Type</code> header (the format it <em>sends</em>)</td></tr>'
+        + '<tr><th scope="row">422 Unprocessable Content</th><td><code>{"title":""}</code> on an API that keeps 400 for parse errors</td><td>The values</td></tr>'
+        + '</tbody></table>',
+      '<dl><dt>400 or 422?</dt><dd>Many APIs, including the examples here, use 400 for both "cannot read it" and "the values break a rule". Others keep 422 for the second. Both are fine; follow the one your API documents, and never mix them.</dd>'
+        + '<dt>404 or 405?</dt><dd>404: the path names nothing. 405: the path exists, but not with this method. Express answers 404 for an unmatched method unless you add a fallback, as in the code sample.</dd></dl>',
     ],
-    table: {
-      caption: 'The 4xx codes of a REST API',
-      head: ['Code', 'Meaning', 'Typical case', 'What the client must fix'],
-      rows: [
-        ['400 Bad Request', 'Unreadable or invalid request', 'Malformed JSON; `title` missing (if the API uses 400 for validation); `?limit=abc`', 'The syntax or the values'],
-        ['404 Not Found', 'Nothing at this URL', '`GET /api/tasks/999`; `/api/taks`', 'The id or the path'],
-        ['405 Method Not Allowed', 'Path exists, method does not', '`DELETE /api/tasks` (the whole collection)', 'Use a method from `Allow`'],
-        ['406 Not Acceptable', 'Cannot answer in the format asked for', '`Accept: text/html` on a JSON-only API', 'The `Accept` header'],
-        ['409 Conflict', 'Clashes with the current state', 'Signing up with an email already registered', 'Different data, or change the state first'],
-        ['415 Unsupported Media Type', 'Body format not accepted', 'JSON body sent without `Content-Type: application/json`', 'The `Content-Type` header'],
-        ['422 Unprocessable Content', 'Readable but breaks a rule (if the API uses it)', '`{"title":""}` on an API that keeps 400 for parse errors', 'The values'],
+    diagram: {
+      kind: 'flow',
+      numbered: true,
+      title: 'The first check that fails decides the code.',
+      desc: 'Six checks in order. Is there a route for the path? If not, 404. Does it accept the method? If not, 405. Is the body in a readable format? If not, 415, or 400 if it cannot be parsed. Does the resource exist? If not, 404. Are the values valid? If not, 400 or 422. Does it clash with stored data? Then 409.',
+      nodes: [
+        { id: 'route', label: 'Route exists?', note: 'else 404' },
+        { id: 'method', label: 'Method allowed?', note: 'else 405' },
+        { id: 'format', label: 'Body readable?', note: 'else 415 / 400' },
+        { id: 'exists', label: 'Resource exists?', note: 'else 404' },
+        { id: 'valid', label: 'Values valid?', note: 'else 400 / 422', key: true },
+        { id: 'clash', label: 'No clash?', note: 'else 409' },
       ],
+      edges: [['route', 'method'], ['method', 'format'], ['format', 'exists'], ['exists', 'valid'], ['valid', 'clash']],
     },
-    example: 'Five versions of a sign-up, `POST /api/users`: with the body in plain text, **415**; with `{"name":"Iris",}` (trailing comma), **400** (cannot parse); with `{"name":"","email":"nope"}`, **400** with two field errors (or 422 elsewhere); with a valid body but the email `ana@example.com`, which already exists, **409**; sent as `PATCH /api/users`, **405** with `Allow: GET, POST`.',
+    code: `// router.route(path) attaches several methods to one path; .all() catches the rest
+router.route('/')
+  .get(listBooks)
+  .post(createBook)
+  .all((req, res) => res.set('Allow', 'GET, POST').status(405).json({ error: 'Method not allowed' }));`,
+    example: 'Five versions of a sign-up, `POST /api/users`: with the body in plain text, **415**; with `{"name":"Iris",}` (a trailing comma), **400** (cannot parse); with `{"name":"","email":"nope"}`, **400** with two field errors (or 422 elsewhere); with a valid body but an email that already exists, **409**; sent as `PATCH /api/users`, **405** with `Allow: GET, POST`.',
     mistake: 'Answering **500** for bad input. If invalid data reaches code that assumes it is valid, `req.body.title.trim()` throws "Cannot read properties of undefined" and the error handler sends 500, telling the client the **server** failed. Validate first and answer 400: the caller made the mistake and can fix it.',
     widget: 'status-chooser' },
 
-  { id: 'status-auth', hub: 'status', topic: 'status', 
+  { id: 'status-auth', hub: 'status', topic: 'status',
     title: '401, 403 or 404: who are you, and may you?',
-    summary: '**401 Unauthorized** means the server does not know who you are (no token, a malformed one or an expired one); **403 Forbidden** means it knows and you are not allowed; some APIs answer **404** instead of 403 so as not to reveal that a resource exists.',
-    body: [
-      'At a nightclub door: no ID, the bouncer says "show me your ID" (**401**). ID fine, but it is a private party and you are not on the list: "you cannot come in" (**403**). A discreet bouncer says "there is no party here" (**404**), so strangers do not even learn that it exists.',
-      'Two words to keep apart: **authentication** is proving who you are (logging in, sending a token); **authorisation** is deciding what that person may do. 401 is an authentication failure, despite its name ("Unauthorized" is a historical misnomer), and it comes with a `WWW-Authenticate` header saying how to authenticate (for tokens: `Bearer`). The client\'s fix is to log in, or refresh the token, and try again. 403 is an authorisation failure: repeating the request with the same identity will never work.',
-      'Hiding existence: user Leo requests `GET /api/tasks/42`, a task that belongs to Ana. Answering 403 confirms that task 42 exists, and a script can try every id to map what others have. Answering **404** reveals nothing. A common policy: 404 for other people\'s **private** resources; 403 when the caller may see the resource but not do this to it (a student can read a course but not delete it). The checks run in order: identity (401), then permission (403), then existence (404).',
-      'The Authentication and security section builds the tokens; this card is only about which code to send.',
+    summary: '**401** means the server does not know who you are, **403** means it knows and you are not allowed, and some APIs answer **404** instead of 403 so as not to reveal that a resource exists.',
+    html: [
+      '<p>The checks run in this order, before the ones in <a href="#/http/api-design/status-client-errors">Client errors</a>. How identity and permissions work, and when to hide with 404, is taught in <a href="#/server/auth/authn-vs-authz">Authentication vs authorisation</a> and <a href="#/server/auth/ownership-checks">Ownership checks</a>; this card is only about which code an API sends.</p>',
+      '<table><caption>Identity and permission codes</caption><thead><tr><th scope="col">Code</th><th scope="col">When</th><th scope="col">What the client does</th></tr></thead><tbody>'
+        + '<tr><th scope="row">401 Unauthorized</th><td>No token, a malformed one or an expired one. Despite its name, it is about <em>identity</em>. It comes with <code>WWW-Authenticate: Bearer</code>.</td><td>Logs in (or refreshes the token) and tries again</td></tr>'
+        + '<tr><th scope="row">403 Forbidden</th><td>A known identity that may not do this</td><td>Nothing: the same request will never work</td></tr>'
+        + '<tr><th scope="row">404 Not Found</th><td>Another user\'s private resource: 403 would confirm that it exists</td><td>Treats it as missing</td></tr>'
+        + '</tbody></table>',
     ],
     example: 'In the request builder, `POST /api/users` is for admins. With no `Authorization` header: **401** with `WWW-Authenticate: Bearer`. With `Authorization: Bearer nonsense`: **401** again (an unknown token is no identity). With `Authorization: Bearer student-token`: **403** ("you are a student"). With `Authorization: Bearer admin-token` and a valid body: **201**.',
-    mistake: 'Sending 401 for "logged in but not allowed". The front end reacts to 401 by sending the user to the login page; they log in again, get 401 again, and loop forever. "Not allowed" is 403.',
+    mistake: 'Sending 401 for "logged in but not allowed". The front end reacts to 401 by sending the user to the log-in page; they log in again, get 401 again, and loop forever. "Not allowed" is 403.',
     practice: { href: '#/http/api-design/practice/api-builder', label: 'Try the tokens in the request builder' } },
 
-  { id: 'error-body', hub: 'status', topic: 'status', 
+  { id: 'error-body', hub: 'status', topic: 'status',
     title: 'One error shape, and when to use 500',
     summary: 'Every error answer should have the **right status code** and the **same JSON shape**, for example `{ "error": "message" }` plus an `errors` list of `{ field, message }` for validation, so a client handles every error with one piece of code; **500** is only for failures of the server itself.',
-    body: [
-      'Think of official forms: every rejected application comes back with the same stamp (the status code) and the reasons in the same box (the error body). If each office used its own layout, you would need a manual per office. An API is the same: one shape for every error, everywhere.',
-      'A shape that covers both cases: `error` is always present (a short human-readable message) and `errors` is added when there are per-field problems: `{ "error": "Validation failed", "errors": [ { "field": "title", "message": "title is required" } ] }`; a 404 is just `{ "error": "Task 99 not found" }`. A validation failure lists **all** problems at once in `errors`, a missing item answers `{ "error": "Task not found" }`: both fit. (There is also a standard, "Problem Details" (RFC 9457, `Content-Type: application/problem+json`), with fields `type`, `title`, `status` and `detail`.)',
-      '**Status first, body second.** Monitoring tools, caches, retry logic and `fetch`\'s `res.ok` look only at the status code. An answer of `200` with `{"error":"not found"}` fools all of them: the error counts as a success. The rule of thumb: if the caller did something wrong, 4xx; if your code did, 5xx.',
-      '**500 Internal Server Error** means the server failed: an uncaught exception, a database that is down (**503 Service Unavailable** if it is temporary). One centralised error handler, registered last in `app.js` (see Routes and middleware), turns every thrown error into the same JSON. It logs the details (stack trace, SQL message) on the server and never sends them to the client: they reveal how your code works. In Express 4 an error thrown inside an `async` handler is **not** caught for you: wrap it in `try/catch` and call `next(err)`. Express 5 forwards rejected promises to the error handler automatically.',
+    html: [
+      '<p><strong>Status first, body second.</strong> Monitoring tools, caches, retry logic and <code>fetch</code>\'s <code>res.ok</code> look only at the status code, so an answer of <code>200</code> with <code>{"error":"not found"}</code> counts as a success everywhere. The rule of thumb: if the caller did something wrong, 4xx; if your code did, 5xx.</p>',
+      '<dl><dt><code>error</code></dt><dd>Always present: a short human-readable message, such as <code>"Task 99 not found"</code>.</dd>'
+        + '<dt><code>errors</code></dt><dd>Added when there are per-field problems, listing <strong>all</strong> of them: <code>[ { "field": "title", "message": "title is required" } ]</code> (see <a href="#/http/api-design/validation">Validating input</a>).</dd></dl>',
+      '<p>There is also a standard shape, "Problem Details" (RFC 9457, <code>Content-Type: application/problem+json</code>, with <code>type</code>, <code>title</code>, <code>status</code> and <code>detail</code>). Any shape works if every error uses it.</p>',
+      '<p><strong>500 Internal Server Error</strong> means the server failed: an uncaught exception, a store that is down (<strong>503 Service Unavailable</strong> if it is temporary). One error handler, registered last (see <a href="#/server/routes/error-handler">The error handler</a>), turns every thrown error into the same JSON, logs the details on the server and never sends them to the client: a stack trace reveals how your code works. Errors in <code>async</code> handlers need care in Express 4 (see <a href="#/server/routes/express-async-errors">Async handlers</a>).</p>',
     ],
+    diagram: {
+      kind: 'branch',
+      title: 'The caller\'s mistakes are explained; the server\'s failures are only logged.',
+      desc: 'An error becomes an answer in the same JSON shape. A 4xx error, the caller\'s mistake, sends its message and any field errors. A 5xx error, the server\'s failure, sends a generic message, while the details stay in the server log.',
+      nodes: [
+        { id: 'err', label: 'An error', note: 'same JSON shape', key: true },
+        { id: 'c4', label: '4xx: the caller', note: 'message + field errors' },
+        { id: 'c5', label: '5xx: the server', note: 'generic message, details logged' },
+      ],
+      edges: [['err', 'c4'], ['err', 'c5']],
+    },
     code: `// app.js: the LAST middleware. Every error leaves in the same shape.
 app.use((err, req, res, next) => {
   const status = err.status || 500;
@@ -347,14 +398,19 @@ app.use((err, req, res, next) => {
     mistake: 'Answering `res.status(200).json({ success: false, error: "Not found" })`. Every tool that reads status codes now records a success, and `res.ok` is `true` in the browser. Put the meaning in the status code (404) and keep the body for the details.' },
 
   /* ---- 5. The API contract ---------------------------------------------------------- */
-  { id: 'json-conventions', hub: 'contract', topic: 'contract', 
+  { id: 'json-conventions', hub: 'contract', topic: 'contract',
     title: 'JSON in, JSON out: Content-Type and Accept',
     summary: 'A JSON API reads a request body only when its `Content-Type: application/json` header says it is JSON, always answers with `Content-Type: application/json`, and can read the client\'s `Accept` header to see which formats it understands.',
-    body: [
-      'A parcel needs a label saying what is inside. `Content-Type` is that label, on whatever travels with a body, in either direction. `Accept` is a note the client attaches to its request: "I can read these formats". (The card **Inside an HTTP request** in How the web works introduced both headers.)',
-      'In Express, `app.use(express.json())` parses a body **only** when the request\'s `Content-Type` is `application/json`. Otherwise it skips it and, in Express 4, `req.body` is an empty object `{}` (in Express 5 it is `undefined`). That is the classic trap: a curl command without `-H "Content-Type: application/json"` sends a perfect title, and your API answers "title is required". If the header is right but the JSON is broken, `express.json()` raises a 400 error that reaches your error handler. On the way out, `res.json(value)` sets the header and serialises the value for you.',
-      'Shared conventions that make an API predictable: keys in **camelCase** (`createdAt`, the JavaScript habit); dates as **ISO 8601** strings in UTC (`"2026-10-05T10:00:00.000Z"`), because JSON has no date type; real booleans (`true`, not `"true"` or `"yes"`); `null` for "no value", always the same way; and a request body that is a JSON **object** at the top level. A strict API answers **415** to a body that is not JSON and **406** when `Accept` rules JSON out; the request builder does both.',
-      'On the client side, `fetch` does none of this for you: you set the header and turn the object into text with `JSON.stringify` yourself.',
+    html: [
+      '<p><code>Content-Type</code> labels whatever body travels, in either direction; <code>Accept</code> is the client saying which formats it can read (both were introduced in <a href="#/http/web/http-request">Inside an HTTP request</a>). In Express, <code>express.json()</code> parses a body <strong>only</strong> when the label says JSON; what <code>req.body</code> holds otherwise is in <a href="#/server/routes/body-parsing">express.json() and req.body</a>. On the way out, <code>res.json(value)</code> sets the header and turns the value into text (see <a href="#/browser/js/json">JSON</a>).</p>',
+      '<h3>Conventions that make an API predictable</h3>',
+      '<ul><li><strong>Keys in camelCase:</strong> <code>createdAt</code>, the JavaScript habit.</li>'
+        + '<li><strong>Dates as ISO 8601 strings in UTC:</strong> <code>"2026-10-05T10:00:00.000Z"</code>, because JSON has no date type.</li>'
+        + '<li><strong>Real booleans:</strong> <code>true</code>, never <code>"true"</code> or <code>"yes"</code>.</li>'
+        + '<li><strong><code>null</code> for "no value",</strong> always the same way.</li>'
+        + '<li><strong>A JSON object</strong> at the top level of a request body.</li>'
+        + '<li><strong>Strict answers:</strong> <strong>415</strong> to a body that is not JSON, <strong>406</strong> when <code>Accept</code> rules JSON out. The request builder does both.</li></ul>',
+      '<p>On the client, <code>fetch</code> does none of this for you: you set the header and call <code>JSON.stringify</code> yourself.</p>',
     ],
     live: { kind: 'js', code: `const book = { title: 'Dune', read: false, due: new Date(Date.UTC(2026, 9, 20)), notes: undefined };
 
@@ -369,19 +425,32 @@ try {
 } catch (e) {
   console.log('400 material:', e.name);
 }` },
-    example: 'The right fetch call: `fetch("/api/books", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(book) })`. Leave out the header and an Express 4 API sees `req.body` as `{}`; leave out `JSON.stringify` and the body is the text `[object Object]`, which no JSON parser can read.',
+    example: 'The right `fetch` call: `fetch("/api/books", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(book) })`. Leave out the header and an Express 4 API sees `req.body` as `{}`; leave out `JSON.stringify` and the body is the text `[object Object]`, which no JSON parser can read.',
     mistake: 'Debugging the validation code when the real problem is a missing `Content-Type` header. If the API says a field is missing that you can see in your request, check the header first: `curl -i` (or the request builder) shows exactly what was sent.',
     practice: { href: '#/http/api-design/practice/api-builder', label: 'Send a body without Content-Type in the request builder' } },
 
-  { id: 'dto', hub: 'contract', topic: 'contract', 
-    title: 'The API contract vs the database row (DTOs)',
-    summary: 'A **DTO** (Data Transfer Object) is the shape of the data your API sends and accepts. It is deliberately different from the database row: it leaves out secrets and internal columns, and renames fields to the JSON convention.',
-    body: [
-      'A restaurant has a kitchen and a menu. The kitchen holds suppliers, costs and the cleaning rota; the menu shows dishes and prices. Customers order from the menu, so you can reorganise the kitchen without reprinting it. The database row is the kitchen; the DTO is the menu, the public **contract** of your API.',
-      'A row often holds columns no client should see: `password_hash` (the stored hash of a password, see Authentication and security), `is_deleted` (a **soft delete** flag: the row is kept but treated as gone), internal notes, foreign keys such as `user_id`. Databases also name columns in **snake_case** (`created_at`) while JSON uses camelCase (`createdAt`). A small function, `toUserDto(row)`, copies the public fields under their public names, and every handler calls it before `res.json`.',
-      'Write the DTO as an **allow-list** (copy what you want), never a block-list (delete what you remember to delete): with an allow-list, a column added to the table tomorrow cannot leak by accident. The same applies to input: copy only the fields a client may set. Otherwise a sign-up body with `"role":"admin"` makes the caller an admin; this attack is called **mass assignment**.',
-      'The pay-off is stability: you can rename a column, split a table or move to another database and the JSON your clients receive stays identical, because the mapping absorbs the change.',
+  { id: 'dto', hub: 'contract', topic: 'contract',
+    title: 'The API contract vs the stored record (DTOs)',
+    summary: 'A **DTO** (Data Transfer Object) is the shape of the data your API sends and accepts. It is deliberately different from what the server stores: it leaves out secrets and internal fields, and uses the JSON naming convention.',
+    html: [
+      '<p>What the server stores is its own business; the DTO is the public <strong>contract</strong>. Keep them apart and you can rename a stored field, split a table or change the database while the JSON your clients receive stays identical: the mapping absorbs the change.</p>',
+      '<dl><dt>Secrets</dt><dd><code>password_hash</code>: the stored, one-way scrambled form of a password (see <a href="#/server/auth/hash-not-encrypt">Hashing, not encryption</a>). It must never leave the server.</dd>'
+        + '<dt>Internal fields</dt><dd>A <strong>soft-delete</strong> flag such as <code>is_deleted</code> (the record is kept but treated as gone), internal notes, references to other records.</dd>'
+        + '<dt>Naming</dt><dd>Databases usually name fields in <strong>snake_case</strong> (<code>created_at</code>); JSON uses <strong>camelCase</strong> (<code>createdAt</code>). The mapping renames them (the SQL side is in <a href="#/database/relational/rows-to-json">From rows to JSON</a>).</dd></dl>',
+      '<ul><li><strong>Map with an allow-list:</strong> copy the fields you want (<code>toUserDto(record)</code>), never delete the ones you remember. A field added tomorrow cannot leak by accident.</li>'
+        + '<li><strong>The same on the way in:</strong> copy only the fields a client may set. Otherwise a sign-up body with <code>"role":"admin"</code> makes the caller an admin: <strong>mass assignment</strong>.</li></ul>',
     ],
+    diagram: {
+      kind: 'flow',
+      title: 'Only the fields on the allow-list reach the client.',
+      desc: 'A stored user record holds id, email, role, created_at, password_hash and is_deleted. The toUserDto function copies only the allowed fields, renamed. The JSON sent holds id, email, role and createdAt.',
+      nodes: [
+        { id: 'row', label: 'Stored record', note: '+ `password_hash`, `is_deleted`' },
+        { id: 'map', label: '`toUserDto()`', note: 'the allow-list', key: true },
+        { id: 'json', label: 'JSON sent', note: 'id, email, role, createdAt' },
+      ],
+      edges: [['row', 'map'], ['map', 'json']],
+    },
     live: { kind: 'js', code: `// One row as the database returns it
 const row = { id: 2, email: 'leo@example.com', password_hash: '$2b$10$Qm1x…',
   role: 'student', created_at: '2026-09-02T08:00:00.000Z', is_deleted: false };
@@ -393,19 +462,193 @@ console.log(leaky);         // is_deleted and created_at leak, and so will any n
 // ✓ Allow-list: copy only the contract
 const toUserDto = (r) => ({ id: r.id, email: r.email, role: r.role, createdAt: r.created_at });
 console.log(toUserDto(row));` },
-    example: 'In the request builder, the server state panel shows the stored user rows with `password_hash`, `created_at` and `is_deleted`. Send `GET /api/users`: every user comes back as `{ "id", "name", "email", "role", "createdAt" }`. Create a user with a password: the 201 body does not contain the password or its hash.',
-    mistake: 'Sending the row straight out, `res.json(user)`, or fixing it with `delete user.password_hash`. The first leaks the hash; the second is a block-list that forgets the next secret column (and, with a shared object, deletes the hash from your data too).',
+    example: 'In the request builder, the server state panel shows the stored user rows with `password_hash`, `created_at` and `is_deleted`. Send `GET /api/users`: every user comes back as `{ "id", "name", "email", "role", "createdAt" }`. Create a user with a password: the 201 body contains neither the password nor its hash.',
+    mistake: 'Sending the record straight out, `res.json(user)`, or fixing it with `delete user.password_hash`. The first leaks the hash; the second is a block-list that forgets the next secret field (and, on a shared object, deletes the hash from your data too).',
     practice: { href: '#/http/api-design/practice/api-builder', label: 'Compare stored rows and responses in the request builder' } },
 
-  { id: 'openapi', hub: 'contract', topic: 'contract', 
+  /* ---- 6. Building and testing ------------------------------------------------------ */
+  { id: 'crud-in-memory', hub: 'build', topic: 'build',
+    title: 'CRUD with an in-memory array',
+    summary: 'Before a database, an API can keep its data in a JavaScript **array** in memory: each handler finds the item by its id, answers **404** if it is missing, and changes the array in place, behind function names that a database layer can keep later.',
+    html: [
+      '<p>The array is a stand-in for a database table, and <code>nextId</code> is the counter that hands out ids: the <strong>server</strong> chooses every id, so two items can never share one and a client can never pick its own. The data lives only as long as the process: every restart (and <code>node --watch</code> restarts on every save) brings back the starting data, and two copies of the server would each have their own array. A real API later swaps the array for a database (see <a href="#/database/relational/models-layer">The models layer</a>) and keeps the function names, so the routes do not change.</p>',
+      '<ol><li><strong>Turn the id into a number:</strong> route parameters are strings (see <a href="#/server/routes/route-params">Route parameters</a>), and <code>"2" === 2</code> is false.</li>'
+        + '<li><strong>Find it:</strong> <code>find</code> when you only need the item, <code>findIndex</code> when you must replace or remove it.</li>'
+        + '<li><strong>Missing? Return early:</strong> <code>return res.status(404).json(…)</code>. Without <code>return</code> the handler answers twice (see <a href="#/server/routes/one-response">Exactly one response per request</a>).</li>'
+        + '<li><strong>Build new objects field by field</strong> from what the client may set.</li></ol>',
+      '<p>Step 4 hides a bug in a popular shortcut, <code>{ id: nextId++, ...req.body }</code>: the spread comes <strong>after</strong> <code>id</code>, so a body with <code>"id": 1</code> overwrites the server\'s id, and any extra field (<code>"isAdmin": true</code>) is stored too.</p>',
+    ],
+    code: `let books = [{ id: 1, title: 'Dune', read: true }];
+let nextId = 2;
+
+function getBook(req, res) {
+  const id = Number(req.params.id);                 // "1" → 1
+  const book = books.find((b) => b.id === id);
+  if (!book) return res.status(404).json({ error: \`Book \${id} not found\` });
+  res.json(book);
+}
+
+function deleteBook(req, res) {
+  const i = books.findIndex((b) => b.id === Number(req.params.id));
+  if (i === -1) return res.status(404).json({ error: 'Book not found' });
+  books.splice(i, 1);
+  res.status(204).end();
+}`,
+    live: { kind: 'js', code: `const books = [{ id: 1, title: 'Dune' }];
+console.log(books.find((b) => b.id === '1'));           // undefined: "1" is not 1
+console.log(books.find((b) => b.id === Number('1')));   // found
+
+let nextId = 2;
+const body = { id: 1, title: 'Hacked', isAdmin: true };  // what a client could send
+console.log({ id: nextId++, ...body });                  // ✗ the body overwrote the id
+console.log({ id: nextId++, title: body.title });        // ✓ only the allowed fields` },
+    example: '`DELETE /api/books/7` when book 7 does not exist: `findIndex` returns `-1`, the handler answers 404 and returns. Without that check, `books.splice(-1, 1)` would silently remove the **last** book and answer 204: the wrong item deleted, and a success reported.',
+    mistake: 'Forgetting `return` before an early answer: `if (!book) res.status(404).json(...)` followed by `res.json(book)`. The second call crashes with `ERR_HTTP_HEADERS_SENT`. Every early answer starts with `return`.' },
+
+  { id: 'validation', hub: 'build', topic: 'build',
+    title: 'Validating input: 400 with field errors',
+    summary: '**Validation** checks every field of the request body (present, right type, right length or range, allowed value) **before** anything is stored, and rejects a bad request with **400** and a list of **all** the problems, each tied to its field.',
+    html: [
+      '<p>Everything that arrives over HTTP was written by someone else, maybe not by your form at all but by curl or a script. So it is checked once, at the boundary, and the rest of the program can trust it. Checks in the front end make a nicer experience; checks in the back end are for correctness and security.</p>',
+      '<dl><dt>Required</dt><dd>Present, and not empty after <code>trim()</code>.</dd>'
+        + '<dt>Type</dt><dd><code>typeof v === "string"</code>; <code>typeof v === "boolean"</code> (the string <code>"true"</code> is not a boolean); <code>Number.isInteger</code> for whole numbers.</dd>'
+        + '<dt>Length or range</dt><dd>A title of at most 120 characters, a rating from 1 to 5.</dd>'
+        + '<dt>Closed set</dt><dd><code>["easy", "medium", "hard"].includes(v)</code>.</dd>'
+        + '<dt>Unknown fields and <code>id</code></dt><dd>Stripped and ignored.</dd></dl>',
+      '<ul><li><strong>Two modes:</strong> full for POST and PUT (every required field must be there), partial for PATCH (only the fields present).</li>'
+        + '<li><strong>Collect every error</strong> instead of stopping at the first, so the client shows all messages at once.</li>'
+        + '<li><strong>A pure function</strong> (data in, <code>{ valid, errors }</code> out, no <code>req</code> or <code>res</code>) can be tested without Express. Schema libraries such as Zod do the same with less code (see <a href="#/server/auth/validation">Validation with a schema</a>).</li></ul>',
+    ],
+    diagram: {
+      kind: 'branch',
+      title: 'Bad input stops at the boundary; only clean data reaches the controller.',
+      desc: 'A request body goes through the validator. If any field is wrong, the API answers 400 with every field error and stores nothing. If all fields are valid, the cleaned data, without unknown fields, goes on to the controller.',
+      nodes: [
+        { id: 'body', label: 'Request body' },
+        { id: 'check', label: 'Validator', note: 'every field, every rule', key: true },
+        { id: 'bad', label: '400', note: 'all field errors' },
+        { id: 'ok', label: 'Controller', note: 'clean data only' },
+      ],
+      edges: [['body', 'check'], ['check', 'bad', 'any error'], ['check', 'ok', 'all valid']],
+    },
+    live: { kind: 'js', code: `function validateBook(body, { partial = false } = {}) {
+  const errors = [];
+  const has = (k) => body[k] !== undefined;
+  if (!partial || has('title')) {
+    if (typeof body.title !== 'string' || !body.title.trim()) {
+      errors.push({ field: 'title', message: 'title is required' });
+    }
+  }
+  if (has('rating') && !(Number.isInteger(body.rating) && body.rating >= 1 && body.rating <= 5)) {
+    errors.push({ field: 'rating', message: 'rating must be a whole number from 1 to 5' });
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+console.log(validateBook({ title: 'Dune', rating: 5 }));
+console.log(validateBook({ title: '   ', rating: '5' }));          // two errors, both reported
+console.log(validateBook({ rating: 4 }, { partial: true }));       // PATCH: title not needed` },
+    example: '`POST /api/books` with `{"title":"   ","rating":"5"}` answers `400` with `{ "error": "Validation failed", "errors": [ { "field": "title", "message": "title is required" }, { "field": "rating", "message": "rating must be a whole number from 1 to 5" } ] }`, and the collection has the same length as before. The client shows each message under its input.',
+    mistake: 'Checking only `if (!req.body.title)`. It accepts `"title": 123` and `"title": "   "`, says nothing about the other fields, and reports one problem at a time, so the user fixes, resubmits and gets the next error, again and again.' },
+
+  { id: 'curl-testing', hub: 'build', topic: 'build',
+    title: 'Testing by hand: curl, Postman, Thunder Client',
+    summary: 'Testing an API by hand means sending each request yourself and reading the raw answer, status and headers included: with **curl** in a terminal, or with a GUI client such as Postman or Thunder Client that saves requests in collections.',
+    html: [
+      '<p>Check each route the moment you write it, before any front end exists. The curl flags themselves (<code>-i</code>, <code>-X</code>, <code>-H</code>, <code>-d</code>) are in <a href="#/server/routes/curl-basics">curl in five flags</a>; here are the habits that make hand testing tell the truth.</p>',
+      '<ul><li><strong>Always <code>-i</code>:</strong> without it you see only the body, and a 201 looks like a 200.</li>'
+        + '<li><strong>A JSON body needs its header:</strong> <code>-d</code> alone labels the body as a form, so add <code>-H "Content-Type: application/json"</code>.</li>'
+        + '<li><strong>Quote URLs with <code>&amp;</code>:</strong> unquoted, the shell reads <code>&amp;</code> as "run in the background".</li>'
+        + '<li><strong>Not sure what was sent?</strong> <code>-v</code> shows the request too.</li></ul>',
+      '<h3>On Windows</h3>',
+      '<dl><dt>Windows PowerShell 5.1</dt><dd><code>curl</code> is an alias for another command (<code>Invoke-WebRequest</code>): type <code>curl.exe</code>. Even single quotes are not enough for JSON there: <code>-d \'{\\"title\\":\\"Study\\"}\'</code>.</dd>'
+        + '<dt><code>cmd.exe</code></dt><dd>Write <code>-d "{\\"title\\":\\"Study\\"}"</code>.</dd>'
+        + '<dt>Any shell</dt><dd>Put the JSON in a file and send <code>-d @task.json</code> (in PowerShell, quote it: <code>"@task.json"</code>). The single-quoted JSON in the code sample works in Git Bash, macOS and Linux.</dd></dl>',
+      '<p><strong>GUI clients</strong> (Postman, the Thunder Client extension for VS Code, Insomnia, or <code>.http</code> files with the REST Client extension) save requests in a <strong>collection</strong>, keep variables such as <code>{{baseUrl}}</code> and <code>{{token}}</code>, and can be shared. They still only check what you remember to click; <a href="#/http/api-design/automated-tests">automated tests</a> repeat everything on every change.</p>',
+    ],
+    code: `curl -i http://localhost:3000/api/tasks
+curl -i "http://localhost:3000/api/tasks?done=false&sort=createdAt&order=desc"
+curl -i -X POST http://localhost:3000/api/tasks \\
+  -H "Content-Type: application/json" \\
+  -d '{"title":"Study REST"}'
+curl -i -X PATCH http://localhost:3000/api/tasks/2 \\
+  -H "Content-Type: application/json" -d '{"done":true}'
+curl -i -X DELETE http://localhost:3000/api/tasks/2
+curl -i -H "Authorization: Bearer $TOKEN" http://localhost:3000/api/me`,
+    dialect: 'shell (Git Bash, macOS, Linux)',
+    example: 'The POST in the code sample prints `HTTP/1.1 201 Created`, then headers including `Location: /api/tasks/6` and `Content-Type: application/json; charset=utf-8`, an empty line, and the JSON body. That is the whole contract of a create; without `-i` you would only see the JSON and could not tell 201 from 200.',
+    mistake: 'Typing `curl -X POST ... -H "Content-Type: application/json"` in Windows PowerShell 5.1 and getting "Cannot bind parameter Headers": that is `Invoke-WebRequest` speaking, not curl. Use `curl.exe`, or Git Bash.',
+    practice: { href: '#/http/api-design/practice/api-builder', label: 'See the curl command for any request in the request builder' } },
+
+  { id: 'automated-tests', hub: 'build', topic: 'build',
+    title: 'Automated API tests with supertest',
+    summary: 'An automated API test sends a request to your Express app **inside the test process** with **supertest**, then checks the status code, the body and, for writes, the change in state; a test runner (**Jest**, or Node\'s built-in `node:test`) runs them all with `npm test`.',
+    html: [
+      '<p>A test suite replays every request you would check by hand, in a second, every time you change something. It catches <strong>regressions</strong>: things that used to work and broke while you changed something else.</p>',
+      '<dl><dt>Test runner</dt><dd>Finds the test files, runs them and reports what passed (Jest: <code>npm test</code> runs <code>jest</code>).</dd>'
+        + '<dt>Test</dt><dd>One case: <code>test("…", async () =&gt; { … })</code>; <code>describe</code> groups several.</dd>'
+        + '<dt>Assertion</dt><dd>Checks one fact and fails the test if it is false: <code>expect(res.status).toBe(201)</code>. <code>toBe</code> compares with <code>===</code>, <code>toEqual</code> compares contents, <code>toMatchObject</code> checks the body contains <strong>at least</strong> the listed fields (ideal when the server adds an <code>id</code>). With <code>node:test</code>: <code>assert.equal(res.status, 201)</code>.</dd>'
+        + '<dt>supertest</dt><dd><code>request(app).post("/api/books").send({ title: "Dune" })</code> sends the request and resolves to the response (<code>res.status</code>, <code>res.headers.location</code>, <code>res.body</code>). <code>.send(object)</code> sets the JSON header; <code>.set("Authorization", "Bearer …")</code> adds any header. It needs the app exported without listening: an <code>app.js</code> that calls <code>app.listen()</code> opens a real port in every test file (see <a href="#/server/routes/app-server-split">app.js builds, server.js starts</a>).</dd></dl>',
+      '<ul><li><strong>Assert four things:</strong> the status, the important headers (<code>Location</code>), the body shape and, for writes, the state change: after a create a GET finds it; after a delete a GET gives 404; after a rejected POST the list has the same length.</li>'
+        + '<li><strong>Keep tests independent:</strong> the in-memory array survives from one test to the next, so reset the store before each test (<code>beforeEach</code>) or let each test create the data it needs.</li></ul>',
+    ],
+    diagram: {
+      kind: 'flow',
+      title: 'No port, no browser: the request goes straight into the app.',
+      desc: 'A test file calls supertest, which sends the request to the Express app running inside the test process, with no real port. The response comes back to the test, whose assertions check the status, headers, body and state.',
+      nodes: [
+        { id: 'test', label: 'Test file' },
+        { id: 'st', label: 'supertest', key: true },
+        { id: 'app', label: 'Your app', note: 'in memory, no port' },
+        { id: 'assert', label: 'Assertions', note: 'status, headers, body' },
+      ],
+      edges: [['test', 'st'], ['st', 'app', 'request'], ['app', 'assert', 'response']],
+    },
+    code: `// tests/books.test.js (Jest + supertest)
+const request = require('supertest');
+const app = require('../src/app');          // the app, NOT server.js
+
+test('POST /api/books → 201 with Location and a server id', async () => {
+  const res = await request(app).post('/api/books').send({ title: 'Dune' });
+  expect(res.status).toBe(201);
+  expect(res.body).toMatchObject({ title: 'Dune' });
+  expect(res.headers.location).toBe(\`/api/books/\${res.body.id}\`);
+});
+
+test('POST without a title → 400, and nothing is added', async () => {
+  const before = await request(app).get('/api/books');
+  const res = await request(app).post('/api/books').send({});
+  expect(res.status).toBe(400);
+  const after = await request(app).get('/api/books');
+  expect(after.body.length).toBe(before.body.length);
+});`,
+    example: 'Run `npm test` and Jest prints one line per test, ✓ or ✕. A failure shows `Expected: 201, Received: 200`: the create handler is missing `res.status(201)`. You fix one line, run again, and every other route is checked again for free.',
+    mistake: 'Tests that depend on each other. The first test creates book 2, and the second assumes the list has two books: run the second alone, or in another order, and it fails although the API is fine. Reset the store in `beforeEach`, so every test starts from the same data.' },
+
+  /* ---- 7. Documenting and other API styles --------------------------------------- */
+  { id: 'openapi', hub: 'beyond', topic: 'beyond',
     title: 'Documenting the API: OpenAPI',
     summary: 'An **OpenAPI** document (formerly called Swagger) describes every endpoint of an API in one YAML or JSON file: paths, methods, parameters, request and response bodies and status codes, in a form that people and programs can both read.',
-    body: [
-      'An OpenAPI file is the floor plan of your API. Visitors use a floor plan to find rooms, inspectors to check the building, builders to construct it. Likewise, people read the spec to learn the API, tools check requests against it, and generators build code from it.',
-      'It is usually written in **YAML**, a text format for the same kind of data as JSON that uses indentation instead of braces, `key: value` pairs and `-` for list items. The main parts: `info` (title, version), `paths` (each path, then each method, with its `parameters`, `requestBody` and `responses` per status code) and `components.schemas` (the shapes of your DTOs, written once and referenced with `$ref`).',
-      'What tools do with it: **Swagger UI** turns it into an interactive page with a "Try it out" button (in Express, the `swagger-ui-express` package serves it at `/docs`); generators produce an **SDK** (a ready-made client library that wraps your endpoints for a language); validators reject requests that do not match the spec. Keep `openapi.yaml` in the repository and change it in the **same commit** as the code, or it stops being true within a week.',
-      'For a small project, an **endpoint table in the README** (method, path, query parameters, success status, error statuses, example request and response) is the minimum; an `openapi.yaml` is a plus. The table and the spec hold the same facts.',
+    html: [
+      '<p>One file, three readers: people read it to learn the API, tools check requests against it, and generators build code from it. It is usually written in <strong>YAML</strong>, a text format for the same kind of data as JSON that uses indentation instead of braces, <code>key: value</code> pairs and <code>-</code> for list items.</p>',
+      '<dl><dt><code>info</code></dt><dd>Title and version.</dd>'
+        + '<dt><code>paths</code></dt><dd>Each path, then each method, with its <code>parameters</code>, <code>requestBody</code> and <code>responses</code> per status code.</dd>'
+        + '<dt><code>components.schemas</code></dt><dd>The shapes of your DTOs, written once and referenced with <code>$ref</code>.</dd></dl>',
+      '<ul><li><strong>Keep it in the repository</strong> and change it in the <strong>same commit</strong> as the code, or it stops being true within a week.</li>'
+        + '<li><strong>The minimum for a small project:</strong> an endpoint table in the README (method, path, query parameters, success status, error statuses, an example request and response). An <code>openapi.yaml</code> holds the same facts.</li></ul>',
     ],
+    diagram: {
+      kind: 'branch',
+      title: 'Written once, the spec feeds people, tools and generators.',
+      desc: 'One openapi.yaml file feeds Swagger UI, an interactive documentation page; a code generator that builds a client library (an SDK); and a validator that rejects requests that do not match the spec.',
+      nodes: [
+        { id: 'spec', label: '`openapi.yaml`', key: true },
+        { id: 'ui', label: 'Swagger UI', note: 'docs with "Try it out"' },
+        { id: 'sdk', label: 'SDK generator', note: 'a ready-made client' },
+        { id: 'val', label: 'Validator', note: 'rejects bad requests' },
+      ],
+      edges: [['spec', 'ui'], ['spec', 'sdk'], ['spec', 'val']],
+    },
     code: `openapi: 3.0.3
 info: { title: Books API, version: 1.0.0 }
 paths:
@@ -446,126 +689,41 @@ components:
             id: { type: integer }
             createdAt: { type: string, format: date-time }`,
     dialect: 'YAML',
-    example: 'A front-end developer asks: "what do I get if the title is missing?" Without a spec they try it, or read your code. With the spec they open `/api/books` → `post` → `responses` and see `400`, "Validation failed (error + errors list)", plus the `NewBook` schema telling them that `title` is required and at most 120 characters long.',
+    example: 'A front-end developer asks: "what do I get if the title is missing?" With the spec they open `/api/books` → `post` → `responses` and see `400`, "Validation failed (error + errors list)", plus the `NewBook` schema saying that `title` is required and at most 120 characters long. In Express, the `swagger-ui-express` package serves the same file as a page at `/docs`.',
     mistake: 'Writing the documentation at the end and never touching it again. Documentation that disagrees with the API is worse than none, because people trust it. Update the spec, or the README table, in the same commit as each change to a route.' },
 
-  /* ---- 6. Building and testing ------------------------------------------------------ */
-  { id: 'crud-in-memory', hub: 'build', topic: 'build', 
-    title: 'CRUD with an in-memory array',
-    summary: 'Before a database, an API can keep its data in a JavaScript **array** in memory: each handler turns the id from the path into a number, finds the item, answers **404** if it is missing, and changes the array in place, behind function names that a database layer can keep later.',
-    body: [
-      'The array is a pretend database table and `nextId` is the ticket dispenser at a deli counter: the **server** hands out the numbers, so two items can never get the same one and a client can never choose its own.',
-      'Four patterns cover every handler. (1) `Number(req.params.id)`: route parameters are always **strings**, and `"2" === 2` is false, so without the conversion every lookup fails. (2) `find` when you only need the item, `findIndex` when you must replace or remove it by position. (3) **Return early**: `return res.status(404).json(...)`. Without `return` the function carries on and tries to answer a second time, and Express throws "Cannot set headers after they are sent to the client". (4) Build new objects **field by field** from what the client may set.',
-      'Point (4) hides a bug in a popular shortcut: `{ id: nextId++, ...req.body }`. The spread comes **after** `id`, so a body containing `"id": 1` overwrites the server\'s id (now two items have id 1), and any extra field (`"isAdmin": true`) is stored too. A safe API does the opposite: a client `id` is ignored and unknown fields are stripped.',
-      'The data lives only as long as the process: every restart (and `node --watch` restarts on every save) brings back the seed data, and two copies of the server would each have their own array. That is why a real API replaces the array with a database (see Relational databases), keeping the controller\'s exported function names so that the routes do not change.',
+  { id: 'rest-vs-graphql', hub: 'beyond', topic: 'beyond',
+    title: 'REST, GraphQL and other API styles',
+    summary: '**GraphQL** is an alternative to REST in which the client sends a typed **query** to one endpoint (`/graphql`) and gets exactly the fields it asked for; REST has many URLs, each with a fixed response shape.',
+    html: [
+      '<p>Everything in this section builds REST APIs, and REST is the default most projects start with. GraphQL is worth recognising because it answers two REST annoyances, at a price.</p>',
+      '<table><caption>REST vs GraphQL</caption><thead><tr><th scope="col"></th><th scope="col">REST</th><th scope="col">GraphQL</th></tr></thead><tbody>'
+        + '<tr><th scope="row">Endpoints</th><td>Many URLs, one per resource</td><td>One URL, usually <code>POST /graphql</code></td></tr>'
+        + '<tr><th scope="row">Response shape</th><td>Fixed per endpoint: the list screen gets every field (<strong>over-fetching</strong>)</td><td>Exactly the fields asked for</td></tr>'
+        + '<tr><th scope="row">One screen, several resources</th><td>Several requests in a row (<strong>under-fetching</strong>)</td><td>One query, one round trip</td></tr>'
+        + '<tr><th scope="row">Describing the API</th><td>OpenAPI, optional</td><td>A typed <strong>schema</strong>, required</td></tr>'
+        + '<tr><th scope="row">Caching</th><td>By URL, for free</td><td>Not by URL: everything goes to one</td></tr>'
+        + '<tr><th scope="row">Errors</th><td>The status code says what happened</td><td>Usually <strong>200 OK</strong> with an <code>errors</code> array in the body</td></tr>'
+        + '</tbody></table>',
+      '<p>One more cost: a query that asks for nested data can make the server run one lookup for the list plus one per item (the <strong>N+1 problem</strong>). GraphQL is a query language for an <strong>API</strong>, not a database: the server still runs functions (resolvers) that read the data.</p>',
+      '<dl><dt>gRPC</dt><dd>Compact binary messages over HTTP/2 with typed contracts: fast calls between a company\'s own back-end services.</dd>'
+        + '<dt>WebSockets</dt><dd>One connection that stays open, where both sides can send: chat, live notifications, games.</dd>'
+        + '<dt>Webhooks</dt><dd>The server calls <strong>your</strong> URL when something happens: "tell me when the payment is completed".</dd></dl>',
     ],
-    code: `let books = [{ id: 1, title: 'Dune', read: true }];
-let nextId = 2;
-
-function getBook(req, res) {
-  const id = Number(req.params.id);                 // "1" → 1
-  const book = books.find((b) => b.id === id);
-  if (!book) return res.status(404).json({ error: \`Book \${id} not found\` });
-  res.json(book);
+    code: `# One request: POST /graphql
+query {
+  user(id: 2) {
+    name
+    tasks(done: false) { title }
+  }
 }
 
-function deleteBook(req, res) {
-  const i = books.findIndex((b) => b.id === Number(req.params.id));
-  if (i === -1) return res.status(404).json({ error: 'Book not found' });
-  books.splice(i, 1);
-  res.status(204).end();
-}`,
-    live: { kind: 'js', code: `const books = [{ id: 1, title: 'Dune' }];
-console.log(books.find((b) => b.id === '1'));           // undefined: "1" is not 1
-console.log(books.find((b) => b.id === Number('1')));   // found
-
-let nextId = 2;
-const body = { id: 1, title: 'Hacked', isAdmin: true };  // what a client could send
-console.log({ id: nextId++, ...body });                  // ✗ the body overwrote the id
-console.log({ id: nextId++, title: body.title });        // ✓ only the allowed fields` },
-    example: '`DELETE /api/books/7` when book 7 does not exist: `findIndex` returns `-1`, the handler answers 404 and returns. Without that check, `books.splice(-1, 1)` would silently remove the **last** book in the array and answer 204: a wrong item deleted and a success reported.',
-    mistake: 'Forgetting `return` before an early answer: `if (!book) res.status(404).json(...)` followed by `res.json(book)`. The second call crashes with `ERR_HTTP_HEADERS_SENT`. Every early answer starts with `return`.' },
-
-  { id: 'validation', hub: 'build', topic: 'build', 
-    title: 'Validating input: 400 with field errors',
-    summary: '**Validation** checks every field of the request body (present, right type, right length or range, allowed value) **before** anything is stored, and rejects a bad request with **400** and a list of **all** the problems, each tied to its field.',
-    body: [
-      'Validation is the passport check at the border of your data. Everything that arrives over HTTP was written by someone else, maybe not by your form at all but by curl or a script, so it is checked once, at the boundary, and the inside of your program can then trust it. Checks in the front end are for a nice experience; checks in the back end are for correctness and security (see **Front end and back end** in How the web works).',
-      'What to check for each field: **required** (present and not empty after `trim()`); **type** (`typeof v === "string"`, `typeof v === "boolean"`: the string `"true"` is not a boolean, and `Number.isInteger` for whole numbers); **length or range** (title at most 120 characters, rating 1 to 5); **closed set** (`["easy", "medium", "hard"].includes(v)`). Then: strip fields you do not know, and ignore any `id` the client sent.',
-      'Two modes: **full** for POST and PUT (every required field must be there) and **partial** for PATCH (check only the fields present). Collect **every** error instead of stopping at the first, so the client can show all messages next to their fields at once. Writing the validator as a **pure function** (data in, `{ valid, errors }` out, no `req` or `res`) lets you test it without Express, like any plain function. Libraries such as Zod do the same with less code (see Authentication and security).',
-    ],
-    live: { kind: 'js', code: `function validateBook(body, { partial = false } = {}) {
-  const errors = [];
-  const has = (k) => body[k] !== undefined;
-  if (!partial || has('title')) {
-    if (typeof body.title !== 'string' || !body.title.trim()) {
-      errors.push({ field: 'title', message: 'title is required' });
-    }
-  }
-  if (has('rating') && !(Number.isInteger(body.rating) && body.rating >= 1 && body.rating <= 5)) {
-    errors.push({ field: 'rating', message: 'rating must be a whole number from 1 to 5' });
-  }
-  return { valid: errors.length === 0, errors };
-}
-
-console.log(validateBook({ title: 'Dune', rating: 5 }));
-console.log(validateBook({ title: '   ', rating: '5' }));          // two errors, both reported
-console.log(validateBook({ rating: 4 }, { partial: true }));       // PATCH: title not needed` },
-    example: '`POST /api/books` with `{"title":"   ","rating":"5"}` answers `400` with `{ "error": "Validation failed", "errors": [ { "field": "title", "message": "title is required" }, { "field": "rating", "message": "rating must be a whole number from 1 to 5" } ] }`, and the collection has the same length as before. The client shows each message under its input.',
-    mistake: 'Checking only `if (!req.body.title)`. It accepts `"title": 123` and `"title": "   "`, says nothing about the other fields, and reports one problem at a time, so the user fixes, resubmits and gets the next error, again and again.' },
-
-  { id: 'curl-testing', hub: 'build', topic: 'build', 
-    title: 'Testing by hand: curl, Postman, Thunder Client',
-    summary: '**curl** sends any HTTP request from the terminal and prints the response; four flags, `-i` (show status and headers), `-X` (method), `-H` (header) and `-d` (body), cover every CRUD call. GUI clients such as Postman or Thunder Client do the same with forms and saved collections.',
-    body: [
-      'curl is a browser without a window: you write the request yourself and see the raw answer, status line and headers included. It is the fastest way to check one route the moment you write it, before any front end exists.',
-      'The flags. `-i` includes the status line and the response headers in the output (without it you see only the body, so a 201 looks like a 200). `-X PATCH` sets the method (the default is GET). `-H "Name: value"` adds a header and can be repeated. `-d \'...\'` sends a body; on its own it switches the method to POST and labels the body as a form (`application/x-www-form-urlencoded`), so a JSON body always needs `-H "Content-Type: application/json"` as well. `-v` shows the request too, which is useful when you are not sure what was sent.',
-      '**On Windows.** In Windows PowerShell 5.1, `curl` is an alias for a different command (`Invoke-WebRequest`) with other options: type `curl.exe`. Quoting also differs. The single-quoted JSON above works in Git Bash (installed with Git, and available as a terminal in VS Code), macOS and Linux. In `cmd.exe` write `-d "{\\"title\\":\\"Study\\"}"`. In Windows PowerShell 5.1 even single quotes are not enough (`-d \'{\\"title\\":\\"Study\\"}\'`). The simplest way out on any shell: put the JSON in a file and send `-d @task.json` (in PowerShell, quote it: `"@task.json"`).',
-      '**GUI clients**: Postman (a desktop app), Thunder Client (a VS Code extension), Insomnia, or `.http` files with the REST Client extension. They save requests in a **collection**, keep variables such as `{{baseUrl}}` and `{{token}}`, and can be shared with your partner. They still only check what you remember to click: automated tests (next card) repeat everything on every change.',
-    ],
-    code: `curl -i http://localhost:3000/api/tasks
-curl -i "http://localhost:3000/api/tasks?done=false&sort=createdAt&order=desc"
-curl -i -X POST http://localhost:3000/api/tasks \\
-  -H "Content-Type: application/json" \\
-  -d '{"title":"Study REST"}'
-curl -i -X PATCH http://localhost:3000/api/tasks/2 \\
-  -H "Content-Type: application/json" -d '{"done":true}'
-curl -i -X DELETE http://localhost:3000/api/tasks/2
-curl -i -H "Authorization: Bearer $TOKEN" http://localhost:3000/api/me`,
-    dialect: 'shell (Git Bash, macOS, Linux)',
-    example: 'The POST above prints `HTTP/1.1 201 Created`, then headers including `Location: /api/tasks/6` and `Content-Type: application/json; charset=utf-8`, an empty line, and the JSON body. That is the whole contract of a create in four lines; without `-i` you would only see the JSON and could not tell 201 from 200. Note the quotes around the URL with `&`: unquoted, the shell treats `&` as "run in the background".',
-    mistake: 'Typing `curl -X POST ... -H "Content-Type: application/json"` in Windows PowerShell 5.1 and getting "Cannot bind parameter Headers": that is `Invoke-WebRequest` speaking, not curl. Use `curl.exe`, or Git Bash.',
-    practice: { href: '#/http/api-design/practice/api-builder', label: 'See the curl command for any request in the request builder' } },
-
-  { id: 'automated-tests', hub: 'build', topic: 'build', 
-    title: 'Automated API tests with supertest',
-    summary: 'An automated API test sends a request to your Express app **inside the test process** with **supertest**, then checks the status code, the body and, for writes, the change in state; a test runner (**Jest**, or Node\'s built-in `node:test`) runs them all with `npm test`.',
-    body: [
-      'An automated test suite is a robot that replays every curl command you ever typed and checks every answer, in a second, every time you change something. It catches **regressions**: things that used to work and broke while you were changing something else.',
-      'Vocabulary. A **test runner** finds the test files, runs them and reports what passed (Jest: `npm test` runs `jest`). A **test** (`test("…", async () => { … })`) is one case; `describe` groups several. An **assertion** checks one fact and fails the test if it is false: `expect(res.status).toBe(201)`. `toBe` compares with `===`, `toEqual` compares contents, and `toMatchObject` checks that the body contains **at least** the listed fields, ideal when the server adds an `id` and a `createdAt` you cannot predict. With `node:test` the same assertions read `assert.equal(res.status, 201)`.',
-      '**supertest** wraps your app: `request(app).post("/api/books").send({ title: "Dune" })` sends the request and resolves to the response (`res.status`, `res.headers.location`, `res.body`). Passing an object to `.send()` sets `Content-Type: application/json` for you; `.set("Authorization", "Bearer …")` adds any header. It starts the app on a temporary port by itself, which only works because `app.js` **exports** the app without calling `app.listen()`; `server.js` is the only file that listens.',
-      'Assert the **status**, the important **headers** (`Location`), the **body shape** and, for writes, the **state change**: after a create, a GET finds it; after a delete, a GET gives 404; after a rejected POST, the list has the same length. Tests must not depend on each other\'s data or order: the in-memory array survives from one test to the next, so either each test creates the data it needs or the store is reset before each test (`beforeEach`), which is the more robust choice.',
-    ],
-    code: `// tests/books.test.js (Jest + supertest)
-const request = require('supertest');
-const app = require('../src/app');          // the app, NOT server.js
-
-test('POST /api/books → 201 with Location and a server id', async () => {
-  const res = await request(app).post('/api/books').send({ title: 'Dune' });
-  expect(res.status).toBe(201);
-  expect(res.body).toMatchObject({ title: 'Dune' });
-  expect(res.headers.location).toBe(\`/api/books/\${res.body.id}\`);
-});
-
-test('POST without a title → 400, and nothing is added', async () => {
-  const before = await request(app).get('/api/books');
-  const res = await request(app).post('/api/books').send({});
-  expect(res.status).toBe(400);
-  const after = await request(app).get('/api/books');
-  expect(after.body.length).toBe(before.body.length);
-});`,
-    example: 'Run `npm test` and Jest prints one line per test, ✓ or ✕. A failure shows `Expected: 201, Received: 200`: you forgot `res.status(201)` in the create handler. You fix one line, run again, and every other route is checked again for free.',
-    mistake: 'Calling `app.listen(3000)` inside `app.js`. Every test file that imports the app now opens port 3000 (`EADDRINUSE` when two files run) and Jest never finishes because a server is still listening. Export the app from `app.js` and listen only in `server.js`.' },
+# The answer (status 200 OK, even when part of it failed)
+{ "data": { "user": { "name": "Leo Martín",
+    "tasks": [ { "title": "Return the right status codes" } ] } } }`,
+    dialect: 'GraphQL',
+    example: 'A dashboard shows a user\'s name and the titles of their unfinished tasks. REST: `GET /api/users/2` and `GET /api/users/2/tasks?done=false`, two requests, each returning all fields. GraphQL: the single query in the code sample, returning only `name` and `title`. For a simple client (one list, one resource) the REST version is simpler, and the browser can cache it.',
+    mistake: 'Thinking GraphQL is a database, or "REST but newer". It is a different way to shape an API, with its own costs; most projects start with REST and add GraphQL only where flexible queries pay off.' },
 ];
 
 DATA.en.REST_QUIZ = [
@@ -593,7 +751,7 @@ DATA.en.REST_QUIZ = [
     q: 'Because a stateless API keeps no per-client memory, you can run several copies behind a load ___ and any copy can answer any request.',
     accept: ['balancer'],
     why: 'A load balancer spreads requests over the copies; statelessness is what makes that safe.' },
-  { type: 'mc', topic: 'rest',
+  { type: 'mc', topic: 'beyond',
     q: 'Which is a real drawback of GraphQL compared with REST?',
     choices: ['It cannot return nested data', 'Errors usually come back as 200 OK, and caching by URL stops working', 'It only works with SQL databases', 'Clients cannot choose which fields they get'],
     answer: 1,
@@ -742,11 +900,19 @@ DATA.en.REST_QUIZ = [
     q: 'A sign-up handler that stores `{ ...req.body }` lets a client make itself an admin by sending `"role":"admin"`.',
     answer: true,
     why: 'That is mass assignment: copy only the fields a client may set.' },
-  { type: 'mc', topic: 'contract',
+  { type: 'mc', topic: 'beyond',
     q: 'What is an OpenAPI document?',
     choices: ['A JavaScript library for building routes', 'A YAML or JSON file that describes every endpoint, its parameters, bodies and status codes', 'A browser extension for testing APIs', 'A database schema'],
     answer: 1,
     why: 'Tools turn it into interactive docs (Swagger UI), client SDKs and request validators.' },
+  { type: 'fib', topic: 'beyond',
+    q: 'In an OpenAPI document, a reusable shape such as `NewBook` is written once under `components.___` and referenced elsewhere with `$ref`.',
+    accept: ['schemas'],
+    why: '`components.schemas` holds the shapes of your DTOs; paths point at them with `$ref: \'#/components/schemas/NewBook\'`, so each shape is described once.' },
+  { type: 'tf', topic: 'beyond',
+    q: 'A GraphQL API usually answers `200 OK` even when part of a query failed, and lists the problems in an `errors` array in the body.',
+    answer: true,
+    why: 'That is a real difference from REST, where the status code itself says what happened. Tools that only read status codes count such an answer as a success.' },
   { type: 'fib', topic: 'contract',
     q: 'Database columns are often in snake_case (`created_at`); in the JSON of the API the same field is usually written in ___Case (`createdAt`).',
     accept: ['camel', 'camelcase'],
