@@ -1,41 +1,52 @@
 'use strict';
 /* Document databases: concept cards, rail groups and self-check quiz (MongoDB as the worked example).
-   See site/README.md for the data contract. `hub` and `topic` keys match MONGO_GROUPS and
-   MONGO_QUIZ_TOPICS. */
+   Cards explain with `html` blocks and `diagram` specs (js/concept-section.js, js/diagram.js).
+   `hub` and `topic` keys match MONGO_GROUPS and MONGO_QUIZ_TOPICS. */
 
 DATA.en.MONGO_QUIZ_TOPICS = {
   model: 'Documents and collections',
-  design: 'Embedding and referencing',
   crud: 'CRUD operations',
   query: 'Queries, projection and pagination',
+  design: 'Embedding and referencing',
   aggregate: 'Aggregation pipeline',
   app: 'Indexes and the back end',
 };
 
 DATA.en.MONGO_GROUPS = [
   { key: 'model', label: 'Documents and collections', icon: 'doc' },
-  { key: 'design', label: 'Embedding and referencing', icon: 'tree' },
   { key: 'crud', label: 'CRUD operations', icon: 'files' },
   { key: 'query', label: 'Queries', icon: 'key' },
+  { key: 'design', label: 'Embedding and referencing', icon: 'tree' },
   { key: 'aggregate', label: 'Aggregation', icon: 'pipeline' },
   { key: 'app', label: 'Indexes and the back end', icon: 'index' },
 ];
 
 DATA.en.MONGO_CONCEPTS = [
   /* ---- 1. Documents and collections ------------------------------------------------ */
-  { id: 'document-model', hub: 'model', topic: 'model', 
+  { id: 'document-model', hub: 'model', topic: 'model',
     title: 'Databases, collections and documents',
     summary: '**MongoDB** is a **document database**: each record is a **document** (a JSON-like object that can contain sub-objects and arrays), similar documents live together in a **collection**, and collections are grouped in a **database**.',
-    body: [
-      'Think of a filing cabinet. The **database** is the cabinet (here called `app`), each **collection** is a drawer (`tasks`, `users`) and each **document** is one folder in a drawer. A folder holds a complete filled-in form, with its sub-sections and lists, not one line of a spreadsheet. That is the big difference from the SQL section: a SQL row is flat (one value per column), while a document can carry its tags, its comments or its owner\'s name inside itself.',
-      'One MongoDB **server** can host several databases. In the MongoDB shell, **mongosh** (the command-line tool you type queries into), `db` means "the database I am using", and `db.tasks` is its `tasks` collection: `db.tasks.find()` asks that collection for its documents. Your Node.js code does the same through the **driver** (the library that speaks MongoDB\'s protocol), as `db.collection(\'tasks\').find()`.',
-      'Collections and databases are created **lazily**: there is no `CREATE TABLE`. The first time you insert into `db.notes`, MongoDB creates the `notes` collection. Reading from a collection that does not exist is not an error either: it simply returns no documents.',
+    html: [
+      '<p>A document is one record: a set of <code>field: value</code> pairs whose values can themselves be objects and arrays. That is the big difference from a SQL row, which is flat (one value per column): a task document can carry its tags, its comments and its owner\'s name inside itself.</p>',
+      '<dl><dt>Document</dt><dd>One record, like a row, except that it can nest objects and arrays.</dd>'
+        + '<dt>Field</dt><dd>A named value inside a document, like a column, but not declared in advance and of any type.</dd>'
+        + '<dt>Collection</dt><dd>A group of documents, usually of the same kind, like a table.</dd>'
+        + '<dt>Database</dt><dd>A group of collections, like a schema in PostgreSQL. One MongoDB server can host several.</dd></dl>',
+      '<p>In <strong>mongosh</strong>, the MongoDB shell (the command-line tool you type queries into), <code>db</code> is the database in use and <code>db.tasks.find()</code> asks its <code>tasks</code> collection for documents. Node.js code does the same through the <strong>driver</strong>, the library that speaks MongoDB\'s protocol: <code>db.collection(\'tasks\').find()</code>.</p>',
+      '<p>Collections and databases are created <strong>lazily</strong>: there is no <code>CREATE TABLE</code>. The first insert into <code>db.notes</code> creates the <code>notes</code> collection, and reading a collection that does not exist is not an error: it returns no documents.</p>',
     ],
-    points: [
-      '**Document**: one record, a set of `field: value` pairs (values can be objects and arrays).',
-      '**Collection**: a group of documents, usually of the same kind (like a table).',
-      '**Database**: a group of collections (like a schema in PostgreSQL).',
-    ],
+    diagram: {
+      kind: 'layers',
+      title: 'A server holds databases, a database holds collections, a collection holds documents.',
+      desc: 'Four levels, outermost first. A MongoDB server hosts databases, such as app. A database holds collections, such as tasks and users. A collection holds documents, and each document is one record.',
+      nodes: [
+        { id: 'server', label: 'MongoDB server', note: 'hosts several databases' },
+        { id: 'db', label: 'Database', note: '`app`' },
+        { id: 'coll', label: 'Collection', note: '`tasks`, `users`' },
+        { id: 'doc', label: 'Document', note: 'one record, can nest', key: true },
+      ],
+      edges: [],
+    },
     code: `// one document of the tasks collection (as the shell prints it)
 {
   _id: ObjectId('6a9a8890a1b2c3d4e5000104'),
@@ -48,30 +59,42 @@ DATA.en.MONGO_CONCEPTS = [
   due: ISODate('2026-09-20T09:00:00.000Z')
 }`,
     dialect: 'mongosh',
-    example: 'The playground\'s database `app` has two collections: `tasks` (10 documents) and `users` (3). The task above keeps its two tags and its owner inside itself. In the [relational schema](#/database/relational/relationships) the same information is spread over three tables (`tasks`, `users` and a tags table), joined by keys. Run `show collections` in the playground, then `db.tasks.find()`.',
+    example: 'The playground\'s database `app` has two collections: `tasks` (10 documents) and `users` (3). The task in this card\'s code keeps its two tags and its owner inside itself. In the [relational schema](#/database/relational/relationships) the same information is spread over three tables (`tasks`, `users` and a tags table), joined by keys. Run `show collections` in the playground, then `db.tasks.find()`.',
     mistake: 'Misspelling a collection name and trusting the empty result. `db.task.find()` (no "s") returns nothing and raises no error, and `db.task.insertOne(…)` silently creates a second collection called `task`. When a query returns nothing unexpectedly, check the name first with `show collections`.',
     practice: { href: '#/database/documents/practice/mongo-playground', label: 'Open the document query playground' } },
 
-  { id: 'bson-objectid', hub: 'model', topic: 'model', 
-    title: 'BSON, `_id` and ObjectId',
+  { id: 'bson-objectid', hub: 'model', topic: 'model',
+    title: 'BSON, _id and ObjectId',
     summary: 'MongoDB stores documents as **BSON** (binary JSON), which adds types JSON lacks, such as dates and **ObjectId**; every document has an `_id` field, unique in its collection, which by default is an ObjectId.',
-    body: [
-      'JSON is text and knows only strings, numbers, booleans, `null`, objects and arrays. A database needs more: a real **date** type to sort by time, exact integer and decimal types, and a compact identifier. So MongoDB stores documents in **BSON**, a binary encoding of the same shape with extra types. You write JSON-like literals; the driver converts them to BSON on the way in and back to JavaScript objects on the way out.',
-      'Every document needs an `_id`: it is the **primary key** (see the SQL section). It must be unique in the collection, it cannot be changed after the insert, and if you do not supply one the driver generates an **ObjectId**: a 12-byte value written as 24 hexadecimal characters. Its first 4 bytes are the creation time in seconds, followed by 5 random bytes and a 3-byte counter, so ids can be generated on any machine without asking the database, and they sort roughly by creation time.',
-      'When a document leaves your API as JSON (`res.json(task)`), the ObjectId becomes a plain string and the date an ISO string. When the string comes back in a URL (`/tasks/6a9a…104`), the server must turn it back into an ObjectId before querying. To print BSON as text without losing the types, tools use **Extended JSON**: `{ "$oid": "6a9a…" }` for an ObjectId, `{ "$date": "2026-09-04T09:00:00Z" }` for a date.',
+    html: [
+      '<p>JSON is text and knows only strings, numbers, booleans, <code>null</code>, objects and arrays. A database needs more: a real <strong>date</strong> type to sort by time, exact numeric types and a compact identifier. So MongoDB stores documents as <strong>BSON</strong>, a binary encoding of the same shape with extra types. You write JSON-like literals; the driver converts them to BSON on the way in and back to JavaScript objects on the way out.</p>',
+      '<table><caption>The BSON types you will meet</caption><thead><tr><th scope="col">BSON type</th><th scope="col">Shell literal</th><th scope="col">In Node.js</th><th scope="col">In JSON (API response)</th></tr></thead><tbody>'
+        + '<tr><th scope="row">String</th><td><code>\'Set up CI\'</code></td><td><code>\'Set up CI\'</code></td><td><code>"Set up CI"</code></td></tr>'
+        + '<tr><th scope="row">Double / Int32</th><td><code>5</code>, <code>2.5</code></td><td><code>5</code>, <code>2.5</code></td><td><code>5</code>, <code>2.5</code></td></tr>'
+        + '<tr><th scope="row">Date</th><td><code>ISODate(\'2026-09-04\')</code></td><td><code>new Date(\'2026-09-04\')</code></td><td><code>"2026-09-04T00:00:00.000Z"</code> (a string)</td></tr>'
+        + '<tr><th scope="row">ObjectId</th><td><code>ObjectId(\'6a9a…104\')</code></td><td><code>new ObjectId(\'6a9a…104\')</code></td><td><code>"6a9a…104"</code> (a string)</td></tr>'
+        + '</tbody></table>',
+      '<p>Booleans, arrays, objects and <code>null</code> look the same in all three places; dates and ids are the ones that change shape.</p>',
+      '<h3>The <code>_id</code> field</h3>',
+      '<ul><li><strong>Every document has one:</strong> <code>_id</code> is the primary key (see <a href="#/database/relational/primary-keys">Primary keys</a>). It is unique in the collection and cannot change after the insert.</li>'
+        + '<li><strong>An ObjectId by default:</strong> if you give none, the driver generates a 12-byte ObjectId, written as 24 hexadecimal characters.</li>'
+        + '<li><strong>Made anywhere:</strong> its first 4 bytes are the creation time in seconds, then 5 random bytes and a 3-byte counter, so any machine can create one without asking the database, and ids sort roughly by creation time.</li></ul>',
+      '<h3>Across the API</h3>',
+      '<p>In a JSON response the ObjectId becomes a plain string and the date an ISO string. When the string comes back in a URL (<code>/tasks/6a9a…104</code>), the server turns it back into an ObjectId before querying. Tools that print BSON as text without losing the types use <strong>Extended JSON</strong>: <code>{ "$oid": "6a9a…" }</code> for an ObjectId, <code>{ "$date": "2026-09-04T09:00:00Z" }</code> for a date.</p>',
+      '<figure data-diagram></figure>',
     ],
-    table: {
-      caption: 'The BSON types you will meet',
-      head: ['BSON type', 'Shell literal', 'In Node.js', 'In JSON (API response)'],
-      rows: [
-        ['String', '`\'Set up CI\'`', '`\'Set up CI\'`', '`"Set up CI"`'],
-        ['Double / Int32', '`5`, `2.5`', '`5`, `2.5`', '`5`, `2.5`'],
-        ['Boolean', '`true`', '`true`', '`true`'],
-        ['Date', '`ISODate(\'2026-09-04\')`', '`new Date(\'2026-09-04\')`', '`"2026-09-04T00:00:00.000Z"` (a string)'],
-        ['ObjectId', '`ObjectId(\'6a9a…104\')`', '`new ObjectId(\'6a9a…104\')`', '`"6a9a…104"` (a string)'],
-        ['Array / Object', '`[ … ]`, `{ … }`', '`[ … ]`, `{ … }`', '`[ … ]`, `{ … }`'],
-        ['Null', '`null`', '`null`', '`null`'],
+    diagram: {
+      kind: 'flow',
+      title: 'An id leaves the API as a string and must come back as an ObjectId.',
+      desc: 'A request arrives for /tasks/6a9a…104: the id is a string. The server checks it with ObjectId.isValid and rejects malformed ids, converts it with new ObjectId(id), queries with findOne({ _id }), and the JSON response carries the id as a string again.',
+      nodes: [
+        { id: 'url', label: '`/tasks/6a9a…104`', note: 'a string' },
+        { id: 'valid', label: '`ObjectId.isValid`', note: 'rejects bad ids' },
+        { id: 'conv', label: '`new ObjectId(id)`', note: 'now an ObjectId', key: true },
+        { id: 'find', label: '`findOne({ _id })`', note: 'finds the task' },
+        { id: 'json', label: 'JSON response', note: 'a string again' },
       ],
+      edges: [['url', 'valid'], ['valid', 'conv'], ['conv', 'find'], ['find', 'json']],
     },
     live: { kind: 'js', code: `// JSON has no date type: a Date survives a round trip only as a string.
 const task = { title: 'Set up CI', createdAt: new Date('2026-09-04T09:00:00Z') };
@@ -84,41 +107,18 @@ console.log(back.createdAt instanceof Date); // false
     example: 'Ben\'s user document has `_id: ObjectId(\'6a93ea08a1b2c3d4e5000002\')`. In the playground, `db.users.findOne({ _id: ObjectId(\'6a93ea08a1b2c3d4e5000002\') })` returns Ben; the same query with the plain string `\'6a93ea08a1b2c3d4e5000002\'` returns `null`. Switch the data view to **Extended JSON** to see how the same documents look as plain JSON.',
     mistake: 'Querying with the id string from the URL: `tasks.findOne({ _id: req.params.id })`. A string is never equal to an ObjectId, so this always finds nothing and the route answers 404 for every task. Convert first: `{ _id: new ObjectId(req.params.id) }`, after checking the id is well-formed (24 hexadecimal characters, e.g. with `ObjectId.isValid(id)`), otherwise `new ObjectId()` throws.' },
 
-  { id: 'sql-bridge', hub: 'model', topic: 'model', 
-    title: 'From SQL to MongoDB: the vocabulary',
-    summary: 'Most SQL ideas have a MongoDB counterpart: table → **collection**, row → **document**, column → **field**, primary key → **`_id`**, JOIN → **embedding** or **`$lookup`**, `WHERE` → a **filter** document, `GROUP BY` → **`$group`**.',
-    body: [
-      'Learning MongoDB after SQL is like learning a second language with the same grammar: the questions you ask a database stay the same (which records? which fields? in what order? how many per group?), only the way you write them changes. SQL writes them as a sentence (`SELECT … FROM … WHERE …`); MongoDB writes them as JavaScript-like objects passed to methods (`find({ … }, { … })`).',
-      'The deepest difference is **where related data lives**. SQL keeps every entity in its own table and joins them at query time using foreign keys (see [Foreign keys](#/database/relational/foreign-keys): the relational tasks schema links `tasks.user_id` to `users.id`). MongoDB lets you **embed** related data inside the document that uses it, or **reference** another document by its `_id` and fetch it separately or with `$lookup`. Choosing between the two is the main design decision (see the Embedding and referencing cards).',
-      'Two more differences matter in practice. The database does not enforce a schema unless you ask it to (next card). And there are no foreign-key constraints: nothing stops a task from pointing at a user that was deleted.',
-    ],
-    table: {
-      caption: 'The same ideas in both worlds (the tasks/users domain)',
-      head: ['Idea', 'SQL (PostgreSQL)', 'MongoDB'],
-      rows: [
-        ['A group of similar records', 'Table `tasks`', 'Collection `tasks`'],
-        ['One record', 'Row (flat)', 'Document (can nest objects and arrays)'],
-        ['A named value', 'Column (declared, one type)', 'Field (not declared; any type)'],
-        ['Identity', '`id SERIAL PRIMARY KEY`', '`_id` (ObjectId by default)'],
-        ['Related data', 'Foreign key `user_id` + `JOIN`', 'Embedded sub-document, or an `_id` reference + `$lookup`'],
-        ['Read', '`SELECT title FROM tasks WHERE done = FALSE`', '`db.tasks.find({ done: false }, { title: 1 })`'],
-        ['Sort and page', '`ORDER BY … LIMIT 10 OFFSET 20`', '`.sort({ … }).skip(20).limit(10)`'],
-        ['Count per group', '`SELECT user_id, COUNT(*) … GROUP BY user_id`', '`aggregate([{ $group: { _id: \'$owner\', n: { $sum: 1 } } }])`'],
-        ['Create / change / remove', '`INSERT`, `UPDATE … SET`, `DELETE`', '`insertOne`, `updateOne` + `$set`, `deleteOne`'],
-        ['Schema rules', 'Enforced by the database (`NOT NULL`, types, FK)', 'Enforced by your code, a validator or Mongoose'],
-      ],
-    },
-    example: 'The relational query "open tasks of ana@example.com" is `SELECT t.title FROM tasks t JOIN users u ON u.id = t.user_id WHERE u.email = \'ana@example.com\' AND t.done = FALSE`. With the owner embedded in each task, MongoDB needs no join: `db.tasks.find({ \'owner.email\': \'ana@example.com\', done: false }, { title: 1 })`. The playground shows "The same in SQL" under each result so you can compare.',
-    mistake: 'Translating a SQL schema table by table, with a `task_tags` collection, a `comments` collection and ids everywhere, then joining them with `$lookup` in every query. That keeps all the costs of the relational model and loses its guarantees (no foreign keys, weaker joins). Design documents around how the data is **read**.',
-    practice: { href: '#/database/documents/practice/mongo-playground', label: 'Compare queries with SQL in the playground' } },
-
-  { id: 'flexible-schema', hub: 'model', topic: 'model', 
+  { id: 'flexible-schema', hub: 'model', topic: 'model',
     title: 'Flexible schema, and who checks the data',
-    summary: 'MongoDB does not require every document of a collection to have the same fields or types; that flexibility moves the job of **validating** data from the database to your code, a **schema validator** on the collection, or a library such as **Mongoose**.',
-    body: [
-      'A SQL table is a printed form: every row has the same boxes, and the database refuses a row with a missing `NOT NULL` value or text in a number column. A MongoDB collection is a folder of free-form notes: by default it accepts any document. In the playground only some tasks have `due` or `comments`, and only Cleo\'s user document has `interests`. That is convenient while the design is changing, and dangerous once real data arrives: one typo (`titel` instead of `title`) creates a document that no query for `title` will ever find.',
-      '"Schema-less" really means **the schema lives somewhere else**. You have three places to put it, and real projects combine them: (1) **validation in your API** before writing (for example Zod schemas in a `validators/` folder); (2) a **`$jsonSchema` validator** on the collection, so the database itself rejects bad documents with "Document failed validation"; (3) an **ODM** (object-document mapper) such as **Mongoose**, which declares a schema in JavaScript and checks documents before sending them (see the Mongoose card).',
-      'Changing the shape later also needs discipline. SQL has migrations (`ALTER TABLE`); in MongoDB you write a script that updates old documents (`updateMany({ priority: { $exists: false } }, { $set: { priority: 3 } })`), or your code must handle both the old and the new shape.',
+    summary: 'MongoDB does not require the documents of a collection to have the same fields or types; that flexibility moves the job of **validating** data out of the table definition and into your code, a **schema validator** on the collection, or a library.',
+    html: [
+      '<p>A SQL table refuses a row with a missing <code>NOT NULL</code> value or text in a number column. A MongoDB collection, by default, accepts <strong>any</strong> document. In the playground only some tasks have <code>due</code> or <code>comments</code>, and only Cleo\'s user has <code>interests</code>. That is convenient while the design changes and dangerous with real data: one typo (<code>titel</code> instead of <code>title</code>) creates a document that no query for <code>title</code> will ever find.</p>',
+      '<p>"Schema-less" really means <strong>the schema lives somewhere else</strong>. Real projects combine these places:</p>',
+      '<table><caption>Where the rules can live</caption><thead><tr><th scope="col">Place</th><th scope="col">Who refuses a bad document</th></tr></thead><tbody>'
+        + '<tr><th scope="row">Your API</th><td>Your code, before writing: <code>400 Bad Request</code> (see <a href="#/http/api-design/validation">Validation</a>)</td></tr>'
+        + '<tr><th scope="row">A <code>$jsonSchema</code> validator</th><td>MongoDB itself, on every write: <code>Document failed validation</code> (this card\'s code example)</td></tr>'
+        + '<tr><th scope="row">An ODM library</th><td>Your Node process, before sending: for example <a href="#/database/documents/mongoose">Mongoose</a></td></tr>'
+        + '</tbody></table>',
+      '<p><strong>Changing the shape later</strong> needs a plan too. SQL has migrations (<code>ALTER TABLE</code>); in MongoDB you run a script that updates the old documents, or your code handles both the old and the new shape.</p>',
     ],
     code: `// A validator on the collection: MongoDB itself rejects bad documents.
 db.createCollection('tasks', {
@@ -139,90 +139,18 @@ db.createCollection('tasks', {
 db.tasks.insertOne({ title: 'Study', done: 'no' });
 // MongoServerError: Document failed validation`,
     dialect: 'mongosh',
-    example: 'Without any validation, `db.tasks.insertOne({ titel: \'Buy bread\', done: \'false\' })` is accepted. The task never appears in `find({ done: false })` (its `done` is the **string** `\'false\'`) nor in a search on `title`. With the validator above, the same insert fails at once; with Zod in the API, the request is answered `400 Bad Request` before the database is touched.',
-    mistake: 'Taking "schema-less" as "no design needed". It is one of the most common beginner mistakes with document databases: the database will not stop you from writing inconsistent documents, so you find them in production. Write the shape of each collection down (fields, types, required ones) before coding, and validate in the API.' },
+    example: 'Without any validation, `db.tasks.insertOne({ titel: \'Buy bread\', done: \'false\' })` is accepted. The task never appears in `find({ done: false })` (its `done` is the **string** `\'false\'`) nor in a search on `title`. With this card\'s validator, the same insert fails at once; with validation in the API, the request is answered `400` before the database is touched.',
+    mistake: 'Taking "schema-less" as "no design needed". The database will not stop you from writing inconsistent documents, so you find them in production. Write the shape of each collection down (fields, types, required ones) before coding, and validate in the API.' },
 
-  /* ---- 2. Embedding and referencing ------------------------------------------------ */
-  { id: 'embedding', hub: 'design', topic: 'design', 
-    title: 'Embedding: keep together what you read together',
-    summary: '**Embedding** stores related data inside the parent document, as a **sub-document** or an **array**, so one read returns everything and one write updates it atomically.',
-    body: [
-      'Picture an order receipt. Its lines (product, quantity, price) are printed on the receipt itself: you never look them up in a separate book, they belong to that receipt only, and they are never shown without it. That is the ideal case for embedding. A task\'s `tags`, an order\'s lines and a user\'s address behave the same way.',
-      'Embedding gives you two things SQL would need extra work for. **One read**: `findOne` returns the task with its tags and comments, with no join. **Atomic writes**: a write to one document is all-or-nothing, so `$push`-ing a comment and changing `done` in the same `updateOne` can never half-happen. Across several documents you would need a **transaction**.',
-      'You query embedded data with **dot notation**: `\'owner.name\'` reaches into a sub-document and `\'comments.author\'` into every element of an array of sub-documents (see the Dot notation card).',
-    ],
-    code: `// tasks: comments and tags are embedded (they belong to this task only)
-{
-  _id: ObjectId('6a9bda10a1b2c3d4e5000105'),
-  title: 'Add pagination',
-  done: false,
-  tags: [ 'api', 'urgent' ],
-  comments: [
-    { author: 'Cleo', text: 'Use skip and limit' },
-    { author: 'Ben', text: 'Sort first!' }
-  ]
-}
-
-// one atomic write changes the task and its comments together
-db.tasks.updateOne(
-  { title: 'Add pagination' },
-  { $set: { done: true }, $push: { comments: { author: 'Ana', text: 'Done!' } } }
-)`,
-    dialect: 'mongosh',
-    example: 'In SQL, showing "Add pagination" with its tags and comments takes three tables and two joins (`tasks`, `task_tags`, `comments`). In MongoDB it is `db.tasks.findOne({ title: \'Add pagination\' })`: one document, one round trip. Try the update above in the playground and look at the task in the data view.',
-    mistake: 'Embedding something that is also needed on its own. If the API has `GET /comments?author=Ben` across all tasks, or comments can be edited from a moderation page, embedded comments make those queries awkward (you must search inside every task). Embed only what is read through its parent.' },
-
-  { id: 'referencing', hub: 'design', topic: 'design', 
-    title: 'Referencing: store the `_id` of another document',
-    summary: '**Referencing** stores only the `_id` of a related document (for example `ownerId` in a task), keeping each entity in its own collection; you fetch the related document with a second query or with **`$lookup`**.',
-    body: [
-      'A library card does not contain the books you borrowed: it lists their **codes**, and the books stay on their shelves where anyone can find them. A reference works the same way: the task keeps `ownerId: ObjectId(\'…\')` and the user stays in `users`, where it can be updated once and read by every task that points to it. This is the foreign-key idea from SQL.',
-      'The difference is that MongoDB **does not check references**. There is no `REFERENCES users(id)` and no `ON DELETE CASCADE` (the [relational tasks schema](#/database/relational/foreign-keys) relies on both): you can insert a task whose `ownerId` matches no user, and deleting a user leaves its tasks behind. Your code must delete or reassign them (`deleteMany({ ownerId: id })`), ideally in the same place that deletes the user.',
-      'To show a task with its owner you either run two queries (find the task, then `findOne` the user) or use the aggregation stage `$lookup`, a left outer join (see the $unwind and $lookup card). Both cost more than reading one embedded document, which is why references are kept for data that really is shared or large.',
-    ],
-    code: `// users
-{ _id: ObjectId('6a93ea08a1b2c3d4e5000002'), name: 'Ben', email: 'ben@example.com' }
-
-// tasks reference their owner by _id (like tasks.user_id in SQL)
-{ _id: ObjectId('…'), title: 'Set up CI', ownerId: ObjectId('6a93ea08a1b2c3d4e5000002') }
-
-// Node.js: two queries
-const task = await db.collection('tasks').findOne({ _id: taskId });
-const owner = await db.collection('users').findOne({ _id: task.ownerId });`,
-    dialect: 'js',
-    example: 'A user may own hundreds of tasks over a year, and the API reads tasks one by one (`GET /tasks/:id`) and page by page (`GET /tasks?limit=10&offset=20`). Keeping tasks in their own collection with an `ownerId` reference serves both, and `db.tasks.find({ ownerId: benId }).sort({ createdAt: -1 }).limit(10)` (with an index on `ownerId`) lists Ben\'s latest tasks.',
-    mistake: 'Assuming MongoDB cleans up like `ON DELETE CASCADE`. After `db.users.deleteOne({ _id: benId })`, Ben\'s tasks are still there, pointing at nobody, and the API may crash when it tries to show their owner. Deleting a parent means deleting or updating its children in your own code.' },
-
-  { id: 'embed-or-reference', hub: 'design', topic: 'design', 
-    title: 'Embed or reference? Rules of thumb',
-    summary: 'Embed data that is **read with its parent, belongs to it alone and stays small**; reference data that **grows without limit, is queried on its own, or is shared** by many documents. A document can never exceed **16 MB**.',
-    body: [
-      'Ask three questions about the related data. (1) **Is it read together with the parent?** If every screen that shows a task also shows its tags, embed them. (2) **How many can there be?** A few, with a natural limit (tags, an address, the lines of one order): embed. Hundreds or "it keeps growing" (a user\'s tasks, a post\'s comments on a popular site, log entries): reference. (3) **Is it used on its own or by many parents?** If it has its own URL, is edited independently or is shared (a user shown on many tasks), reference.',
-      'Size is a hard limit, not a style choice. A single document can be at most **16 MB**, and long before that a huge document is slow: every read loads it whole and every `$push` rewrites it. An array that grows without bound (say, a user document holding **all** of that user\'s tasks) will eventually hit the limit, and it makes "page 3 of my tasks" or "task 42" awkward queries.',
-      'There is a middle way: **embed a copy of the few fields you show often** and keep the reference for the rest. The playground\'s tasks embed `owner: { name, email }`: the list screen shows the owner\'s name without a second query, and `owner.email` still identifies the user. The price is **duplication**: if Ben changes his name, every task that copied it must be updated (`updateMany({ \'owner.email\': \'ben@example.com\' }, { $set: { \'owner.name\': \'Benjamin\' } })`), or the copies go stale. Copy only fields that rarely change.',
-    ],
-    table: {
-      caption: 'Decisions for a tasks app',
-      head: ['Related data', 'Typical size', 'Read with parent?', 'Used alone?', 'Choice'],
-      rows: [
-        ['A task\'s tags', 'A few strings', 'Always', 'No', '**Embed** an array'],
-        ['A task\'s comments', 'A handful', 'Yes, on the task page', 'Rarely', '**Embed** an array of sub-documents'],
-        ['A user\'s tasks', 'Grows forever', 'Only in pages', 'Yes: `GET /tasks/:id`', '**Reference**: `tasks` collection with `ownerId`'],
-        ['The owner\'s name on a task', 'One field', 'Yes, in lists', '–', '**Embed a copy** + keep the reference (accept duplication)'],
-        ['Users ↔ projects (many-to-many)', 'Many on both sides', 'Partly', 'Yes', '**Reference**: arrays of ids, or a membership collection'],
-      ],
-    },
-    example: 'A tempting first design is a user document with an embedded `tasks` array. By the rule above (embed only small, bounded data that is never queried on its own) that is a poor fit for a tasks API: tasks grow without limit, have their own routes, are paginated and are updated one at a time. A separate `tasks` collection with `ownerId` (plus, if you like, an embedded `owner.name` copy) follows the rule.',
-    mistake: 'Deciding by habit: "MongoDB means embed everything" or "always normalise like SQL". Both extremes hurt. Decide per relationship, from how the data is read and how big it can grow.' },
-
-  /* ---- 3. CRUD ------------------------------------------------------------------------- */
-  { id: 'insert', hub: 'crud', topic: 'crud', 
+  /* ---- 2. CRUD ------------------------------------------------------------------------- */
+  { id: 'insert', hub: 'crud', topic: 'crud',
     title: 'Creating documents: insertOne and insertMany',
     summary: '`insertOne(doc)` adds one document and `insertMany([docs])` several; if a document has no `_id`, one is generated, and the result reports the new id(s).',
-    body: [
-      'Inserting is handing a filled-in form to the clerk: the clerk stamps it with a reference number (`_id`) and files it in the right drawer, creating the drawer if it did not exist. You get a receipt back: `{ acknowledged: true, insertedId: ObjectId(\'…\') }`. In the Node.js driver the same receipt is the resolved value of `await tasks.insertOne(doc)`.',
-      '`insertMany` is **ordered** by default: it inserts in array order and **stops at the first error** (for example a duplicate `_id`, or a duplicate email when there is a unique index), and the documents before the error **stay inserted**. It is not all-or-nothing; that would need a transaction.',
-      'An insert does not check fields unless a validator or your code does (previous section). Dates should be real dates (`ISODate(…)` in the shell, `new Date()` in Node), not strings, or sorting by date will compare text.',
+    html: [
+      '<p>An insert adds the document to the collection, creating the collection if it does not exist yet. If the document has no <code>_id</code>, one is generated, and the result reports it: <code>{ acknowledged: true, insertedId: ObjectId(\'…\') }</code>. In Node.js that object is what <code>await tasks.insertOne(doc)</code> returns.</p>',
+      '<ul><li><strong><code>insertMany</code> stops at the first error</strong> (a duplicate <code>_id</code>, or a duplicate email under a unique index), and the documents before it <strong>stay inserted</strong>. It is not all-or-nothing; that would need a transaction.</li>'
+        + '<li><strong>No checks by default:</strong> fields are not validated unless a validator or your code does it (see <a href="#/database/documents/flexible-schema">Flexible schema</a>).</li>'
+        + '<li><strong>Dates as dates:</strong> <code>ISODate(…)</code> in the shell, <code>new Date()</code> in Node.js. Dates stored as strings sort as text.</li></ul>',
     ],
     code: `db.tasks.insertOne({
   title: 'Prepare the slides',
@@ -244,13 +172,17 @@ db.users.insertMany([
     mistake: 'Passing an array to `insertOne` (use `insertMany`), or putting update operators in an insert: `insertOne({ $set: { done: true } })` is rejected because field names cannot start with `$`. `$set` belongs in `updateOne`.',
     practice: { href: '#/database/documents/practice/mongo-playground', label: 'Insert documents in the playground' } },
 
-  { id: 'find-basics', hub: 'crud', topic: 'crud', 
+  { id: 'find-basics', hub: 'crud', topic: 'crud',
     title: 'Reading: find, findOne and the filter',
     summary: '`find(filter, projection)` returns every document that matches the **filter** (an object of conditions), `findOne` returns the first match or `null`, and `countDocuments(filter)` returns how many match.',
-    body: [
-      'A filter is a **template** that documents are held against: `{ done: false, priority: 5 }` reads "documents whose `done` is `false` **and** whose `priority` is `5`". Each field listed is one condition and **all of them must hold** (an implicit AND, like `WHERE done = FALSE AND priority = 5`). An empty filter `{}` has no conditions, so it matches every document.',
-      'Matching is by **value and type**: `{ priority: 5 }` does not match `priority: \'5\'` (a string), and `{ done: \'false\' }` does not match `done: false`. A field that is missing never equals a value, but it does match `null`: `{ due: null }` finds tasks with `due: null` **and** tasks with no `due` at all.',
-      '`find` does not hand back an array: it returns a **cursor**, a pointer that fetches documents in batches as you read them. The shell prints the first 20; in Node.js you call `.toArray()` (or loop with `for await`) to read them, and chain `.sort()`, `.skip()` and `.limit()` before reading.',
+    html: [
+      '<p>A filter is a <strong>template</strong> that documents are held against: <code>{ done: false, priority: 5 }</code> reads "<code>done</code> is <code>false</code> <strong>and</strong> <code>priority</code> is 5". Every field listed must match, like <code>WHERE done = FALSE AND priority = 5</code>. The empty filter <code>{}</code> has no conditions, so it matches every document.</p>',
+      '<dl><dt><code>find(filter)</code></dt><dd>Every matching document, as a cursor.</dd>'
+        + '<dt><code>findOne(filter)</code></dt><dd>The first match, or <code>null</code>.</dd>'
+        + '<dt><code>countDocuments(filter)</code></dt><dd>How many documents match.</dd></dl>',
+      '<ul><li><strong>Value and type:</strong> <code>{ priority: 5 }</code> does not match <code>priority: \'5\'</code> (a string), and <code>{ done: \'false\' }</code> does not match <code>done: false</code>.</li>'
+        + '<li><strong>Missing matches <code>null</code>:</strong> a missing field never equals a value, but <code>{ due: null }</code> finds tasks with <code>due: null</code> <strong>and</strong> tasks with no <code>due</code> at all.</li>'
+        + '<li><strong>A cursor, not an array:</strong> <code>find</code> returns a pointer that fetches documents in batches as you read them. The shell prints the first 20; in Node.js you call <code>.toArray()</code> (or loop with <code>for await</code>), and chain <code>.sort()</code>, <code>.skip()</code> and <code>.limit()</code> before reading.</li></ul>',
     ],
     code: `db.tasks.find({ done: false })                       // every open task
 db.tasks.find({ done: false, 'owner.name': 'Ana' })  // AND: both conditions
@@ -261,29 +193,26 @@ db.tasks.countDocuments({ done: true })              // 3
 const open = await db.collection('tasks').find({ done: false }).toArray();`,
     dialect: 'mongosh',
     example: 'With the seed data, `db.tasks.find({ done: false })` returns 7 documents and `db.tasks.countDocuments({ done: false })` returns `7`. The playground translates the filter to SQL: `SELECT * FROM tasks WHERE done = FALSE;`. Now try `db.tasks.find({ done: \'false\' })`: 0 documents, and a note explains why.',
-    mistake: 'Writing the filter as SQL or JavaScript: `find({ done = false })`, `find({ priority > 3 })` or `find(done: false)`. A filter is always an **object** of `field: condition` pairs; comparisons other than equality use operators such as `{ priority: { $gt: 3 } }` (next section).',
+    mistake: 'Writing the filter as SQL or JavaScript: `find({ done = false })`, `find({ priority > 3 })` or `find(done: false)`. A filter is always an **object** of `field: condition` pairs; comparisons other than equality use operators such as `{ priority: { $gt: 3 } }` (see [Query operators](#/database/documents/query-operators)).',
     widget: 'mongo-playground' },
 
-  { id: 'update-operators', hub: 'crud', topic: 'crud', 
+  { id: 'update-operators', hub: 'crud', topic: 'crud',
     title: 'Updating: updateOne, updateMany and update operators',
     summary: '`updateOne(filter, update)` changes the first matching document and `updateMany` every match; the **update** document uses operators such as `$set`, `$unset`, `$inc`, `$push` and `$pull` to say **what** to change.',
-    body: [
-      'An update has two halves, like a work order: **which** documents (the filter, same rules as `find`) and **what to do** to them (the update document). The second half must be made of **operators**, because a plain object would be ambiguous: does `{ done: true }` mean "set `done`" or "replace the whole task with `{ done: true }`"? The shell and drivers refuse it with "Update document requires atomic operators". To replace a whole document on purpose there is `replaceOne`.',
-      'The result tells you what happened: `matchedCount` (how many documents the filter found) and `modifiedCount` (how many actually changed). They differ when a document already had the new value. A `matchedCount` of 0 usually means a wrong filter, and your API should answer `404`.',
-      'With `{ upsert: true }` as a third argument, an update that matches nothing **inserts** a new document built from the filter and the update. Use it deliberately (for example "create the settings document if missing").',
+    html: [
+      '<p>An update has two halves: <strong>which</strong> documents (the filter, with the same rules as <code>find</code>) and <strong>what to change</strong> (the update document). The second half must be made of <strong>operators</strong>. A plain <code>{ done: true }</code> would be ambiguous (set one field, or replace the whole task?), so it is refused with "Update document requires atomic operators". To replace a whole document on purpose, use <code>replaceOne</code>.</p>',
+      '<table><caption>The update operators you will use</caption><thead><tr><th scope="col">Operator</th><th scope="col">What it does</th><th scope="col">Example</th></tr></thead><tbody>'
+        + '<tr><th scope="row"><code>$set</code></th><td>Sets fields (creates them if missing); dot paths reach sub-documents</td><td><code>{ $set: { done: true, \'owner.name\': \'Benjamin\' } }</code></td></tr>'
+        + '<tr><th scope="row"><code>$unset</code></th><td>Removes fields (the value given is ignored)</td><td><code>{ $unset: { due: \'\' } }</code></td></tr>'
+        + '<tr><th scope="row"><code>$inc</code></th><td>Adds a number (negative to subtract); creates the field if missing</td><td><code>{ $inc: { priority: 1 } }</code></td></tr>'
+        + '<tr><th scope="row"><code>$push</code></th><td>Appends a value to an array (<code>$each</code> for several)</td><td><code>{ $push: { tags: \'urgent\' } }</code></td></tr>'
+        + '<tr><th scope="row"><code>$addToSet</code></th><td>Appends only if the value is not already there</td><td><code>{ $addToSet: { tags: \'urgent\' } }</code></td></tr>'
+        + '<tr><th scope="row"><code>$pull</code></th><td>Removes every array element equal to a value or matching a condition</td><td><code>{ $pull: { comments: { author: \'Ben\' } } }</code></td></tr>'
+        + '</tbody></table>',
+      '<dl><dt><code>matchedCount</code></dt><dd>How many documents the filter found. 0 usually means a wrong filter, and an API answers <code>404</code>.</dd>'
+        + '<dt><code>modifiedCount</code></dt><dd>How many actually changed; lower when a document already had the new value.</dd>'
+        + '<dt><code>{ upsert: true }</code></dt><dd>A third argument: when nothing matches, a new document is inserted, built from the filter and the update. Use it on purpose ("create the settings document if missing").</dd></dl>',
     ],
-    table: {
-      caption: 'The update operators you will use',
-      head: ['Operator', 'What it does', 'Example'],
-      rows: [
-        ['`$set`', 'Sets fields (creates them if missing); dot paths reach sub-documents', '`{ $set: { done: true, \'owner.name\': \'Benjamin\' } }`'],
-        ['`$unset`', 'Removes fields (the value given is ignored)', '`{ $unset: { due: \'\' } }`'],
-        ['`$inc`', 'Adds a number (negative to subtract); creates the field if missing', '`{ $inc: { priority: 1 } }`'],
-        ['`$push`', 'Appends a value to an array (`$each` for several)', '`{ $push: { tags: \'urgent\' } }`'],
-        ['`$addToSet`', 'Appends only if the value is not already there', '`{ $addToSet: { tags: \'urgent\' } }`'],
-        ['`$pull`', 'Removes every array element equal to a value or matching a condition', '`{ $pull: { comments: { author: \'Ben\' } } }`'],
-      ],
-    },
     code: `db.tasks.updateOne({ title: 'Set up CI' }, { $set: { done: true } })
 // { acknowledged: true, matchedCount: 1, modifiedCount: 1, upsertedCount: 0 }
 
@@ -297,55 +226,52 @@ db.tasks.updateOne({ title: 'Set up CI' }, { done: true })
     mistake: 'Replacing an array when you meant to add to it: `{ $set: { tags: [\'urgent\'] } }` throws away the existing tags, while `{ $push: { tags: \'urgent\' } }` keeps them. And `updateOne` with a filter that matches several documents changes **only the first one**: use `updateMany` when you mean all of them.',
     practice: { href: '#/database/documents/practice/mongo-playground', label: 'Run updates in the playground (then Reset data)' } },
 
-  { id: 'delete-empty-filter', hub: 'crud', topic: 'crud', 
-    title: 'Deleting, and the danger of `{}`',
+  { id: 'delete-empty-filter', hub: 'crud', topic: 'crud',
+    title: 'Deleting, and the danger of {}',
     summary: '`deleteOne(filter)` removes the first matching document and `deleteMany(filter)` every match; because an empty filter `{}` matches **everything**, `deleteMany({})` empties the collection without asking.',
-    body: [
-      'A filter selects documents the same way for every method, so the most dangerous filter is the one with no conditions. In SQL, forgetting the `WHERE` of a `DELETE` deletes every row; in MongoDB `{}` plays that role, and there is no confirmation and no undo. The same goes for `updateMany({}, …)`, which changes every document.',
-      'Empty filters rarely come from typing `{}`. They come from code that **builds** a filter from the request and ends up with nothing in it: a missing query parameter, a misspelled property, or a body that was not parsed because `express.json()` is missing. Guard every write: refuse to run `deleteMany` or `updateMany` when the filter is empty, and prefer deleting by `_id`.',
-      'Good habits: run the filter with `find` (or `countDocuments`) **before** deleting, check `deletedCount` afterwards, and in an API delete one resource per request (`DELETE /tasks/:id` → `deleteOne({ _id })`, answering `404` when `deletedCount` is 0).',
+    html: [
+      '<p>A filter selects documents the same way for every method, so the most dangerous filter is the one with no conditions. <code>deleteMany({})</code> empties the collection, like a SQL <code>DELETE</code> without its <code>WHERE</code>, with no confirmation and no undo; <code>updateMany({}, …)</code> changes every document.</p>',
+      '<p>Empty filters rarely come from typing <code>{}</code>. They come from code that <strong>builds</strong> the filter from a request and ends up with nothing in it: a missing query parameter, a misspelled property, or a request body that was never parsed.</p>',
+      '<h3>Habits that prevent it</h3>',
+      '<ul><li><strong>Refuse an empty filter</strong> before any <code>deleteMany</code> or <code>updateMany</code>.</li>'
+        + '<li><strong>Delete by <code>_id</code>:</strong> one resource per request, <code>DELETE /tasks/:id</code> runs <code>deleteOne({ _id })</code>.</li>'
+        + '<li><strong>Look first:</strong> run the filter with <code>find</code> or <code>countDocuments</code> before deleting.</li>'
+        + '<li><strong>Check the result:</strong> a <code>deletedCount</code> of 0 means nothing matched, and an API answers <code>404</code>.</li></ul>',
     ],
-    code: `// A "clean up" route with a hidden bug
-app.delete('/tasks', async (req, res, next) => {
-  try {
-    const filter = {};
-    if (req.query.done) filter.done = req.query.done === 'true';
-    // DELETE /tasks          → filter is {}  → EVERY task is deleted
-    if (Object.keys(filter).length === 0) {
-      return res.status(400).json({ error: 'A filter is required' });
-    }
-    const { deletedCount } = await req.app.locals.db.collection('tasks').deleteMany(filter);
-    res.json({ deletedCount });
-  } catch (err) {
-    next(err);            // Express 4 does not catch async errors by itself
+    code: `// A clean-up helper: the guard stops the empty filter
+async function deleteTasks(tasks, query) {
+  const filter = {};
+  if (query.done !== undefined) filter.done = query.done === 'true';
+  // called without ?done=  →  filter is {}  →  EVERY task would be deleted
+  if (Object.keys(filter).length === 0) {
+    throw new Error('A filter is required');
   }
-});`,
+  const { deletedCount } = await tasks.deleteMany(filter);
+  return deletedCount;
+}`,
     dialect: 'js',
     example: 'In the playground, `db.tasks.find({ done: true })` shows 3 tasks; `db.tasks.deleteMany({ done: true })` then reports `deletedCount: 3`. Loading the example "Delete (empty filter!)" deletes all 10 tasks and the result warns you; press **Reset data** to bring them back.',
     mistake: 'Using `deleteOne` to mean "delete this one" with a filter that is not unique, such as `{ title: \'Study\' }`. It removes whichever matching document comes first, which may not be the one the user clicked. Identify the document by `_id`.' },
 
-  /* ---- 4. Queries ------------------------------------------------------------------------ */
-  { id: 'query-operators', hub: 'query', topic: 'query', 
+  /* ---- 3. Queries ------------------------------------------------------------------------ */
+  { id: 'query-operators', hub: 'query', topic: 'query',
     title: 'Query operators: comparison and logic',
     summary: 'Conditions other than equality use **query operators**, written as `{ field: { $operator: value } }`: comparison (`$eq $ne $gt $gte $lt $lte`), lists (`$in $nin`), presence (`$exists`), patterns (`$regex`), and `$and` / `$or` to combine whole conditions.',
-    body: [
-      'A filter like `{ priority: 5 }` can only say "equals". To say "greater than", you replace the value by an object whose key is an **operator**: `{ priority: { $gt: 3 } }` reads "priority greater than 3". The `$` marks a word as an operator rather than a field name. Several operators in the same object all apply: `{ priority: { $gte: 2, $lte: 4 } }` is "between 2 and 4".',
-      'Comparisons only compare values of the **same type**: `{ priority: { $gt: 3 } }` never matches a priority stored as the string `\'5\'`. That is one more reason to keep types consistent (the Flexible schema card).',
-      'Conditions on different fields are already combined with AND. You need `$and` only to put two conditions on the **same** field in separate objects, and `$or` when **either** of several conditions may hold. `$and`, `$or` and `$nor` go at the **top level** of the filter and take an array of filters.',
+    html: [
+      '<p><code>{ priority: 5 }</code> can only say "equals". For anything else, replace the value by an object whose key is an <strong>operator</strong>: <code>{ priority: { $gt: 3 } }</code> reads "priority greater than 3". The <code>$</code> marks an operator rather than a field name, and several operators in one object all apply: <code>{ priority: { $gte: 2, $lte: 4 } }</code> is "between 2 and 4".</p>',
+      '<table><caption>Query operators (SQL equivalent in the last column)</caption><thead><tr><th scope="col">Operator</th><th scope="col">Meaning</th><th scope="col">Example</th><th scope="col">SQL</th></tr></thead><tbody>'
+        + '<tr><th scope="row"><code>$eq</code> / <code>$ne</code></th><td>Equal / not equal (<code>$ne</code> also matches a missing field)</td><td><code>{ done: { $ne: true } }</code></td><td><code>done &lt;&gt; TRUE</code></td></tr>'
+        + '<tr><th scope="row"><code>$gt</code> <code>$gte</code> <code>$lt</code> <code>$lte</code></th><td>Greater / at least / less / at most</td><td><code>{ priority: { $gte: 3 } }</code></td><td><code>priority &gt;= 3</code></td></tr>'
+        + '<tr><th scope="row"><code>$in</code> / <code>$nin</code></th><td>Equal to one of a list / to none of it</td><td><code>{ priority: { $in: [1, 5] } }</code></td><td><code>priority IN (1, 5)</code></td></tr>'
+        + '<tr><th scope="row"><code>$exists</code></th><td>The field is present (<code>true</code>) or absent (<code>false</code>)</td><td><code>{ due: { $exists: true } }</code></td><td><code>due IS NOT NULL</code> (roughly)</td></tr>'
+        + '<tr><th scope="row"><code>$regex</code> or <code>/…/</code></th><td>A string matches a pattern (<code>i</code> = ignore case)</td><td><code>{ title: /^write/i }</code></td><td><code>title ILIKE \'write%\'</code></td></tr>'
+        + '<tr><th scope="row"><code>$or</code></th><td>At least one of the filters holds</td><td><code>{ $or: [{ done: true }, { priority: 5 }] }</code></td><td><code>done OR priority = 5</code></td></tr>'
+        + '<tr><th scope="row"><code>$and</code></th><td>All the filters hold</td><td><code>{ $and: [{ due: { $exists: true } }, { due: { $lt: ISODate(\'2026-09-26\') } }] }</code></td><td><code>… AND …</code></td></tr>'
+        + '</tbody></table>',
+      '<ul><li><strong>Same type only:</strong> <code>{ priority: { $gt: 3 } }</code> never matches a priority stored as the string <code>\'5\'</code>, one more reason to keep types consistent (see <a href="#/database/documents/flexible-schema">Flexible schema</a>).</li>'
+        + '<li><strong>Inside or outside:</strong> comparison operators go <strong>inside</strong> a field; <code>$and</code>, <code>$or</code> and <code>$nor</code> go at the <strong>top</strong> of the filter and take an array of filters.</li>'
+        + '<li><strong><code>$and</code> is rarely needed:</strong> conditions on different fields are already combined with AND. Use it only to put two conditions on the <strong>same</strong> field in separate objects.</li></ul>',
     ],
-    table: {
-      caption: 'Query operators (SQL equivalent in the last column)',
-      head: ['Operator', 'Meaning', 'Example', 'SQL'],
-      rows: [
-        ['`$eq` / `$ne`', 'Equal / not equal (`$ne` also matches a missing field)', '`{ done: { $ne: true } }`', '`done <> TRUE`'],
-        ['`$gt` `$gte` `$lt` `$lte`', 'Greater / at least / less / at most', '`{ priority: { $gte: 3 } }`', '`priority >= 3`'],
-        ['`$in` / `$nin`', 'Equal to one of a list / to none of it', '`{ priority: { $in: [1, 5] } }`', '`priority IN (1, 5)`'],
-        ['`$exists`', 'The field is present (`true`) or absent (`false`)', '`{ due: { $exists: true } }`', '`due IS NOT NULL` (roughly)'],
-        ['`$regex` or `/…/`', 'A string matches a pattern (`i` = ignore case)', '`{ title: /^write/i }`', '`title ILIKE \'write%\'`'],
-        ['`$or`', 'At least one of the filters holds', '`{ $or: [{ done: true }, { priority: 5 }] }`', '`done OR priority = 5`'],
-        ['`$and`', 'All the filters hold', '`{ $and: [{ due: { $exists: true } }, { due: { $lt: ISODate(\'2026-09-26\') } }] }`', '`… AND …`'],
-      ],
-    },
     code: `db.tasks.find({ priority: { $gt: 3 } })                 // 4 or 5
 db.tasks.find({ priority: { $gte: 2, $lte: 4 } })       // a range
 db.tasks.find({ tags: { $in: ['db', 'api'] } })         // any of these tags
@@ -354,16 +280,23 @@ db.tasks.find({ title: /write/i })                      // 'Write …' in any ca
 db.tasks.find({ $or: [{ priority: 5 }, { done: true }] })`,
     dialect: 'mongosh',
     example: 'In the playground, `db.tasks.find({ $or: [{ priority: 5 }, { done: true }] })` returns 4 tasks: Set up CI (priority 5) plus the 3 finished ones. The SQL panel shows `WHERE priority = 5 OR done = TRUE`. Mistype an operator (`$get`) and the error says `unknown operator: $get (did you mean $gt?)`.',
-    mistake: 'Putting the operator in the wrong place: `{ $gt: { priority: 3 } }` (operator outside, field inside) fails with "unknown top level operator", and `{ priority: { $or: [...] } }` fails too. Comparison operators go **inside** the field; `$and`/`$or` go **outside**, at the top. Also avoid writing the same field twice in one object (`{ priority: { $gt: 1 }, priority: { $lt: 5 } }`): in JavaScript the second silently replaces the first; combine them as `{ priority: { $gt: 1, $lt: 5 } }`.',
+    mistake: 'Putting the operator in the wrong place: `{ $gt: { priority: 3 } }` (operator outside, field inside) fails with "unknown top level operator", and `{ priority: { $or: [...] } }` fails too. Also avoid writing the same field twice in one object (`{ priority: { $gt: 1 }, priority: { $lt: 5 } }`): in JavaScript the second silently replaces the first; combine them as `{ priority: { $gt: 1, $lt: 5 } }`.',
     widget: 'mongo-playground' },
 
-  { id: 'arrays-dot-notation', hub: 'query', topic: 'query', 
+  { id: 'arrays-dot-notation', hub: 'query', topic: 'query',
     title: 'Dot notation: inside sub-documents and arrays',
     summary: '**Dot notation** (`\'owner.name\'`, `\'comments.author\'`) reaches fields inside sub-documents and inside the elements of arrays; on an array field, a plain value matches arrays that **contain** it.',
-    body: [
-      'A path is like a postal address read from the outside in: `\'owner.name\'` means "the `name` inside `owner`". When the path crosses an **array**, MongoDB looks at **every element**: `\'comments.author\': \'Ben\'` matches a task if **any** of its comments was written by Ben. Paths with dots must be written in **quotes**, because `owner.name: …` is not a valid object key in JavaScript.',
-      'For arrays of plain values, equality means **contains**: `{ tags: \'urgent\' }` matches `[\'devops\', \'urgent\']`. Writing the whole array, `{ tags: [\'devops\', \'urgent\'] }`, asks for **exactly** that array, in that order. Other array tools: `$all` (contains all of these, any order), `$size` (exactly n elements), and a position such as `\'tags.0\'` (the first element).',
-      'Several conditions on an array of sub-documents may be satisfied by **different** elements: `{ \'comments.author\': \'Ben\', \'comments.text\': /done/ }` matches if some comment is by Ben and some (possibly other) comment mentions "done". To require **one element** that meets all conditions, use `$elemMatch`: `{ comments: { $elemMatch: { author: \'Ben\', text: /done/ } } }`.',
+    html: [
+      '<p><code>\'owner.name\'</code> means "the <code>name</code> inside <code>owner</code>". When a path crosses an <strong>array</strong>, MongoDB looks at <strong>every element</strong>: <code>\'comments.author\': \'Ben\'</code> matches a task if <strong>any</strong> of its comments was written by Ben. Paths with dots go in <strong>quotes</strong>, because <code>owner.name: …</code> is not a valid object key in JavaScript.</p>',
+      '<table><caption>Asking about an array of values</caption><thead><tr><th scope="col">Filter</th><th scope="col">Matches</th></tr></thead><tbody>'
+        + '<tr><th scope="row"><code>{ tags: \'urgent\' }</code></th><td>Arrays that <strong>contain</strong> <code>\'urgent\'</code></td></tr>'
+        + '<tr><th scope="row"><code>{ tags: [\'devops\', \'urgent\'] }</code></th><td>Exactly that array, in that order</td></tr>'
+        + '<tr><th scope="row"><code>{ tags: { $all: [\'api\', \'urgent\'] } }</code></th><td>Contains all of them, in any order</td></tr>'
+        + '<tr><th scope="row"><code>{ tags: { $size: 0 } }</code></th><td>Exactly 0 elements</td></tr>'
+        + '<tr><th scope="row"><code>{ \'tags.0\': \'api\' }</code></th><td>The first element is <code>\'api\'</code></td></tr>'
+        + '</tbody></table>',
+      '<h3>Several conditions on one element</h3>',
+      '<p><code>{ \'comments.author\': \'Ben\', \'comments.text\': /done/ }</code> matches if some comment is by Ben and some, possibly <strong>another</strong>, mentions "done". To require <strong>one element</strong> that meets every condition, use <code>$elemMatch</code>: <code>{ comments: { $elemMatch: { author: \'Ben\', text: /done/ } } }</code>.</p>',
     ],
     code: `db.tasks.find({ 'owner.name': 'Ben' })               // inside a sub-document
 db.tasks.find({ 'comments.author': 'Ben' })           // inside an array of sub-documents
@@ -376,13 +309,17 @@ db.tasks.find({ comments: { $elemMatch: { author: 'Ben', text: /sort/i } } })`,
     mistake: 'Writing `{ owner: { name: \'Ben\' } }` to find Ben\'s tasks. That asks for an `owner` sub-document **exactly equal** to `{ name: \'Ben\' }`, with no other fields, so it finds nothing (the owner also has an `email`). Use dot notation for one field: `{ \'owner.name\': \'Ben\' }`.',
     practice: { href: '#/database/documents/practice/mongo-playground', label: 'Query arrays and sub-documents in the playground' } },
 
-  { id: 'projection', hub: 'query', topic: 'query', 
+  { id: 'projection', hub: 'query', topic: 'query',
     title: 'Projection: choose the fields you get back',
     summary: 'The second argument of `find` is the **projection**: `{ title: 1 }` returns only the listed fields (plus `_id`), `{ comments: 0 }` returns everything except the listed fields; the two styles cannot be mixed, except for `_id: 0`.',
-    body: [
-      'A filter chooses **which documents**; a projection chooses **which fields** of them, like the column list after `SELECT`. Sending only what the client needs saves bandwidth and avoids leaking fields (for example a user\'s `passwordHash`, which must never leave the server).',
-      'There are two styles. **Inclusion** (`1` or `true`): "only these fields". **Exclusion** (`0` or `false`): "everything but these". A projection must use one style: `{ title: 1, done: 0 }` is an error ("Cannot do exclusion on field done in inclusion projection"), because it is unclear what should happen to the other fields. The only exception is `_id`, which is included by default and can be hidden in either style with `_id: 0`.',
-      'Dot paths work here too: `{ \'owner.name\': 1, _id: 0 }` returns `{ owner: { name: \'Ben\' } }`. In the Node.js driver the projection goes in an options object: `find(filter, { projection: { title: 1 } })`, or `find(filter).project({ title: 1 })`.',
+    html: [
+      '<p>A filter chooses <strong>which documents</strong>; a projection chooses <strong>which fields</strong> of them, like the column list after <code>SELECT</code>. Sending only what the client needs saves bandwidth and keeps fields such as a user\'s <code>passwordHash</code> on the server.</p>',
+      '<dl><dt>Inclusion: <code>{ title: 1 }</code></dt><dd>Only these fields, plus <code>_id</code>.</dd>'
+        + '<dt>Exclusion: <code>{ comments: 0 }</code></dt><dd>Every field except these.</dd>'
+        + '<dt><code>_id: 0</code></dt><dd>Hides <code>_id</code>, in either style.</dd></dl>',
+      '<ul><li><strong>One style per projection:</strong> <code>{ title: 1, done: 0 }</code> is an error ("Cannot do exclusion on field done in inclusion projection"), because nobody could tell what should happen to the other fields. <code>_id</code> is the only exception.</li>'
+        + '<li><strong>Dot paths work:</strong> <code>{ \'owner.name\': 1, _id: 0 }</code> returns <code>{ owner: { name: \'Ben\' } }</code>.</li>'
+        + '<li><strong>In Node.js</strong> the projection goes in the options: <code>find(filter, { projection: { title: 1 } })</code>, or <code>find(filter).project({ title: 1 })</code>.</li></ul>',
     ],
     code: `db.tasks.find({}, { title: 1 })            // _id and title
 db.tasks.find({}, { title: 1, _id: 0 })    // only title
@@ -397,51 +334,174 @@ await tasks.find({ done: false }, { projection: { title: 1, _id: 0 } }).toArray(
     mistake: 'Passing the projection as the **first** argument: `find({ title: 1 })` is a **filter** ("documents whose title equals 1") and returns nothing. To project every document, give an empty filter first: `find({}, { title: 1 })`.',
     practice: { href: '#/database/documents/practice/mongo-playground', label: 'Try projections in the playground' } },
 
-  { id: 'sort-paginate', hub: 'query', topic: 'query', 
+  { id: 'sort-paginate', hub: 'query', topic: 'query',
     title: 'Sorting and pagination: sort, skip, limit',
-    summary: '`.sort({ field: 1 })` orders results (1 ascending, -1 descending, several keys allowed), `.skip(n)` jumps over the first n and `.limit(n)` keeps at most n; together they give pages: `skip((page - 1) * size).limit(size)`.',
-    body: [
-      'Pagination is reading a long list one screen at a time. To show page 3 with 10 items per page you must (1) put the list in a fixed order, (2) step over the 20 items of pages 1 and 2, (3) take the next 10. In SQL that is `ORDER BY … LIMIT 10 OFFSET 20` (the SQL section\'s pagination card); in MongoDB it is `.sort({ … }).skip(20).limit(10)`.',
-      'The order of application is always **sort, then skip, then limit**, whatever order you chain them in: `.limit(10).skip(20).sort(…)` gives the same page. Without `sort`, documents come in **natural order** (roughly the order they were stored), which MongoDB does not promise to keep: pages could overlap or skip items. Add a unique tie-breaker, such as `_id`, when the sort key can repeat: `.sort({ priority: -1, _id: 1 })`.',
-      'For the page count, ask `countDocuments(filter)` with the same filter. `skip` still walks over every skipped document, so very deep pages get slow on big collections; large apps page with a range instead ("tasks created before the last one I showed").',
+    summary: '`.sort({ field: 1 })` orders results (1 ascending, -1 descending, several keys allowed), `.skip(n)` jumps over the first n and `.limit(n)` keeps at most n; together they give pages: `skip((page - 1) * limit).limit(limit)`.',
+    html: [
+      '<p>To show page 3 with 10 items per page: put the list in a fixed order, step over the 20 items of pages 1 and 2, and take the next 10. In SQL that is <code>ORDER BY … LIMIT 10 OFFSET 20</code> (see <a href="#/database/relational/pagination">Pagination in SQL</a>); in MongoDB, <code>.sort({ … }).skip(20).limit(10)</code>. The query string and the shape of the response are part of the API contract (see <a href="#/http/api-design/query-params">Filters, sorting and pagination</a>).</p>',
+      '<ul><li><strong>Always sort:</strong> without <code>sort</code>, documents come in <strong>natural order</strong> (roughly the order they were stored), which MongoDB does not promise to keep, so pages could overlap or skip items.</li>'
+        + '<li><strong>Add a tie-breaker:</strong> when the sort key can repeat, add a unique field such as <code>_id</code>: <code>.sort({ priority: -1, _id: 1 })</code>.</li>'
+        + '<li><strong>The total</strong> comes from <code>countDocuments(filter)</code> with the same filter. The API sends the page as an array and the total in the <code>X-Total-Count</code> header.</li>'
+        + '<li><strong>Deep pages are slow:</strong> <code>skip</code> still walks over every skipped document. Large apps page by range instead ("tasks created before the last one I showed").</li></ul>',
     ],
-    code: `// GET /tasks?page=2&size=4   (sorted by creation date, oldest first)
+    diagram: {
+      kind: 'flow',
+      numbered: true,
+      title: 'MongoDB always sorts, then skips, then limits, whatever order you chain them in.',
+      desc: 'Four steps in a fixed order. The filter keeps the matching documents. Sort puts them in order, by createdAt then _id. Skip steps over (page − 1) × limit documents. Limit keeps the next limit documents: one page.',
+      nodes: [
+        { id: 'filter', label: 'Filter', note: '`{ done: false }`' },
+        { id: 'sort', label: 'Sort', note: 'by `createdAt`, then `_id`', key: true },
+        { id: 'skip', label: 'Skip', note: '`(page − 1) × limit`' },
+        { id: 'limit', label: 'Limit', note: 'one page' },
+      ],
+      edges: [['filter', 'sort'], ['sort', 'skip'], ['skip', 'limit']],
+    },
+    code: `// GET /tasks?page=2&limit=4   (oldest first: an array body, the total in a header)
 const page = Number(req.query.page) || 1;
-const size = Math.min(Number(req.query.size) || 10, 50);   // cap the page size
-const filter = { ownerId: req.user.id };
+const limit = Math.min(Number(req.query.limit) || 10, 50);   // cap the page size
+const filter = { done: false };
 
 const [items, total] = await Promise.all([
   tasks.find(filter).sort({ createdAt: 1, _id: 1 })
-    .skip((page - 1) * size).limit(size).toArray(),
+    .skip((page - 1) * limit).limit(limit).toArray(),
   tasks.countDocuments(filter),
 ]);
-res.json({ items, page, size, total, pages: Math.ceil(total / size) });`,
+res.set('X-Total-Count', String(total)).json(items);`,
     dialect: 'js',
     example: 'The seed has 10 tasks. With 4 per page sorted by `createdAt`, page 1 is tasks 1–4, page 2 is `db.tasks.find().sort({ createdAt: 1 }).skip(4).limit(4)` (Add pagination, Review pull request, Draft project plan, Design the Mongo schema), and page 3 holds the last 2. `Math.ceil(10 / 4)` gives 3 pages.',
-    mistake: 'Computing `skip(page * size)`, which makes page 1 start at the second page. Page n skips the **(n − 1) × size** documents of the pages before it. Also check the input: `Number(\'abc\')` is `NaN`, and a client asking for `size=100000` should be capped.',
+    mistake: 'Computing `skip(page * limit)`, which makes page 1 start at the second page. Page n skips the **(n − 1) × limit** documents of the pages before it. Also check the input: `Number(\'abc\')` is `NaN`, and a client asking for `limit=100000` should be capped.',
     practice: { href: '#/database/documents/practice/mongo-playground', label: 'Page through the tasks in the playground' } },
 
-  /* ---- 5. Aggregation ------------------------------------------------------------------- */
-  { id: 'aggregation-pipeline', hub: 'aggregate', topic: 'aggregate', 
-    title: 'The aggregation pipeline',
-    summary: 'An **aggregation pipeline** is an array of **stages** (`$match`, `$project`, `$group`, `$sort`, `$limit`…) that documents flow through in order, each stage transforming the output of the previous one, like commands joined by a Unix pipe.',
-    body: [
-      'Picture a factory line. Documents enter at one end; the first station throws away the ones that do not qualify, the next reshapes each one, another sorts them into groups and counts them, the last keeps the top three. Each station only sees what the previous one handed over. In a Unix shell, `cat tasks | grep open | sort | head -3` works the same way; in MongoDB you write the line as an array: `db.tasks.aggregate([ stage1, stage2, … ])`.',
-      '`find` can filter, project, sort and page. Use `aggregate` when you need to **compute** something: totals and averages per group (`$group`), new fields (`$project` with expressions), one document per array element (`$unwind`) or data from another collection (`$lookup`). The result is a cursor of new documents, which do not need to look like the stored ones.',
-      'Inside stages, a string that starts with `$` means **the value of a field**: `\'$priority\'` is "this document\'s priority", `\'$owner.name\'` reaches into a sub-document. Put `$match` **first** whenever you can: every later stage then works on fewer documents, and only a leading `$match` can use an index.',
+  /* ---- 4. Designing documents: embedding and referencing ------------------------------- */
+  { id: 'embedding', hub: 'design', topic: 'design',
+    title: 'Embedding: keep together what you read together',
+    summary: '**Embedding** stores related data inside the parent document, as a **sub-document** or an **array**, so one read returns everything and one write updates it atomically.',
+    html: [
+      '<p>Embedding puts related data <strong>inside</strong> the document that uses it: a task\'s tags as an array, its comments as an array of sub-documents, its owner\'s name as a sub-document. It fits data that belongs to one parent and is never shown without it, such as a task\'s tags or the lines of an order.</p>',
+      '<dl><dt>One read</dt><dd><code>findOne</code> returns the task with its tags and comments: no join.</dd>'
+        + '<dt>Atomic writes</dt><dd>A write to one document is all-or-nothing: changing <code>done</code> and pushing a comment in the same <code>updateOne</code> can never half-happen. Across several documents you would need a <strong>transaction</strong>.</dd>'
+        + '<dt>Reaching inside</dt><dd>Queries use dot notation: <code>\'comments.author\'</code> (see <a href="#/database/documents/arrays-dot-notation">Dot notation</a>).</dd></dl>',
     ],
-    table: {
-      caption: 'The stages you will use most',
-      head: ['Stage', 'What it does', 'SQL idea'],
-      rows: [
-        ['`$match`', 'Keeps the documents that match a filter (same syntax as `find`)', '`WHERE` (or `HAVING` after `$group`)'],
-        ['`$project`', 'Keeps, removes, renames or computes fields', 'The `SELECT` list'],
-        ['`$group`', 'One output document per group, with accumulators', '`GROUP BY` + `COUNT`/`SUM`/`AVG`'],
-        ['`$sort` / `$skip` / `$limit`', 'Order, skip, keep the first n', '`ORDER BY` / `OFFSET` / `LIMIT`'],
-        ['`$unwind`', 'One document per element of an array', 'Joining a child table'],
-        ['`$lookup`', 'Adds the matching documents of another collection as an array', '`LEFT JOIN`'],
-        ['`$count`', 'Replaces everything by one document with the number of documents', '`SELECT COUNT(*)`'],
+    diagram: {
+      kind: 'tree',
+      title: 'One document holds the task with its tags, owner and comments: one read returns it all.',
+      desc: 'A task document contains a tags array of strings, an owner sub-document with name and email, and a comments array of sub-documents: one comment by Cleo and one by Ben.',
+      nodes: [
+        { id: 'task', label: 'Task document', note: '`title`, `done`', key: true },
+        { id: 'tags', label: '`tags`', note: 'array of strings' },
+        { id: 'owner', label: '`owner`', note: 'sub-document' },
+        { id: 'comments', label: '`comments`', note: 'array of sub-documents' },
+        { id: 'c1', label: 'Comment by Cleo' },
+        { id: 'c2', label: 'Comment by Ben' },
       ],
+      edges: [['task', 'tags'], ['task', 'owner'], ['task', 'comments'], ['comments', 'c1'], ['comments', 'c2']],
+    },
+    code: `// tasks: comments and tags are embedded (they belong to this task only)
+{
+  _id: ObjectId('6a9bda10a1b2c3d4e5000105'),
+  title: 'Add pagination',
+  done: false,
+  tags: [ 'api', 'urgent' ],
+  comments: [
+    { author: 'Cleo', text: 'Use skip and limit' },
+    { author: 'Ben', text: 'Sort first!' }
+  ]
+}
+
+// one atomic write changes the task and its comments together
+db.tasks.updateOne(
+  { title: 'Add pagination' },
+  { $set: { done: true }, $push: { comments: { author: 'Ana', text: 'Done!' } } }
+)`,
+    dialect: 'mongosh',
+    example: 'In SQL, showing "Add pagination" with its tags and comments takes three tables and two joins (`tasks`, `task_tags`, `comments`). In MongoDB it is `db.tasks.findOne({ title: \'Add pagination\' })`: one document, one round trip. Try this card\'s update in the playground and look at the task in the data view.',
+    mistake: 'Embedding something that is also needed on its own. If the API has `GET /comments?author=Ben` across all tasks, or comments can be edited from a moderation page, embedded comments make those queries awkward (you must search inside every task). Embed only what is read through its parent.' },
+
+  { id: 'referencing', hub: 'design', topic: 'design',
+    title: 'Referencing: store the _id of another document',
+    summary: '**Referencing** stores only the `_id` of a related document (for example `ownerId` in a task), keeping each entity in its own collection; you fetch the related document with a second query or with **`$lookup`**.',
+    html: [
+      '<p>A reference stores only the <code>_id</code> of the related document: the task keeps <code>ownerId: ObjectId(\'…\')</code> and the user stays in <code>users</code>, where it is updated once and read by every task that points to it. This is the foreign-key idea from SQL.</p>',
+      '<ul><li><strong>Nothing checks it:</strong> there is no <code>REFERENCES users(id)</code> and no <code>ON DELETE CASCADE</code> (see <a href="#/database/relational/foreign-keys">Foreign keys</a>). A task can point at a user that does not exist, and deleting a user leaves its tasks behind: your code deletes or reassigns them (<code>deleteMany({ ownerId: id })</code>), ideally where it deletes the user.</li>'
+        + '<li><strong>Two reads to show both:</strong> find the task, then <code>findOne</code> its user, or join them with <code>$lookup</code> (see <a href="#/database/documents/unwind-lookup">$unwind and $lookup</a>). Both cost more than reading one embedded document, so references are for data that is shared or grows large.</li></ul>',
+    ],
+    diagram: {
+      kind: 'branch',
+      title: 'Many tasks point to one user, who is stored once, in their own collection.',
+      desc: 'Two task documents, Set up CI and Write API tests, each store ownerId 6a93…0002. That id belongs to Ben\'s document in the users collection, stored once.',
+      nodes: [
+        { id: 't1', label: '"Set up CI"', note: 'a task, `ownerId: …0002`' },
+        { id: 't2', label: '"Write API tests"', note: 'a task, `ownerId: …0002`' },
+        { id: 'ben', label: 'Ben in `users`', note: '`_id: …0002`', key: true },
+      ],
+      edges: [['t1', 'ben'], ['t2', 'ben']],
+    },
+    code: `// users
+{ _id: ObjectId('6a93ea08a1b2c3d4e5000002'), name: 'Ben', email: 'ben@example.com' }
+
+// tasks reference their owner by _id (like tasks.user_id in SQL)
+{ _id: ObjectId('…'), title: 'Set up CI', ownerId: ObjectId('6a93ea08a1b2c3d4e5000002') }
+
+// Node.js: two queries
+const task = await db.collection('tasks').findOne({ _id: taskId });
+const owner = await db.collection('users').findOne({ _id: task.ownerId });`,
+    dialect: 'js',
+    example: 'A user may own hundreds of tasks over a year, and the API reads tasks one by one (`GET /tasks/:id`) and page by page (`GET /tasks?page=3&limit=10`). Keeping tasks in their own collection with an `ownerId` reference serves both, and `db.tasks.find({ ownerId: benId }).sort({ createdAt: -1 }).limit(10)` (with an index on `ownerId`) lists Ben\'s latest tasks.',
+    mistake: 'Assuming MongoDB cleans up like `ON DELETE CASCADE`. After `db.users.deleteOne({ _id: benId })`, Ben\'s tasks are still there, pointing at nobody, and the API may crash when it tries to show their owner. Deleting a parent means deleting or updating its children in your own code.' },
+
+  { id: 'embed-or-reference', hub: 'design', topic: 'design',
+    title: 'Embed or reference? Rules of thumb',
+    summary: 'Embed data that is **read with its parent, belongs to it alone and stays small**; reference data that **grows without limit, is queried on its own, or is shared** by many documents. A document can never exceed **16 MB**.',
+    html: [
+      '<p>Decide per relationship, from how the data is <strong>read</strong> and how much it can <strong>grow</strong>. Ask three questions:</p>',
+      '<dl><dt>Is it read with the parent?</dt><dd>If every screen that shows a task also shows its tags: embed.</dd>'
+        + '<dt>How many can there be?</dt><dd>A few, with a natural limit (tags, an address, the lines of an order): embed. Hundreds, or "it keeps growing" (a user\'s tasks, log entries): reference.</dd>'
+        + '<dt>Is it used alone or shared?</dt><dd>If it has its own URL, is edited on its own, or appears on many parents (a user on many tasks): reference.</dd></dl>',
+      '<table><caption>Decisions for a tasks app</caption><thead><tr><th scope="col">Related data</th><th scope="col">Typical size</th><th scope="col">Read with parent?</th><th scope="col">Used alone?</th><th scope="col">Choice</th></tr></thead><tbody>'
+        + '<tr><th scope="row">A task\'s tags</th><td>A few strings</td><td>Always</td><td>No</td><td><strong>Embed</strong> an array</td></tr>'
+        + '<tr><th scope="row">A task\'s comments</th><td>A handful</td><td>Yes, on the task page</td><td>Rarely</td><td><strong>Embed</strong> an array of sub-documents</td></tr>'
+        + '<tr><th scope="row">A user\'s tasks</th><td>Grows forever</td><td>Only in pages</td><td>Yes: <code>GET /tasks/:id</code></td><td><strong>Reference</strong>: a <code>tasks</code> collection with <code>ownerId</code></td></tr>'
+        + '<tr><th scope="row">The owner\'s name on a task</th><td>One field</td><td>Yes, in lists</td><td>–</td><td><strong>Embed a copy</strong> and keep the reference (accept duplication)</td></tr>'
+        + '<tr><th scope="row">Users ↔ projects (many-to-many)</th><td>Many on both sides</td><td>Partly</td><td>Yes</td><td><strong>Reference</strong>: arrays of ids, or a membership collection</td></tr>'
+        + '</tbody></table>',
+      '<ul><li><strong>16 MB per document</strong> is a hard limit. Long before it, a huge document is slow: every read loads it whole and every <code>$push</code> rewrites it. An array that grows without bound will eventually hit the limit.</li>'
+        + '<li><strong>The middle way, a copy:</strong> embed the few fields you show often and keep the reference for the rest. The playground\'s tasks embed <code>owner: { name, email }</code>, so a list shows the owner without a second query. The price is <strong>duplication</strong>: if Ben changes his name, every copy must be updated (<code>updateMany({ \'owner.email\': \'ben@example.com\' }, { $set: { \'owner.name\': \'Benjamin\' } })</code>) or it goes stale. Copy only fields that rarely change.</li></ul>',
+    ],
+    example: 'A tempting first design is a user document with an embedded `tasks` array. By the three questions, that is a poor fit for a tasks API: tasks grow without limit, have their own routes, are paginated and are updated one at a time. A separate `tasks` collection with `ownerId` (plus, if you like, an embedded `owner.name` copy) follows the rules.',
+    mistake: 'Deciding by habit: "MongoDB means embed everything" or "always normalise like SQL". Both extremes hurt. Decide per relationship, from how the data is read and how big it can grow.' },
+
+  /* ---- 5. Aggregation ------------------------------------------------------------------- */
+  { id: 'aggregation-pipeline', hub: 'aggregate', topic: 'aggregate',
+    title: 'The aggregation pipeline',
+    summary: 'An **aggregation pipeline** is an array of **stages** (`$match`, `$project`, `$group`, `$sort`, `$limit`…) that documents flow through in order, each stage transforming the output of the previous one.',
+    html: [
+      '<p>Documents flow through the stages in order, and each stage sees only what the stage before it handed over. You write the pipeline as one array: <code>db.tasks.aggregate([ stage1, stage2, … ])</code>.</p>',
+      '<table><caption>The stages you will use most</caption><thead><tr><th scope="col">Stage</th><th scope="col">What it does</th><th scope="col">SQL idea</th></tr></thead><tbody>'
+        + '<tr><th scope="row"><code>$match</code></th><td>Keeps the documents that match a filter (same syntax as <code>find</code>)</td><td><code>WHERE</code> (or <code>HAVING</code> after <code>$group</code>)</td></tr>'
+        + '<tr><th scope="row"><code>$project</code></th><td>Keeps, removes, renames or computes fields</td><td>The <code>SELECT</code> list</td></tr>'
+        + '<tr><th scope="row"><code>$group</code></th><td>One output document per group, with accumulators</td><td><code>GROUP BY</code> + <code>COUNT</code>/<code>SUM</code>/<code>AVG</code></td></tr>'
+        + '<tr><th scope="row"><code>$sort</code> / <code>$skip</code> / <code>$limit</code></th><td>Order, skip, keep the first n</td><td><code>ORDER BY</code> / <code>OFFSET</code> / <code>LIMIT</code></td></tr>'
+        + '<tr><th scope="row"><code>$unwind</code></th><td>One document per element of an array</td><td>Joining a child table</td></tr>'
+        + '<tr><th scope="row"><code>$lookup</code></th><td>Adds the matching documents of another collection as an array</td><td><code>LEFT JOIN</code></td></tr>'
+        + '<tr><th scope="row"><code>$count</code></th><td>Replaces everything by one document with the number of documents</td><td><code>SELECT COUNT(*)</code></td></tr>'
+        + '</tbody></table>',
+      '<ul><li><strong>When to use it:</strong> <code>find</code> can filter, project, sort and page. Use <code>aggregate</code> to <strong>compute</strong>: totals per group, new fields, one document per array element, data from another collection. The output documents need not look like the stored ones.</li>'
+        + '<li><strong><code>\'$priority\'</code> is a value:</strong> inside stages, a string that starts with <code>$</code> means the value of that field; <code>\'$owner.name\'</code> reaches into a sub-document.</li>'
+        + '<li><strong><code>$match</code> first:</strong> every later stage then handles fewer documents, and only a leading <code>$match</code> can use an index.</li></ul>',
+    ],
+    diagram: {
+      kind: 'flow',
+      title: 'Each stage works only on what the stage before it handed over.',
+      desc: 'This card\'s pipeline, stage by stage. The 10 tasks enter. $match keeps the 7 open ones. $sort orders them by priority. $limit keeps the top 3. $project turns them into 3 small documents with title, owner and tag count.',
+      nodes: [
+        { id: 'in', label: 'All tasks', note: '10 documents' },
+        { id: 'match', label: '`$match`', note: 'open ones: 7', key: true },
+        { id: 'sort', label: '`$sort`', note: 'by priority: 7' },
+        { id: 'limit', label: '`$limit`', note: 'the top 3' },
+        { id: 'project', label: '`$project`', note: '3 small documents' },
+      ],
+      edges: [['in', 'match'], ['match', 'sort'], ['sort', 'limit'], ['limit', 'project']],
     },
     code: `// The 3 open tasks with the highest priority, as small documents
 db.tasks.aggregate([
@@ -453,18 +513,34 @@ db.tasks.aggregate([
 // { title: 'Set up CI', owner: 'Ben', tagCount: 2 }
 // { title: 'Write the SQL schema' … } is not here: it is done.`,
     dialect: 'mongosh',
-    example: 'Run the pipeline above in the playground and then remove one stage at a time: without `$limit` you get 7 documents, without `$match` the finished tasks appear, without `$project` you get whole documents. Watching what each stage receives is the fastest way to debug a pipeline.',
+    example: 'Run this card\'s pipeline in the playground and then remove one stage at a time: without `$limit` you get 7 documents, without `$match` the finished tasks appear, without `$project` you get whole documents. Watching what each stage receives is the fastest way to debug a pipeline.',
     mistake: 'Passing the stages without the array: `aggregate({ $match: … }, { $group: … })`. The pipeline is **one array** of stage objects, and each stage object has exactly one key: `aggregate([ { $match: … }, { $group: … } ])`.',
     widget: 'mongo-playground' },
 
-  { id: 'group-accumulators', hub: 'aggregate', topic: 'aggregate', 
-    title: '`$group`: one result per group',
+  { id: 'group-accumulators', hub: 'aggregate', topic: 'aggregate',
+    title: '$group: one result per group',
     summary: '`$group` collects documents that share the same **`_id` expression** into one output document per group, and computes **accumulators** for each group: `$sum`, `$avg`, `$min`, `$max`, `$push`, `$addToSet`, `$count`.',
-    body: [
-      'Imagine sorting a pile of task cards into one tray per owner, then writing on a sticky note for each tray "how many cards, average priority". `$group` does exactly that: the `_id` you give says **which tray** a document goes into, and every other field of the stage is a sticky-note calculation. It is SQL\'s `GROUP BY` with aggregate functions (the SQL section\'s aggregates card).',
-      'The `_id` is usually a field path with `$`: `_id: \'$owner.name\'` groups by owner name. `_id: null` puts every document in a single group (totals for the whole collection). Each accumulator is an object with one operator: `{ $sum: 1 }` adds 1 per document (a count), `{ $sum: \'$priority\' }` adds the priorities, `{ $avg: \'$priority\' }` averages them, `{ $push: \'$title\' }` collects the titles into an array.',
-      'The output contains **only** `_id` and the accumulator fields; every other field of the input documents is gone. To filter groups by their totals (SQL\'s `HAVING`), add a `$match` **after** the `$group`; to order them, a `$sort` on the new field.',
+    html: [
+      '<p><code>$group</code> puts the documents that share the same <strong><code>_id</code> expression</strong> into one group and writes one output document per group, with <strong>accumulators</strong> computed over it. It is SQL\'s <code>GROUP BY</code> with aggregate functions (see <a href="#/database/relational/aggregates">Aggregates</a>).</p>',
+      '<dl><dt><code>_id: \'$owner.name\'</code></dt><dd>The group key: one group per owner name. <code>_id: null</code> makes one group of everything (totals for the whole collection).</dd>'
+        + '<dt><code>{ $sum: 1 }</code></dt><dd>Adds 1 per document: a count.</dd>'
+        + '<dt><code>{ $sum: \'$priority\' }</code>, <code>{ $avg: \'$priority\' }</code></dt><dd>The total and the average of a field; <code>$min</code> and <code>$max</code> work the same way.</dd>'
+        + '<dt><code>{ $push: \'$title\' }</code></dt><dd>Collects the values into an array (<code>$addToSet</code> skips duplicates).</dd></dl>',
+      '<ul><li><strong>Only <code>_id</code> and the accumulators survive:</strong> every other field of the input documents is gone.</li>'
+        + '<li><strong>Filter groups</strong> by their totals (SQL\'s <code>HAVING</code>) with a <code>$match</code> <strong>after</strong> the <code>$group</code>; order them with a <code>$sort</code> on the new field.</li></ul>',
     ],
+    diagram: {
+      kind: 'branch',
+      title: 'The 7 open tasks become one result per owner.',
+      desc: 'The 7 open tasks are grouped by owner name: Ana gets a document with open 3, Ben one with open 2, and Cleo one with open 2.',
+      nodes: [
+        { id: 'open', label: 'Open tasks', note: '7 documents', key: true },
+        { id: 'ana', label: 'Ana', note: '`open: 3`' },
+        { id: 'ben', label: 'Ben', note: '`open: 2`' },
+        { id: 'cleo', label: 'Cleo', note: '`open: 2`' },
+      ],
+      edges: [['open', 'ana'], ['open', 'ben'], ['open', 'cleo']],
+    },
     code: `// Open tasks per owner, with their average priority, busiest first
 db.tasks.aggregate([
   { $match: { done: false } },
@@ -491,14 +567,27 @@ ORDER BY open DESC;`,
     mistake: 'Forgetting the `$` in the group key: `_id: \'owner.name\'` is the constant text "owner.name", so every document lands in **one** group and you get a single result with the total count. Field paths in aggregation expressions always start with `$`. (In a `$match` filter, by contrast, field names never take a `$`.)',
     practice: { href: '#/database/documents/practice/mongo-playground', label: 'Group and count in the playground' } },
 
-  { id: 'unwind-lookup', hub: 'aggregate', topic: 'aggregate', 
-    title: '`$unwind` and `$lookup`',
+  { id: 'unwind-lookup', hub: 'aggregate', topic: 'aggregate',
+    title: '$unwind and $lookup',
     summary: '`$unwind: \'$tags\'` turns one document with an array into **one document per element**; `$lookup` adds, to each document, an **array** of the matching documents of another collection (a left outer join).',
-    body: [
-      '`$unwind` is like photocopying a form once per line of a list it contains: a task with tags `[\'api\', \'urgent\']` becomes two documents, identical except that `tags` is `\'api\'` in one and `\'urgent\'` in the other. After that, `$group` by `\'$tags\'` can count tasks per tag. Documents whose array is empty or missing **disappear** unless you write `{ $unwind: { path: \'$tags\', preserveNullAndEmptyArrays: true } }`.',
-      '`$lookup` brings referenced data in. You name the other collection (`from`), the field in this document (`localField`), the matching field in the other collection (`foreignField`) and the new field to fill (`as`). Every input document stays, even if nothing matches (then `as` is an empty array): that is a **left outer join**, like SQL\'s `LEFT JOIN`, except that the matches arrive as an array inside the document instead of as extra rows.',
-      'A `$lookup` per request is a sign that the data might be better embedded (see Embed or reference?). When you do use it, index the `foreignField` in the other collection, or every lookup scans that whole collection.',
+    html: [
+      '<dl><dt><code>{ $unwind: \'$tags\' }</code></dt><dd>One document per array element: a task tagged <code>[\'api\', \'urgent\']</code> becomes two documents, identical except that <code>tags</code> is <code>\'api\'</code> in one and <code>\'urgent\'</code> in the other. A <code>$group</code> by <code>\'$tags\'</code> can then count tasks per tag.</dd>'
+        + '<dt><code>$lookup</code></dt><dd>Adds to each document an <strong>array</strong> of the matching documents of another collection. You name the collection (<code>from</code>), the field in this document (<code>localField</code>), the matching field there (<code>foreignField</code>) and the new field to fill (<code>as</code>).</dd></dl>',
+      '<ul><li><strong>Empty arrays vanish:</strong> documents whose array is empty or missing disappear after <code>$unwind</code>, unless you write <code>{ $unwind: { path: \'$tags\', preserveNullAndEmptyArrays: true } }</code>.</li>'
+        + '<li><strong>A left outer join:</strong> every input document stays after <code>$lookup</code>, with an empty <code>as</code> array when nothing matches, like SQL\'s <code>LEFT JOIN</code>, except that the matches arrive as an array inside the document instead of as extra rows.</li>'
+        + '<li><strong>A <code>$lookup</code> on every request</strong> hints that the data might be better embedded (see <a href="#/database/documents/embed-or-reference">Embed or reference?</a>). When you do use it, index the <code>foreignField</code>, or every lookup scans the other collection.</li></ul>',
     ],
+    diagram: {
+      kind: 'branch',
+      title: '`$unwind` copies the document once for each element of its array.',
+      desc: 'One task with tags api and urgent enters $unwind. Two documents come out: the same task with tags set to api, and the same task with tags set to urgent.',
+      nodes: [
+        { id: 'task', label: 'One task', note: '`tags: [api, urgent]`', key: true },
+        { id: 'a', label: 'Same task', note: '`tags: \'api\'`' },
+        { id: 'u', label: 'Same task', note: '`tags: \'urgent\'`' },
+      ],
+      edges: [['task', 'a'], ['task', 'u']],
+    },
     code: `// Tasks per tag
 db.tasks.aggregate([
   { $unwind: '$tags' },                         // 10 tasks → 17 (task, tag) documents
@@ -519,14 +608,27 @@ db.tasks.aggregate([
     practice: { href: '#/database/documents/practice/mongo-playground', label: 'Try $unwind and $lookup in the playground' } },
 
   /* ---- 6. Indexes and the back end ----------------------------------------------------- */
-  { id: 'indexes', hub: 'app', topic: 'app', 
+  { id: 'indexes', hub: 'app', topic: 'app',
     title: 'Indexes: from scanning to looking up',
     summary: 'An **index** is a sorted structure (a **B-tree**) of the values of one or more fields that points to the documents; with it, MongoDB finds matches without reading every document (**IXSCAN** instead of **COLLSCAN**), at the cost of storage and slower writes.',
-    body: [
-      'Finding "priority 5" without an index is like finding a word in a book with no index: you read every page. MongoDB calls that a **collection scan** (COLLSCAN): the work grows in proportion to the number of documents. An index is the alphabetical index at the back of the book: the values are kept **sorted** in a tree (a **B-tree**: a balanced tree in which every node holds many sorted keys), so a lookup takes a few steps down the tree. Doubling the collection adds about one more step instead of doubling the work. Indexes also make sorting on the indexed field cheap.',
-      'Every collection has a unique index on `_id`. You add others with `createIndex({ field: 1 })` (1 ascending, -1 descending). A **compound** index covers several fields in order: `{ ownerId: 1, createdAt: -1 }` serves "Ben\'s tasks, newest first", and also queries on `ownerId` alone (a **prefix**), but not queries on `createdAt` alone. A **unique** index makes the database refuse duplicates, which is how you guarantee one account per email (the error code is **E11000**).',
-      'Indexes are not free: each one takes space, and **every insert, update and delete must also update every index**. Index the fields your frequent or slow queries filter or sort on, not every field. To check whether a query uses an index, run it with `.explain(\'executionStats\')` and compare `totalDocsExamined` with `nReturned`: examining 10 000 documents to return 10 is a missing index.',
+    html: [
+      '<p>An index keeps the values of one or more fields <strong>sorted</strong>, each pointing to its document, so MongoDB finds matches without reading every document. The idea, the B-tree and the cost on every write are the same as in SQL (see <a href="#/database/relational/indexes">Indexes in SQL</a>); this card is the MongoDB side.</p>',
+      '<dl><dt><code>createIndex({ priority: 1 })</code></dt><dd>An index on one field: 1 ascending, -1 descending. Every collection already has a unique index on <code>_id</code>.</dd>'
+        + '<dt>Compound: <code>{ ownerId: 1, createdAt: -1 }</code></dt><dd>Serves "Ben\'s tasks, newest first", and queries on <code>ownerId</code> alone (a <strong>prefix</strong>), but not queries on <code>createdAt</code> alone.</dd>'
+        + '<dt>Unique: <code>{ email: 1 }, { unique: true }</code></dt><dd>The database refuses duplicates: one account per email. A duplicate fails with error <strong>E11000</strong>.</dd>'
+        + '<dt><code>.explain(\'executionStats\')</code></dt><dd>Shows the plan: <strong>COLLSCAN</strong> reads every document, <strong>IXSCAN</strong> uses an index. Compare <code>totalDocsExamined</code> with <code>nReturned</code>: examining 10 000 documents to return 10 is a missing index.</dd></dl>',
     ],
+    diagram: {
+      kind: 'branch',
+      title: 'With an index on priority, the same query reads 1 document instead of 10.',
+      desc: 'The query find({ priority: 5 }) on the 10 seed tasks. Without an index, the plan is a COLLSCAN that examines all 10 documents. With an index on priority, the plan is an IXSCAN that examines only the 1 matching document.',
+      nodes: [
+        { id: 'q', label: 'The query', note: '`find({ priority: 5 })`' },
+        { id: 'coll', label: 'COLLSCAN', note: 'examines all 10' },
+        { id: 'ix', label: 'IXSCAN', note: 'examines 1', key: true },
+      ],
+      edges: [['q', 'coll', 'no index'], ['q', 'ix', 'index on priority']],
+    },
     code: `db.tasks.find({ priority: 5 }).explain('executionStats')
 // winningPlan: { stage: 'COLLSCAN' } · totalDocsExamined: 10 · nReturned: 1
 
@@ -540,16 +642,21 @@ db.users.insertOne({ name: 'Ana 2', email: 'ana@example.com' })
 // MongoServerError: E11000 duplicate key error … index: email_1 dup key: { email: 'ana@example.com' }`,
     dialect: 'mongosh',
     example: 'In the playground, load the example "Index + explain": the first plan is a COLLSCAN that examines all 10 tasks; after `createIndex({ priority: 1 })` the same query is an IXSCAN that examines only the 1 matching task. (The playground\'s planner is simplified, but the before/after is the real behaviour.) The example "Unique index" shows the E11000 error.',
-    mistake: 'Indexing "just in case". Ask the right question first: an index on `email` makes `find({ email })` faster, but makes every **insert**, every **update** that changes `email`, and every **delete** slower, and uses memory. Add an index when a real, frequent query needs it, and check with `explain`.',
+    mistake: 'Indexing "just in case". An index on `email` makes `find({ email })` faster, but makes every **insert**, every **update** that changes `email`, and every **delete** slower, and uses memory. Add an index when a real, frequent query needs it, and check with `explain`.',
     practice: { href: '#/database/documents/practice/mongo-playground', label: 'Compare plans with explain() in the playground' } },
 
-  { id: 'node-driver', hub: 'app', topic: 'app', 
+  { id: 'node-driver', hub: 'app', topic: 'app',
     title: 'Connecting from Node.js: the official driver',
     summary: 'The official **`mongodb`** package gives you a `MongoClient` that you **connect once** at startup and reuse; `client.db(\'app\').collection(\'tasks\')` returns a collection with the same methods as the shell, all returning Promises.',
-    body: [
-      'A `MongoClient` is like a phone line kept open to the database: dialling for every request would be slow, so you connect **once** when the server starts and every request reuses the same client. It manages a **connection pool** for you (the same idea as the `pg` Pool in the SQL section). The connection string comes from the environment (`process.env.MONGO_URL`, e.g. `mongodb://localhost:27017`), never hard-coded, because it may contain a password.',
-      'The collection methods are the ones you used in the shell, with three differences: they return **Promises** (use `await` inside `async` functions), `find` returns a cursor you finish with `.toArray()`, and shell helpers become JavaScript: `ISODate(…)` is `new Date(…)` and `ObjectId(…)` is `new ObjectId(…)` (imported from `mongodb`). The **models/ seam** of the [models layer](#/database/relational/models-layer) stays the same: a factory `createTasksModel(db)` hides the database, and maps `_id` to the `id` your API returns.',
-      'In **Express 4** an error thrown inside an `async` route handler is not passed to your error handler automatically: catch it and call `next(err)`. (Express 5 forwards rejected promises by itself.)',
+    html: [
+      '<p>Create one <code>MongoClient</code>, connect it <strong>once</strong> when the server starts and reuse it for every request: it manages a <strong>connection pool</strong>, the same idea as the <code>pg</code> pool (see <a href="#/database/relational/drivers-pools">Drivers and pools</a>). The connection string comes from the environment (<code>process.env.MONGO_URL</code>, such as <code>mongodb://localhost:27017</code>), never from the code, because it may contain a password.</p>',
+      '<table><caption>From mongosh to the Node.js driver</caption><thead><tr><th scope="col"></th><th scope="col">mongosh</th><th scope="col">Node.js driver</th></tr></thead><tbody>'
+        + '<tr><th scope="row">Results</th><td>Printed</td><td>Promises: <code>await</code> them inside <code>async</code> functions</td></tr>'
+        + '<tr><th scope="row"><code>find</code></th><td>Prints the first 20</td><td>A cursor: finish it with <code>.toArray()</code></td></tr>'
+        + '<tr><th scope="row">Dates</th><td><code>ISODate(…)</code></td><td><code>new Date(…)</code></td></tr>'
+        + '<tr><th scope="row">Ids</th><td><code>ObjectId(…)</code></td><td><code>new ObjectId(…)</code>, imported from <code>mongodb</code></td></tr>'
+        + '</tbody></table>',
+      '<p>The <strong>models/ seam</strong> of <a href="#/database/relational/models-layer">the models layer</a> stays the same: a factory <code>createTasksModel(db)</code> hides the database and maps <code>_id</code> to the <code>id</code> your API returns. Errors thrown in <code>async</code> handlers reach Express as described in <a href="#/server/routes/express-async-errors">Async handlers</a>.</p>',
     ],
     code: `// db.js: connect once, share the database object
 const { MongoClient } = require('mongodb');
@@ -588,16 +695,30 @@ function createTasksModel(db) {
 module.exports = { createTasksModel };`,
     dialect: 'js',
     example: 'A controller keeps calling `await tasksModel.findById(req.params.id)` and answers 404 on `null`, exactly as with the SQL model; only `models/` changed: swap the storage, keep the shape. The API still returns `{ "id": "6a9a…104", "title": "Set up CI", … }`.',
-    mistake: 'Passing request data straight into a filter: `users.findOne({ email: req.body.email, password: req.body.password })`. `express.json()` turns `{"password": {"$ne": null}}` into an object, the filter then means "any password that is not null", and the attacker logs in without knowing it (**NoSQL injection**). Validate that values are strings (Zod, or `typeof x === \'string\'`) before building filters, and never compare plain passwords anyway (passwords are hashed: see the Authentication section).' },
+    mistake: 'Passing request data straight into a filter: `users.findOne({ email: req.body.email, password: req.body.password })`. `express.json()` turns `{"password": {"$ne": null}}` into an object, the filter then means "any password that is not null", and the attacker logs in without knowing it: **NoSQL injection**. Check that values are strings (`typeof x === \'string\'`, or [validate the body](#/http/api-design/validation)) before building filters, and never compare plain passwords anyway: they are stored [hashed](#/server/auth/hash-not-encrypt).' },
 
-  { id: 'mongoose', hub: 'app', topic: 'app', 
+  { id: 'mongoose', hub: 'app', topic: 'app',
     title: 'Mongoose: schemas and models on top of the driver',
     summary: '**Mongoose** is an **ODM** (object-document mapper) for Node.js: you declare a **schema** (fields, types, required, defaults, limits) and get a **model** whose methods validate documents before writing them to MongoDB.',
-    body: [
-      'The driver is a blank notebook: it writes whatever you hand it. Mongoose is a notebook with printed forms: you describe once what a task looks like, and every task is checked and filled in (defaults, trimmed strings, timestamps) before it is saved. Most tutorials and many Express projects use it, so you should recognise it.',
-      'A **schema** lists the fields with their types and rules. A **model** (`mongoose.model(\'Task\', taskSchema)`) is a class bound to a collection: by default the name is lower-cased and pluralised, so `Task` uses `tasks`. Its methods mirror the driver (`Task.find`, `Task.create`, `Task.findById`, `Task.updateOne`) but return Mongoose documents, cast types (the string `\'6a9a…\'` becomes an ObjectId automatically) and drop fields that are not in the schema.',
-      'Validation runs on `create` and `save`. Update methods such as `findByIdAndUpdate` do **not** run validators unless you pass `{ runValidators: true }`. A `ref` plus `.populate(\'owner\')` replaces a referenced id by the referenced document (a second query behind the scenes, like a manual `$lookup`).',
+    html: [
+      '<p>The driver writes whatever you hand it. With Mongoose you describe once what a task looks like, and every task is checked and completed (defaults, trimmed strings, timestamps) in your Node process before it is saved. Many Express projects and tutorials use it, so you should recognise it.</p>',
+      '<dl><dt>Schema</dt><dd>The fields with their types and rules: <code>required</code>, <code>default</code>, <code>min</code> and <code>max</code>, <code>trim</code>.</dd>'
+        + '<dt>Model</dt><dd><code>mongoose.model(\'Task\', taskSchema)</code>: a class bound to a collection, named in lower case and plural (<code>tasks</code>). <code>Task.find</code>, <code>Task.create</code> and <code>Task.findById</code> mirror the driver, cast types (an id string becomes an ObjectId) and drop fields that are not in the schema.</dd>'
+        + '<dt><code>ref</code> + <code>.populate()</code></dt><dd>Replaces a referenced id by its document: a second query behind the scenes, like a manual <code>$lookup</code>.</dd></dl>',
+      '<p><strong>Validation runs on <code>create</code> and <code>save</code>.</strong> Update methods such as <code>findByIdAndUpdate</code> skip it unless you pass <code>{ runValidators: true }</code>.</p>',
     ],
+    diagram: {
+      kind: 'flow',
+      title: 'Mongoose checks and completes each document in your Node process, before MongoDB sees it.',
+      desc: 'A plain object such as a task with an untrimmed title goes to the schema, which casts types, adds defaults and validates. The model Task, bound to the tasks collection, then writes the checked document to MongoDB.',
+      nodes: [
+        { id: 'obj', label: 'Plain object', note: '`title: \'  Study  \'`' },
+        { id: 'schema', label: 'Schema', note: 'casts, defaults, validates', key: true },
+        { id: 'model', label: 'Model `Task`', note: 'collection `tasks`' },
+        { id: 'db', label: 'MongoDB', note: 'stores the document' },
+      ],
+      edges: [['obj', 'schema'], ['schema', 'model'], ['model', 'db']],
+    },
     code: `const mongoose = require('mongoose');
 
 const taskSchema = new mongoose.Schema({
@@ -610,36 +731,59 @@ const taskSchema = new mongoose.Schema({
 
 const Task = mongoose.model('Task', taskSchema);   // collection 'tasks'
 
-// inside async controllers (connect once at startup: await mongoose.connect(url))
-const task = await Task.create({ title: '  Study  ', owner: req.user.id }); // title → 'Study'
+// inside async functions (connect once at startup: await mongoose.connect(url))
+const task = await Task.create({ title: '  Study  ', owner: userId });   // title → 'Study'
 const open = await Task.find({ done: false }).sort({ createdAt: -1 }).limit(10).populate('owner', 'name');
 await Task.findByIdAndUpdate(id, { priority: 9 }, { runValidators: true });  // rejected: max 5`,
     dialect: 'js',
     example: '`await Task.create({ owner: userId })` throws a `ValidationError` ("Path `title` is required") without contacting the database, which your error handler can turn into `400 Bad Request`. The same insert through the bare driver would have been stored.',
     mistake: 'Believing Mongoose makes MongoDB itself enforce the schema. The rules live in your Node process: a script, another service or the shell that writes to the same collection bypasses them, and updates skip validation unless you ask for it. For rules that must always hold, add a `$jsonSchema` validator or a unique index in the database too.' },
 
-  { id: 'sql-or-mongo', hub: 'app', topic: 'app', 
+  { id: 'sql-or-mongo', hub: 'app', topic: 'app',
     title: 'SQL or MongoDB? Choosing honestly',
     summary: 'Choose a **relational database** when your data is many linked entities with stable rules and you want the database to guarantee integrity; choose **MongoDB** when records are self-contained documents read as a whole, or their shape varies. Both can run a typical web API.',
-    body: [
-      'Start from the data and the questions, not from fashion. If your app is a web of entities that refer to each other (users, projects, tasks, comments, permissions) and you need reports across them, the relational model gives you joins, foreign keys and constraints for free. If most requests are "fetch this thing with everything inside it" (a product page with its variants, a submitted form, a CMS article with blocks) and the shape varies from record to record, documents fit naturally.',
-      'Some common claims are out of date. "MongoDB has no transactions": multi-document **ACID transactions** exist since MongoDB 4.0 (on replica sets), although single-document writes, which are atomic, are the normal tool. "SQL cannot store JSON": PostgreSQL has a `jsonb` column type with indexes. "MongoDB scales and SQL does not": both scale far beyond a small project; at that size, design and indexes matter far more than the engine.',
-      'Learn both: the concepts transfer, and many teams run one of each. If the API is layered, switching is cheap either way: routes and controllers stay identical, only `models/` changes. Writing the same model twice, once with SQL and once with MongoDB, is the best way to feel the difference (see [The models layer](#/database/relational/models-layer)).',
+    html: [
+      '<p>Start from the data and the questions, not from fashion. A web of entities that refer to each other (users, projects, tasks, comments, permissions), with reports across them, gets joins, foreign keys and constraints for free in SQL. Requests that are "fetch this thing with everything inside it" (a product page with its variants, a submitted form, an article made of blocks), with shapes that vary from record to record, fit documents.</p>',
+      '<table><caption>Which way does your project lean?</caption><thead><tr><th scope="col">Question</th><th scope="col">Leans SQL</th><th scope="col">Leans MongoDB</th></tr></thead><tbody>'
+        + '<tr><th scope="row">What does a typical read return?</th><td>Rows combined from several tables</td><td>One document with everything inside</td></tr>'
+        + '<tr><th scope="row">How stable is the shape?</th><td>Known up front, rarely changes</td><td>Varies per record or changes often</td></tr>'
+        + '<tr><th scope="row">Who must enforce the rules?</th><td>The database (<code>NOT NULL</code>, FK, <code>CHECK</code>)</td><td>Your code or a validator is acceptable</td></tr>'
+        + '<tr><th scope="row">Relationships</th><td>Many-to-many, shared entities, cascades</td><td>Mostly parent → few children</td></tr>'
+        + '<tr><th scope="row">Reports</th><td>Ad-hoc joins and <code>GROUP BY</code> across entities</td><td>Pipelines over one collection</td></tr>'
+        + '<tr><th scope="row">Multi-record changes</th><td>Frequent (money transfers, stock)</td><td>Rare: most writes touch one document</td></tr>'
+        + '</tbody></table>',
+      '<h3>Claims that are out of date</h3>',
+      '<ul><li><strong>"MongoDB has no transactions":</strong> multi-document <strong>ACID transactions</strong> exist since MongoDB 4.0 (on replica sets), although single-document writes, which are atomic, remain the normal tool.</li>'
+        + '<li><strong>"SQL cannot store JSON":</strong> PostgreSQL has a <code>jsonb</code> column type with indexes.</li>'
+        + '<li><strong>"MongoDB scales and SQL does not":</strong> both scale far beyond a small project; at that size, design and indexes matter far more than the engine.</li></ul>',
+      '<p><strong>Learn both:</strong> the concepts transfer, and many teams run one of each. With a layered API, switching is cheap: routes and controllers stay identical and only <code>models/</code> changes (see <a href="#/database/relational/models-layer">The models layer</a>).</p>',
     ],
-    table: {
-      caption: 'Which way does your project lean?',
-      head: ['Question', 'Leans SQL', 'Leans MongoDB'],
-      rows: [
-        ['What does a typical read return?', 'Rows combined from several tables', 'One document with everything inside'],
-        ['How stable is the shape?', 'Known up front, rarely changes', 'Varies per record or changes often'],
-        ['Who must enforce the rules?', 'The database (`NOT NULL`, FK, `CHECK`)', 'Your code / validator is acceptable'],
-        ['Relationships', 'Many-to-many, shared entities, cascades', 'Mostly parent → few children'],
-        ['Reports', 'Ad-hoc joins and `GROUP BY` across entities', 'Pipelines over one collection'],
-        ['Multi-record changes', 'Frequent (money transfers, stock)', 'Rare: most writes touch one document'],
-      ],
-    },
     example: 'A tasks API fits both. SQL: `users` and `tasks` with a foreign key and `ON DELETE CASCADE`, owner checks by `user_id`, `LIMIT/OFFSET` pages. MongoDB: a `tasks` collection with `ownerId` (plus an embedded `owner.name` copy), tags and comments embedded, an index on `{ ownerId: 1, createdAt: -1 }`. A course-enrolment system with students, groups, subjects and grades, queried in every direction, leans clearly towards SQL.',
     mistake: 'Picking MongoDB "to avoid designing a schema". The design work does not disappear; it moves into your code, where the database can no longer help you. Pick it when the document model fits your reads, and then design the documents carefully.' },
+
+  { id: 'sql-bridge', hub: 'app', topic: 'app',
+    title: 'From SQL to MongoDB: the vocabulary',
+    summary: 'A recap of the section as a dictionary: table → **collection**, row → **document**, column → **field**, primary key → **`_id`**, JOIN → **embedding** or **`$lookup`**, `WHERE` → a **filter** document, `GROUP BY` → **`$group`**.',
+    html: [
+      '<p>The questions you ask a database stay the same (which records? which fields? in what order? how many per group?); only the way you write them changes. SQL writes a sentence (<code>SELECT … FROM … WHERE …</code>); MongoDB passes JavaScript-like objects to methods (<code>find({ … }, { … })</code>).</p>',
+      '<table><caption>The same ideas in both worlds (the tasks/users domain)</caption><thead><tr><th scope="col">Idea</th><th scope="col">SQL (PostgreSQL)</th><th scope="col">MongoDB</th></tr></thead><tbody>'
+        + '<tr><th scope="row">A group of similar records</th><td>Table <code>tasks</code></td><td>Collection <code>tasks</code></td></tr>'
+        + '<tr><th scope="row">One record</th><td>Row (flat)</td><td>Document (can nest objects and arrays)</td></tr>'
+        + '<tr><th scope="row">A named value</th><td>Column (declared, one type)</td><td>Field (not declared; any type)</td></tr>'
+        + '<tr><th scope="row">Identity</th><td><code>id SERIAL PRIMARY KEY</code></td><td><code>_id</code> (ObjectId by default)</td></tr>'
+        + '<tr><th scope="row">Related data</th><td>Foreign key <code>user_id</code> + <code>JOIN</code></td><td>Embedded sub-document, or an <code>_id</code> reference + <code>$lookup</code></td></tr>'
+        + '<tr><th scope="row">Read</th><td><code>SELECT title FROM tasks WHERE done = FALSE</code></td><td><code>db.tasks.find({ done: false }, { title: 1 })</code></td></tr>'
+        + '<tr><th scope="row">Sort and page</th><td><code>ORDER BY … LIMIT 10 OFFSET 20</code></td><td><code>.sort({ … }).skip(20).limit(10)</code></td></tr>'
+        + '<tr><th scope="row">Count per group</th><td><code>SELECT user_id, COUNT(*) … GROUP BY user_id</code></td><td><code>aggregate([{ $group: { _id: \'$owner\', n: { $sum: 1 } } }])</code></td></tr>'
+        + '<tr><th scope="row">Create / change / remove</th><td><code>INSERT</code>, <code>UPDATE … SET</code>, <code>DELETE</code></td><td><code>insertOne</code>, <code>updateOne</code> + <code>$set</code>, <code>deleteOne</code></td></tr>'
+        + '<tr><th scope="row">Schema rules</th><td>Enforced by the database (<code>NOT NULL</code>, types, FK)</td><td>Enforced by your code, a validator or Mongoose</td></tr>'
+        + '</tbody></table>',
+      '<ul><li><strong>Where related data lives</strong> is the deepest difference: SQL keeps each entity in its own table and joins at query time; MongoDB embeds or references (see <a href="#/database/documents/embed-or-reference">Embed or reference?</a>).</li>'
+        + '<li><strong>The database checks less:</strong> no schema unless you add one (see <a href="#/database/documents/flexible-schema">Flexible schema</a>), and no foreign keys: nothing stops a task from pointing at a user that was deleted.</li></ul>',
+    ],
+    example: 'The relational query "open tasks of ana@example.com" is `SELECT t.title FROM tasks t JOIN users u ON u.id = t.user_id WHERE u.email = \'ana@example.com\' AND t.done = FALSE`. With the owner embedded in each task, MongoDB needs no join: `db.tasks.find({ \'owner.email\': \'ana@example.com\', done: false }, { title: 1 })`. The playground shows "The same in SQL" under each result so you can compare.',
+    mistake: 'Translating a SQL schema table by table, with a `task_tags` collection, a `comments` collection and ids everywhere, then joining them with `$lookup` in every query. That keeps all the costs of the relational model and loses its guarantees (no foreign keys, weaker joins). Design documents around how the data is **read**.',
+    practice: { href: '#/database/documents/practice/mongo-playground', label: 'Compare queries with SQL in the playground' } },
 ];
 
 DATA.en.MONGO_QUIZ = [
