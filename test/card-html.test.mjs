@@ -61,6 +61,13 @@ function checkBlock(b) {
   return errs;
 }
 
+// Titles are printed as escaped text (rail, pager, heading, search): markdown would show
+// literally. Element names such as <Outlet /> are fine: they are escaped.
+test('card titles have no markdown', () => {
+  const bad = cards.filter(({ c }) => /`|\*\*|\]\(/.test(c.title || '')).map(({ where, c }) => `${where}: ${c.title}`);
+  assert.deepEqual([...bad], []);
+});
+
 test('the block checker accepts good HTML and rejects bad HTML', () => {
   assert.deepEqual(checkBlock('<ul><li><strong>V8</strong>: runs <code>a &lt; b</code>.</li></ul>'), []);
   assert.deepEqual(checkBlock('<p>See <a href="#/server/runtime/promises">Promises</a>.</p>'), []);

@@ -7,7 +7,8 @@
 //   node site/tools/card-splice.mjs git replace three-areas scratch/three-areas.js
 //
 // <file> is the data file name without .js. A card runs from its line "  { id: '<id>'" to
-// just before the next card, the next group comment ("  /* ----") or the closing "];".
+// just before the next card, the next group comment ("  /* ----") or the closing "];" of the
+// array.
 // The file is checked by loading it afterwards; nothing is written if it does not load.
 import { readFileSync, writeFileSync } from 'node:fs';
 import vm from 'node:vm';
@@ -26,7 +27,9 @@ if (start <= 0) {
   console.error(`card ${id} not found in ${file}.js`);
   process.exit(1);
 }
-const rest = /\n(?:  \{ id: '|  \/\* ----|\];)/g;
+// The array ends at a "];" followed by a blank line and the next DATA assignment (or the end
+// of the file): a "];" inside a card's code sample must not end it.
+const rest = /\n(?:  \{ id: '|  \/\* ----|\];(?=\r?\n\r?\nDATA\.en\.|\s*$))/g;
 rest.lastIndex = start + 1;
 const end = rest.exec(src).index + 1;
 const segment = src.slice(start, end);

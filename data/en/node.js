@@ -255,6 +255,7 @@ console.log(deleteTask);     // undefined` },
         + '<dt><code>fs.promises.readFile(file, \'utf8\')</code></dt><dd>The same without waiting: it returns a promise, used with <code>await</code> (see <a href="#/server/runtime/async-await">async and await</a>).</dd>'
         + '<dt><code>fs.writeFileSync(file, text)</code></dt><dd>Creates the file, or replaces its contents.</dd>'
         + '<dt><code>path.join(\'data\', \'tasks.json\')</code></dt><dd>Joins parts with the separator of the operating system: <code>/</code> on macOS and Linux, <code>\\</code> on Windows.</dd>'
+        + '<dt><code>JSON.parse(text)</code></dt><dd>Turns a JSON file\'s text into a value; <code>JSON.stringify(value, null, 2)</code> writes it back (see <a href="#/browser/js/json">JSON</a>).</dd>'
         + '<dt><code>__dirname</code></dt><dd>The folder of the current file, in CommonJS. In an ES module: <code>import.meta.dirname</code>.</dd></dl>',
     ],
     code: `// src/load.js
@@ -606,7 +607,7 @@ console.log('this prints second: copyData() returned a pending promise');` },
     title: 'Errors in async code: try/catch every await',
     summary: 'When an awaited promise is rejected, `await` **throws** the error on that line, so an ordinary `try { … } catch (err) { … }` catches it; an error nobody catches stops the whole server.',
     html: [
-      '<p><code>try</code>/<code>catch</code> is a safety net: the risky lines go inside <code>try { }</code>, and if one of them throws, JavaScript jumps to <code>catch (err) { }</code> with the error, skipping the rest of the <code>try</code>. With <code>await</code>, a rejected promise becomes a thrown error on the <code>await</code> line, so the same net works for asynchronous code.</p>',
+      '<p><code>try</code>/<code>catch</code> is a safety net: the risky lines go inside <code>try { }</code>, and if one of them throws, JavaScript jumps to <code>catch (err) { }</code> with the error, skipping the rest of the <code>try</code> (see <a href="#/browser/js/try-catch">try and catch</a>). With <code>await</code>, a rejected promise becomes a thrown error on the <code>await</code> line, so the same net works for asynchronous code.</p>',
       '<p>An error nobody catches rejects the <code>async</code> function\'s own promise. Since Node 15, an <strong>unhandled rejection</strong> prints the error and <strong>ends the process</strong>: for a server, every user is disconnected, not only the one whose request failed.</p>',
       '<p><strong>With a framework</strong> the <code>catch</code> hands the error to one shared error handler: in Express 4 it calls <code>next(err)</code>; Express 5 forwards a rejected promise by itself (see <a href="#/server/runtime/frameworks">Why a framework</a>).</p>',
     ],
