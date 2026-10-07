@@ -1,60 +1,73 @@
 'use strict';
-/* Client-side routing: concept cards, rail groups and self-check quiz (React Router as the worked example). */
+/* Client-side routing: concept cards, rail groups and self-check quiz (React Router as the worked example).
+   Cards explain with `html` blocks and `diagram` specs (js/concept-section.js, js/diagram.js). */
 
 DATA.en.ROUTING_QUIZ_TOPICS = {
   spa: 'Single-page apps and URLs',
-  matching: 'Routes and matching',
+  matching: 'Routes, links and matching',
   layouts: 'Nested routes and layouts',
-  navigation: 'Navigating',
+  navigation: 'Navigating from code',
   guards: 'Protected routes and data',
 };
 
 DATA.en.ROUTING_GROUPS = [
   { key: 'spa', label: 'Single-page apps and URLs', icon: 'web' },
-  { key: 'routes', label: 'Routes and matching', icon: 'route' },
+  { key: 'routes', label: 'Routes, links and matching', icon: 'route' },
   { key: 'layouts', label: 'Nested routes and layouts', icon: 'tree' },
-  { key: 'navigation', label: 'Navigating', icon: 'arrow' },
+  { key: 'navigation', label: 'Navigating from code', icon: 'arrow' },
   { key: 'guards', label: 'Protected routes and data', icon: 'lock' },
 ];
 
 const ROUTER_SIM = { href: '#/browser/routing/practice/router-sim', label: 'Try it in the router simulator' };
 
 DATA.en.ROUTING_CONCEPTS = [
-  /* ---- 1. Single-page apps and URLs ------------------------------------------------ */
+  /* ---- 1. Single-page apps and URLs -------------------------------------------------------- */
   { id: 'mpa-vs-spa', hub: 'spa', topic: 'spa',
     title: 'Multi-page sites and single-page apps',
-    summary: 'In a **multi-page site** every link asks the server for a new HTML page. In a **single-page app** (SPA) the server sends one HTML page and the JavaScript bundle once; after that, the app itself swaps screens and changes the URL, asking the server only for data.',
-    body: [
-      'Picture two restaurants. In the first, every time you want another dish, the waiter takes away the whole table, plates, glasses and your coat included, and lays a new one. That is a multi-page site: each click is a full page load, the browser throws away the page (with its JavaScript variables, scroll position and half-typed form) and draws the new one the server sent. In the second restaurant the table stays; only the plate changes. That is a single-page app: one page load, then the app replaces the part of the screen that changes.',
-      'What travels over the network is the clearest difference. Multi-page: each navigation is `GET /tasks/7` and the answer is a complete HTML document built for that URL (by Express templates, PHP, Django… or static files). Single-page: the first visit gets `index.html` and the JavaScript bundle; from then on, clicking "Task 7" sends no HTML request at all, the app draws the task screen itself, and only the data travels, as JSON: `GET /api/tasks/7` (see [Fetching data](#/browser/data-fetching)).',
-      'An SPA must still give every screen its own **URL**, otherwise the Back button, bookmarks, shared links and refresh all break. Keeping the URL and the screen in step, without asking the server for pages, is the job of a **client-side router**: a piece of code in the browser that reads the URL, decides which components to show, and updates the URL when the user moves around. React does not include one; React Router is the usual choice, and it is the example on these cards.',
+    summary: 'In a **multi-page site** every link loads a new HTML page from the server; in a **single-page app** (SPA) the server sends one HTML page once, and the app then swaps screens and changes the URL itself, asking the server only for data.',
+    html: [
+      '<p>A full page load throws away everything the page held: variables, scroll position, a half-typed form. A single-page app loads once, then replaces only the part of the screen that changes. Every screen still needs its own <strong>URL</strong>, or Back, bookmarks, shared links and refresh break; keeping URL and screen in step is the job of a <strong>client-side router</strong>, code in the browser that reads the URL and decides what to show (React has none built in; React Router is the example here).</p>',
+      '<table><caption>What happens when the user clicks "Task 7"</caption><thead><tr><th scope="col"></th><th scope="col">Multi-page site</th><th scope="col">Single-page app</th></tr></thead><tbody>'
+        + '<tr><th scope="row">Request</th><td><code>GET /tasks/7</code>: a whole HTML page</td><td>None for the page; <code>GET /api/tasks/7</code>: JSON (see <a href="#/browser/data-fetching">Fetching data</a>)</td></tr>'
+        + '<tr><th scope="row">Who builds the screen</th><td>The server</td><td>The app, in the browser</td></tr>'
+        + '<tr><th scope="row">JavaScript state (variables, forms)</th><td>Lost</td><td>Kept</td></tr>'
+        + '<tr><th scope="row">The URL changes because…</th><td>The browser loaded a new document</td><td>The router called <code>history.pushState</code></td></tr>'
+        + '<tr><th scope="row">Back button</th><td>The browser loads the previous page</td><td>The router draws the previous screen</td></tr>'
+        + '<tr><th scope="row">First visit</th><td>Fast: one ready-made page</td><td>Slower: the bundle must download and run first</td></tr>'
+        + '</tbody></table>',
     ],
-    table: { caption: 'What happens when the user clicks "Task 7"',
-      head: ['', 'Multi-page site', 'Single-page app'],
-      rows: [
-        ['Request', '`GET /tasks/7` → a whole HTML page', 'none for the page; `GET /api/tasks/7` → JSON'],
-        ['Who builds the screen', 'the server', 'the app, in the browser'],
-        ['JavaScript state (variables, forms)', 'lost', 'kept'],
-        ['The URL changes because…', 'the browser loaded a new document', 'the router called `history.pushState`'],
-        ['Back button', 'the browser loads the previous page', 'the router draws the previous screen'],
-        ['First visit', 'fast: one ready-made page', 'slower: the bundle must download and run first'],
-      ] },
-    points: [
-      'SPA: **one** HTML page, many screens, each with its own URL.',
-      'After the first load, an SPA asks the server for **data**, not pages.',
-      'The **client-side router** keeps the URL and the screen in step.',
-    ],
-    example: 'Open the Network tab of the browser\'s developer tools (see [DevTools: the Network tab](#/http/web/devtools-network)) on any React app and click around: the "Doc" filter shows one request, the first one; the "Fetch/XHR" filter shows the JSON calls each screen makes. Do the same on a classic multi-page site: every click adds a new "Doc" request.',
-    mistake: 'Thinking that a single-page app has a single URL. A good SPA has as many URLs as screens (`/tasks`, `/tasks/7`, `/tasks/7/edit`); "single page" refers to the one HTML document the server sends, not to the address bar.' },
+    example: 'Open the Network tab (see [Watching the conversation: the Network tab](#/http/web/devtools-network)) on a React app and click around: the "Doc" filter shows one request, the first; "Fetch/XHR" shows the JSON calls each screen makes. On a classic multi-page site every click adds a new "Doc" request.',
+    mistake: 'Thinking a single-page app has a single URL. A good SPA has as many URLs as screens (`/tasks`, `/tasks/7`, `/tasks/7/edit`); "single page" means the one HTML document the server sends, not the address bar.' },
 
   { id: 'history-api', hub: 'spa', topic: 'spa',
     title: 'The History API: changing the URL without a request',
-    summary: 'The browser\'s **History API** lets JavaScript change the URL without loading a page: `history.pushState(state, \'\', \'/tasks/7\')` adds an entry to the history, `replaceState` overwrites the current one, and the **`popstate`** event fires when the user presses Back or Forward. Every client-side router is built on these three.',
-    body: [
-      'The browser keeps a **history stack** per tab: a list of entries (URL plus an optional `state` object) and a pointer to the current one. Normally only page loads add entries. `pushState` lets your code add one too, and here is the trick: the address bar shows the new URL, but **nothing is requested and nothing is redrawn**. The browser just writes the new address down. Drawing the matching screen is your job.',
-      'The other direction matters as much. When the user presses Back, the browser moves the pointer to the previous entry, puts its URL in the address bar and fires `popstate` on `window` (again without a request, if the entry was created by `pushState`). A router listens to `popstate`, reads `location.pathname` and draws that screen. `pushState` and `replaceState` themselves do **not** fire `popstate`, so the router redraws right after calling them.',
-      'Three methods and an event make a router: on a link click, `preventDefault()` (see [preventDefault](#/browser/dom/prevent-default)), `pushState`, render; on `popstate`, render. `replaceState` is for "go there, but do not leave the current page in the history" (redirects, see [Push or replace](#/browser/routing/push-vs-replace)). `history.back()`, `history.forward()` and `history.go(-2)` move the pointer from code. React Router wraps all of this; you will rarely call these yourself.',
+    summary: 'The browser\'s **History API** lets JavaScript change the URL without loading a page: `pushState` adds a history entry, `replaceState` overwrites the current one, and the **`popstate`** event fires on Back and Forward. Every client-side router is built on them.',
+    html: [
+      '<p>Each tab keeps a <strong>history stack</strong>: entries (a URL and an optional <code>state</code> object) and a pointer to the current one. <code>pushState</code> writes a new address into it, and that is all: <strong>nothing is requested and nothing is redrawn</strong>. Drawing the matching screen is the router\'s job.</p>',
+      '<dl><dt><code>history.pushState(state, \'\', \'/tasks\')</code></dt><dd>Adds an entry and moves the pointer to it; the address bar shows <code>/tasks</code>. It does <strong>not</strong> fire <code>popstate</code>, so the router renders right after calling it.</dd>'
+        + '<dt><code>history.replaceState(…)</code></dt><dd>Overwrites the current entry, for redirects (see <a href="#/browser/routing/push-vs-replace">Push or replace</a>).</dd>'
+        + '<dt><code>popstate</code></dt><dd>Fires on <code>window</code> when Back or Forward moves the pointer; the router reads <code>location.pathname</code> and draws that screen.</dd>'
+        + '<dt><code>history.back()</code>, <code>history.go(-2)</code></dt><dd>Move the pointer from code.</dd></dl>',
+      '<p>React Router wraps all of this, the link\'s <code>preventDefault()</code> included (see <a href="#/browser/dom/prevent-default">preventDefault</a>); you will rarely call these yourself.</p>',
     ],
+    diagram: {
+      kind: 'sequence',
+      numbered: true,
+      title: 'pushState only writes the address; the router draws, and popstate tells it about Back.',
+      desc: 'A link is clicked and the router code cancels the page load with preventDefault. It calls pushState, which adds /tasks to the browser history without any request, and then draws the tasks screen itself. Later the user presses Back: the browser history moves its pointer and fires popstate, and the router draws the URL it restored.',
+      nodes: [
+        { id: 'router', label: 'Router code' },
+        { id: 'history', label: 'Browser history', key: true },
+      ],
+      edges: [
+        ['router', 'router', 'link clicked: `preventDefault()`'],
+        ['router', 'history', '`pushState(…, \'/tasks\')`'],
+        ['router', 'router', 'draws /tasks'],
+        ['history', 'history', 'the user presses Back'],
+        ['history', 'router', '`popstate`'],
+        ['router', 'router', 'draws the restored URL'],
+      ],
+    },
     code: `// A hand-made router in plain JavaScript: what a library like React Router does underneath
 const routes = {
   '/': () => '<h1>Home</h1>',
@@ -80,17 +93,32 @@ window.addEventListener('popstate', render);
 
 render();                                   // 3. the first load`,
     practice: ROUTER_SIM,
-    example: 'With the code above, on `/` the user clicks `<a href="/tasks" data-link>`: the listener cancels the navigation, `pushState` makes the history `[/, /tasks]` with the pointer on `/tasks`, and `render()` draws "All tasks". Back moves the pointer to `/` and fires `popstate`, so `render()` draws "Home". No request reached the server in either step.',
-    mistake: 'Expecting `pushState` to show the new page by itself, or to fire `popstate`. It only changes the address bar and the history; if your code does not render afterwards, the URL says `/tasks` while the screen still shows the home page.' },
+    example: 'With this hand-made router, on `/` the user clicks `<a href="/tasks" data-link>`: the listener cancels the navigation, `pushState` makes the history `[/, /tasks]`, and `render()` draws "All tasks". Back moves the pointer to `/`, fires `popstate`, and `render()` draws "Home". No request reached the server.',
+    mistake: 'Expecting `pushState` to show the new page, or to fire `popstate`. It only changes the address bar and the history; without a render afterwards, the URL says `/tasks` while the screen still shows the home page.' },
 
   { id: 'server-fallback', hub: 'spa', topic: 'spa',
     title: 'Refresh and deep links: every path must return index.html',
-    summary: 'A client-side route such as `/tasks/7` exists only inside the app. When the user **refreshes** or opens a shared link, the browser asks the **server** for `/tasks/7`; unless the server answers every app path with `index.html` (the **SPA fallback**), the user gets a 404 instead of the app.',
-    body: [
-      'Remember who knows about which URL. The **router** knows `/tasks/7`, but the router is JavaScript inside `index.html`, so it only runs once that page is loaded. A refresh, a bookmark, a link pasted in a chat or a URL typed in the address bar all start from zero: the browser sends `GET /tasks/7` to the server. A server that only serves files looks for a file called `tasks/7`, finds none and answers **404 Not Found**. Clicking around worked; refreshing breaks. That is the symptom.',
-      'The fix is on the **server**: for any path that is not a real file and not the API, send `index.html` with status 200. The app starts, the router reads `location.pathname`, which is still `/tasks/7`, and draws the right screen. This rule is called the SPA fallback (or "history fallback", or a "rewrite").',
-      'Where you meet it: the **Vite dev server** already does it, which is why the problem only appears after deploying. `vite preview` does it too. A static host needs a rule: Netlify a `_redirects` file with `/* /index.html 200`, Vercel a rewrite, Nginx `try_files $uri /index.html`. GitHub Pages cannot rewrite at all; there, people copy `index.html` to `404.html` (the app works, but each deep link answers with status 404) or use [hash URLs](#/browser/routing/hash-vs-path). When Express serves the built app, add a last route after the API and the static files.',
+    summary: 'A client-side route such as `/tasks/7` exists only inside the app: on a **refresh** or a shared link the browser asks the **server** for `/tasks/7`, so the server must answer every app path with `index.html` (the **SPA fallback**), or the user gets a 404.',
+    html: [
+      '<p>The router is JavaScript inside <code>index.html</code>, so it only runs once that page has loaded. A refresh, a bookmark or a pasted link starts from zero: the browser sends <code>GET /tasks/7</code>, a server that only serves files finds no file of that name, and it answers <strong>404</strong>. Clicking around worked; refreshing breaks. With the fallback, the app starts, the router reads <code>location.pathname</code> and draws <code>/tasks/7</code>.</p>',
+      '<h3>Where the fallback is set up</h3>',
+      '<dl><dt>Vite dev server, <code>vite preview</code></dt><dd>Built in, which is why the problem only appears after deploying.</dd>'
+        + '<dt>Netlify, Vercel, Nginx</dt><dd>A rewrite rule: <code>/* /index.html 200</code> in Netlify\'s <code>_redirects</code>, a Vercel rewrite, <code>try_files $uri /index.html</code> in Nginx.</dd>'
+        + '<dt>GitHub Pages</dt><dd>Cannot rewrite: copy <code>index.html</code> to <code>404.html</code> (the app works, but deep links answer with status 404), or use <a href="#/browser/routing/hash-vs-path">hash URLs</a>.</dd>'
+        + '<dt>Express</dt><dd>One last route after the API and the static files, as in the code.</dd></dl>',
     ],
+    diagram: {
+      kind: 'branch',
+      title: 'The API answers JSON, files are files, and every other path gets the app.',
+      desc: 'Any GET request that reaches the server goes one of three ways. Paths under /api go to the API routes, which answer JSON, including a JSON 404. Paths of real files, such as /assets/index.js, are sent as files. Every other path, such as /tasks/7, gets index.html with status 200, and the router draws that URL.',
+      nodes: [
+        { id: 'req', label: 'A GET request', note: 'refresh, link, bookmark' },
+        { id: 'api', label: 'API routes', note: 'JSON, even the 404' },
+        { id: 'files', label: 'Static files', note: '`/assets/…`' },
+        { id: 'app', label: '`index.html`', note: 'status 200, router draws', key: true },
+      ],
+      edges: [['req', 'api', '`/api/…`'], ['req', 'files', 'a real file'], ['req', 'app', 'any other path']],
+    },
     code: `// Express serving the built React app (the dist/ folder from npm run build)
 const path = require('path');
 const dist = path.join(__dirname, '..', 'client', 'dist');
@@ -105,26 +133,23 @@ app.get(/^\\/(?!api\\/).*/, (req, res) => {
 
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));   // 4. unknown /api/… routes`,
     practice: ROUTER_SIM,
-    example: 'In the router simulator, switch off "The server answers every path with index.html", click a link to `/tasks` (it works: no request is made), then press **Refresh**: the page becomes the server\'s `404 Not Found · Cannot GET /tasks`, and the history shows a new page load. Switch the fallback on and refresh again: the app starts and draws `/tasks`.',
-    mistake: 'Making the fallback catch everything, API included: `GET /api/tsks` (a typo) then answers `200` with an HTML page, and the front end fails with "Unexpected token \'<\' in JSON". Exclude `/api/` from the fallback so unknown API paths keep their JSON 404 (see [The 404 catch-all](#/server/routes/not-found)).' },
+    example: 'In the router simulator, switch off "The server answers every path with index.html", click a link to `/tasks` (it works: no request is made), then press **Refresh**: the page becomes the server\'s `404 Not Found · Cannot GET /tasks`. Switch the fallback on and refresh again: the app starts and draws `/tasks`.',
+    mistake: 'Making the fallback catch everything, API included: `GET /api/tsks` (a typo) then answers `200` with an HTML page, and the front end fails with "Unexpected token \'<\' in JSON". Exclude `/api/` from the fallback, so unknown API paths keep their JSON 404 (see [The 404 catch-all](#/server/routes/not-found)).' },
 
   { id: 'hash-vs-path', hub: 'spa', topic: 'spa',
     title: 'Hash URLs and path URLs',
-    summary: 'A router can keep the screen in the **path** (`/tasks/7`, needs the server fallback) or in the **hash** (`/#/tasks/7`). The hash, everything after `#`, is never sent to the server, so hash URLs work on any static host, at the price of uglier URLs.',
-    body: [
-      'Recall the parts of a URL (see [Anatomy of a URL](#/http/web/url-anatomy)): the **fragment** or hash, the part after `#`, stays in the browser. It was invented to jump to a place in the page (`#comments`), so changing it never reloads anything. A router can use it as its address: `https://example.com/#/tasks/7` asks the server only for `/`, and the router reads `#/tasks/7`. Changing the hash fires the `hashchange` event, the hash version of `popstate`.',
-      'That is why hash routing needs no server configuration: every URL of the app is, for the server, the same file. It is a good fit for hosts that cannot rewrite (GitHub Pages, a folder on a shared server, a file opened from disk). This study site uses hash URLs, `#/browser/routing`, for exactly that reason.',
-      'Path URLs are the default for applications: they are cleaner, the hash stays free for in-page anchors, and servers and search engines see the real path. In React Router you choose with the router component: `BrowserRouter` (or `createBrowserRouter`) for paths, `HashRouter` (or `createHashRouter`) for hashes. Routes, links and hooks are written the same way with both.',
+    summary: 'A router can keep the screen in the **path** (`/tasks/7`, which needs the server fallback) or in the **hash** (`/#/tasks/7`); the hash is never sent to the server, so hash URLs work on any static host, at the price of uglier URLs.',
+    html: [
+      '<p>The <strong>fragment</strong>, the part after <code>#</code>, stays in the browser (see <a href="#/http/web/url-anatomy">Anatomy of a URL</a>). It was made for jumping inside a page, so changing it never reloads anything; it fires <code>hashchange</code> instead. A router can use it as its address: <code>https://example.com/#/tasks/7</code> asks the server only for <code>/</code>, which is why this study site uses hash URLs.</p>',
+      '<table><caption>The same screen, two kinds of URL</caption><thead><tr><th scope="col"></th><th scope="col">Path: <code>/tasks/7</code></th><th scope="col">Hash: <code>/#/tasks/7</code></th></tr></thead><tbody>'
+        + '<tr><th scope="row">What the server receives</th><td><code>GET /tasks/7</code></td><td><code>GET /</code> (the hash is not sent)</td></tr>'
+        + '<tr><th scope="row">Server configuration</th><td>SPA fallback needed</td><td>None</td></tr>'
+        + '<tr><th scope="row">Browser API underneath</th><td><code>pushState</code> + <code>popstate</code></td><td><code>location.hash</code> + <code>hashchange</code></td></tr>'
+        + '<tr><th scope="row">React Router</th><td><code>BrowserRouter</code> / <code>createBrowserRouter</code></td><td><code>HashRouter</code> / <code>createHashRouter</code></td></tr>'
+        + '<tr><th scope="row">In-page anchors (<code>#section</code>)</th><td>Work as usual</td><td>Clash with the route</td></tr>'
+        + '</tbody></table>',
+      '<p>Path URLs are the default for applications: cleaner, the hash stays free for in-page anchors, and servers and search engines see the real path. Routes, links and hooks are written the same way with both.</p>',
     ],
-    table: { caption: 'The same screen, two kinds of URL',
-      head: ['', 'Path: `/tasks/7`', 'Hash: `/#/tasks/7`'],
-      rows: [
-        ['What the server receives', '`GET /tasks/7`', '`GET /` (the hash is not sent)'],
-        ['Server configuration', 'SPA fallback needed', 'none'],
-        ['Browser API underneath', '`pushState` + `popstate`', '`location.hash` + `hashchange`'],
-        ['React Router', '`BrowserRouter` / `createBrowserRouter`', '`HashRouter` / `createHashRouter`'],
-        ['In-page anchors (`#section`)', 'work as usual', 'clash with the route'],
-      ] },
     code: `// A hash router in plain JavaScript: no server configuration needed
 function render() {
   const path = location.hash.slice(1) || '/';     // '#/tasks/7' → '/tasks/7'
@@ -133,17 +158,32 @@ function render() {
 window.addEventListener('hashchange', render);   // links: <a href="#/tasks/7">
 render();`,
     example: 'Deploy the same app twice to a static host without rewrites. With `BrowserRouter`, `https://me.github.io/app/tasks/7` gives a 404 on refresh. With `HashRouter`, `https://me.github.io/app/#/tasks/7` always works: the server only ever sees `/app/`.',
-    mistake: 'Switching to `HashRouter` while keeping `href="/tasks"` in plain `<a>` tags. Those still point at a path, so they trigger a full page load to a URL the host does not have. Use the router\'s `<Link to="/tasks">`, which writes the right URL for the router you chose.' },
+    mistake: 'Switching to `HashRouter` while keeping `href="/tasks"` in plain `<a>` tags. Those still point at a path, so they load a page the host does not have. Use the router\'s `<Link to="/tasks">`, which writes the right URL for the router you chose (see [Link instead of a href](#/browser/routing/link-vs-a)).' },
 
-  /* ---- 2. Routes and matching --------------------------------------------------------- */
+  /* ---- 2. Routes, links and matching ------------------------------------------------------- */
   { id: 'router-setup', hub: 'routes', topic: 'matching',
     title: 'Setting up a router (React Router)',
-    summary: 'In React, a router is a component at the top of the app that listens to the URL and gives every component below it access to the current location. With React Router: `npm install react-router`, wrap the app in `<BrowserRouter>`, and describe the screens with `<Routes>` and `<Route>`.',
-    body: [
-      'The router is the switchboard of the app: it holds the current location (path, query string, hash, state), listens to the History API, and lets any component below it read the location or navigate. That is why it goes at the **top**, once, usually in `main.jsx` around `<App />`: hooks such as `useParams` or `useNavigate` throw an error in a component that is not inside a router.',
-      'Package names changed over time. React Router 7 is installed as `react-router`; version 6, used by many tutorials and existing projects, was `react-router-dom`, and its components and hooks have the same names. Imports therefore look like `import { Link } from \'react-router\'` in new projects and `from \'react-router-dom\'` in older ones; check `package.json` and use what is installed.',
-      'React Router offers two ways to declare routes. **JSX routes** (`<BrowserRouter>` + `<Routes>`), the simplest, used on these cards. A **route object** created with `createBrowserRouter([...])` and rendered with `<RouterProvider router={router} />` (the "data" mode), which adds `loader` functions that fetch a route\'s data before it renders. Matching, nesting, params and links work the same in both.',
+    summary: 'A router is a component at the top of the app that listens to the URL and lets every component below it read the location; with React Router: `npm install react-router`, wrap the app in `<BrowserRouter>`, and list the screens with `<Routes>` and `<Route>`.',
+    html: [
+      '<p>The router holds the current location and listens to the History API, so it goes <strong>once, at the top</strong>, usually around <code>&lt;App /&gt;</code> in <code>main.jsx</code>. Every routing hook below it reads from it; a routing hook used outside it throws an error.</p>',
+      '<dl><dt><code>useLocation()</code></dt><dd>The current location: <code>pathname</code> (<code>/tasks/7</code>), <code>search</code> (<code>?page=2</code>), <code>hash</code>, and <code>state</code>, data attached to this history entry by the navigation that created it.</dd>'
+        + '<dt><code>react-router</code> or <code>react-router-dom</code></dt><dd>Version 7 is installed as <code>react-router</code>; version 6, in many tutorials and existing projects, was <code>react-router-dom</code>, with the same component and hook names. Import from whichever <code>package.json</code> lists.</dd>'
+        + '<dt>JSX routes or route objects</dt><dd><code>&lt;BrowserRouter&gt;</code> + <code>&lt;Routes&gt;</code>, used on these cards; or <code>createBrowserRouter([...])</code> + <code>&lt;RouterProvider&gt;</code>, the "data" mode, which adds <code>loader</code> functions that fetch before a route renders. Matching, nesting, params and links work the same.</dd></dl>',
     ],
+    diagram: {
+      kind: 'tree',
+      title: 'One router at the top; every component below it can read the URL.',
+      desc: 'BrowserRouter wraps App, which renders Routes. Routes holds three routes: / renders Home, /tasks renders TaskList, and /tasks/:id renders TaskDetail. Any component inside BrowserRouter can read the location.',
+      nodes: [
+        { id: 'br', label: '`<BrowserRouter>`', note: 'holds the location', key: true },
+        { id: 'app', label: '`<App>`' },
+        { id: 'routes', label: '`<Routes>`', note: 'picks one route' },
+        { id: 'r1', label: '`/`', note: '`<Home />`' },
+        { id: 'r2', label: '`/tasks`', note: '`<TaskList />`' },
+        { id: 'r3', label: '`/tasks/:id`', note: '`<TaskDetail />`' },
+      ],
+      edges: [['br', 'app'], ['app', 'routes'], ['routes', 'r1'], ['routes', 'r2'], ['routes', 'r3']],
+    },
     code: `// main.jsx: one router, at the top
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';    // version 6: 'react-router-dom'
@@ -179,15 +219,19 @@ export default function App() {
 // ]);
 // createRoot(root).render(<RouterProvider router={router} />);`,
     example: 'A typical layout of files: `src/pages/` holds one component per screen (`TaskList.jsx`, `TaskDetail.jsx`, `Login.jsx`), `src/components/` the pieces they share (`TaskItem`, `NavBar`), and `App.jsx` the route table that connects URLs to pages. Reading `App.jsx` alone tells you every screen the app has.',
-    mistake: 'Calling `useNavigate()` in a component that is rendered **outside** the router, for example an auth provider placed above `<BrowserRouter>` in `main.jsx`. React Router throws "useNavigate() may be used only in the context of a <Router> component". Put the router at the very top, and any provider that navigates inside it.' },
+    mistake: 'Calling `useNavigate()` in a component rendered **outside** the router, such as a provider that keeps the logged-in user (see [An authentication context](#/browser/shared-state/auth-context)) placed above `<BrowserRouter>` in `main.jsx`. React Router throws "useNavigate() may be used only in the context of a <Router> component". Put the router at the very top, and any provider that navigates inside it.' },
 
   { id: 'routes-and-route', hub: 'routes', topic: 'matching',
     title: 'Routes: mapping a URL to a component',
-    summary: 'A **route** pairs a URL **pattern** (`path="/tasks/:id"`) with what to render for it (`element={<TaskDetail />}`). `<Routes>` looks at the current URL, chooses the best matching route and renders its element; when the URL changes, it chooses again.',
-    body: [
-      'Think of `<Routes>` as a switch statement on the URL that React re-runs on every navigation: "if the path looks like this, show that". Each `<Route>` is one case. The **path** is a pattern, not a fixed string: literal segments (`tasks`) must be equal, a segment starting with a colon (`:id`) matches any single segment, and a final `*` matches whatever is left. Matching ignores letter case and a trailing slash, and it ignores the query string and the hash: `/Tasks/7/?tab=notes` matches `/tasks/:id`.',
-      'A path must match the **whole** URL, segment by segment: `/tasks/:id` matches `/tasks/7` but not `/tasks` (one segment missing) nor `/tasks/7/edit` (one too many). Each screen therefore gets its own route, and the "nothing matches" case needs one too ([the catch-all](#/browser/routing/not-found-route)). When nothing matches, React Router renders nothing and only writes a warning in the console.',
-      '`element` takes a JSX **element**, `<TaskList />`, not the function `TaskList`: you can pass props there (`element={<TaskList filter="open" />}`) and wrap it (`element={<RequireAuth><Settings /></RequireAuth>}`). The component is only rendered while its route matches; navigating away unmounts it, so its state is lost unless it lives higher up (see [Nested routes and layouts](#/browser/routing/nested-routes)).',
+    summary: 'A **route** pairs a URL **pattern** (`path="/tasks/:id"`) with what to render (`element={<TaskDetail />}`); `<Routes>` picks the best match for the current URL, renders its element, and chooses again whenever the URL changes.',
+    html: [
+      '<p><code>&lt;Routes&gt;</code> works like a <code>switch</code> on the URL that React re-runs on every navigation, and each <code>&lt;Route&gt;</code> is one case. A path must match the <strong>whole</strong> URL, segment by segment, so each screen needs its own route, and "nothing matches" needs one too (<a href="#/browser/routing/not-found-route">the catch-all</a>).</p>',
+      '<dl><dt><code>tasks</code></dt><dd>A literal segment: must be equal.</dd>'
+        + '<dt><code>:id</code></dt><dd>Any one non-empty segment (see <a href="#/browser/routing/url-params">URL parameters</a>).</dd>'
+        + '<dt><code>*</code> at the end</dt><dd>Whatever is left of the URL.</dd></dl>',
+      '<ul><li><strong>Ignored when matching:</strong> letter case, a trailing slash, the query string and the hash: <code>/Tasks/7/?tab=notes</code> matches <code>/tasks/:id</code>.</li>'
+        + '<li><strong>No match:</strong> React Router renders nothing and only logs a warning in the console.</li>'
+        + '<li><strong><code>element</code> takes an element,</strong> <code>&lt;TaskList /&gt;</code>, not the function <code>TaskList</code>, so it can carry props or a wrapper. It renders only while its route matches; navigating away unmounts it and its state is lost (see <a href="#/browser/routing/nested-routes">Nested routes and layouts</a>).</li></ul>',
     ],
     live: { kind: 'react', code: `import { useState } from 'react';
 
@@ -216,38 +260,114 @@ function App() {
   );
 }` },
     example: 'In the box, click `/Tasks/`: it still shows "All tasks", because the toy matcher, like React Router, ignores case and a trailing slash. Click `/nope`: no route matches and nothing renders, which is what React Router does too (plus a console warning `No routes matched location "/nope"`).',
-    mistake: 'Writing routes in the React Router 5 style found in old tutorials: `<Route exact path="/" component={Home} />` inside a `<Switch>`. In current versions `Switch` does not exist (it is `Routes`), `exact` is gone (every path is exact unless it ends in `/*`) and `component` is ignored, so the route renders nothing. Write `<Route path="/" element={<Home />} />`.' },
+    mistake: 'Writing routes in the React Router 5 style of old tutorials: `<Route exact path="/" component={Home} />` inside a `<Switch>`. In current versions `Switch` does not exist (it is `Routes`), `exact` is gone (every path is exact unless it ends in `/*`) and `component` is ignored, so the route renders nothing. Write `<Route path="/" element={<Home />} />`.' },
+
+  { id: 'link-vs-a', hub: 'routes', topic: 'matching',
+    title: '<Link> instead of <a href>',
+    summary: 'Inside the app, navigate with `<Link to="/tasks">`: it renders a normal `<a href>` (accessible, can open in a new tab), but the router handles the click, so there is no page load and the app keeps its state; a plain `<a href="/tasks">` reloads the whole app.',
+    html: [
+      '<p>A plain link tells the browser to leave this document and load another: the running app and all its state are thrown away, and the app starts again. <code>&lt;Link&gt;</code> intercepts the click, cancels the browser\'s navigation and calls the router: <code>pushState</code>, then render. The page never reloads.</p>',
+      '<ul><li><strong>Still a real link:</strong> it renders an <code>&lt;a href&gt;</code>, so Ctrl/Cmd-click opens a new tab, the URL shows on hover, screen readers announce a link and Tab reaches it.</li>'
+        + '<li><strong>Buttons for actions, links for places:</strong> save, delete and open a dialog are buttons; going somewhere is a link.</li>'
+        + '<li><strong><code>&lt;NavLink&gt;</code></strong> knows whether it points at the current page: it adds the class <code>active</code> and <code>aria-current="page"</code>. It is active for its URL <strong>and everything below</strong> (<code>/tasks</code> at <code>/tasks/7</code>); <code>end</code> makes it exact, which the link to <code>/</code> needs.</li>'
+        + '<li><strong>Other sites</strong> stay plain <code>&lt;a href="https://…"&gt;</code>.</li></ul>',
+    ],
+    diagram: {
+      kind: 'branch',
+      title: 'Same click, two outcomes: the router keeps the app; a plain link restarts it.',
+      desc: 'A click on a link inside the app goes one of two ways. With Link, the router changes the URL with pushState: nothing is requested and the app keeps its state. With a plain a href, the browser loads the page again and the app restarts from zero.',
+      nodes: [
+        { id: 'click', label: 'A click', note: 'on an in-app link' },
+        { id: 'link', label: '`<Link to>`', note: 'no request, state kept', key: true },
+        { id: 'a', label: '`<a href>`', note: 'page load: app restarts' },
+      ],
+      edges: [['click', 'link'], ['click', 'a']],
+    },
+    code: `import { Link, NavLink } from 'react-router';
+
+function NavBar() {
+  return (
+    <nav aria-label="Main">
+      <NavLink to="/" end>Home</NavLink>
+      <NavLink to="/tasks">Tasks</NavLink>
+      <NavLink to="/tasks/new" className={({ isActive }) => (isActive ? 'tab current' : 'tab')}>
+        New task
+      </NavLink>
+    </nav>
+  );
+}
+
+// In a list: a link per item, built from the data
+<li key={task.id}><Link to={'/tasks/' + task.id}>{task.title}</Link></li>
+
+/* CSS: highlight the current page */
+/* nav a.active, nav a[aria-current="page"] { font-weight: 700; border-bottom: 3px solid; } */`,
+    live: { kind: 'react', code: `import { useState } from 'react';
+
+// Simulated: a full page load is a new start of the app,
+// imitated here by giving the app a new key (React remounts it from zero).
+function TheApp({ path, go, fullLoad }) {
+  const [clicks, setClicks] = useState(0);         // state kept in memory
+  return (
+    <>
+      <p>State in memory: <strong>{clicks}</strong>{' '}
+        <button onClick={() => setClicks(clicks + 1)}>+1</button></p>
+      <p>
+        <button onClick={() => go('/tasks')}>{'<Link to="/tasks">'}</button>{' '}
+        <button onClick={() => fullLoad('/tasks')}>{'<a href="/tasks">'}</button>{' '}
+        <button onClick={() => go('/')}>{'<Link to="/">'}</button>
+      </p>
+      <p>Page: <code>{path}</code></p>
+    </>
+  );
+}
+
+function App() {
+  const [path, setPath] = useState('/');
+  const [loads, setLoads] = useState(1);
+  function fullLoad(to) {
+    setPath(to);
+    setLoads(loads + 1);                           // the browser starts the app again
+  }
+  return (
+    <>
+      <p>Page loads (requests for index.html): {loads}</p>
+      <TheApp key={loads} path={path} go={setPath} fullLoad={fullLoad} />
+    </>
+  );
+}` },
+    example: 'In the box, press +1 a few times, then use the two "Link" buttons: the page changes and the counter stays. Press the `<a href>` button: "Page loads" goes up and the counter is back to 0, because the whole app started again, which is what a real `<a href>` inside an SPA does to all its state.',
+    mistake: 'Using `<button onClick={() => navigate(\'/tasks/\' + id)}>` for plain navigation in a list. It works with a mouse, but the user cannot open the task in a new tab or see where it leads, and assistive technology announces a button, not a link. If clicking it goes somewhere, it is a `<Link>`.' },
 
   { id: 'route-ranking', hub: 'routes', topic: 'matching',
     title: 'How the router picks a route: ranking, not order',
-    summary: 'When several routes match a URL, React Router does not take the first one written: it **ranks** them, and the most specific path wins. A literal segment beats a `:param`, which beats `*`. So `/tasks/new` and `/tasks/:id` can be written in any order.',
-    body: [
-      'Ranking is like sorting addresses by how precisely they describe a place: "12 Baker Street" beats "any house on Baker Street", which beats "anywhere". React Router gives every route path a **score**: one point per segment, then **10** for each literal segment (`tasks`), **3** for each dynamic one (`:id`), **1** for an empty one (the root `/`), **2** more for an [index route](#/browser/routing/index-routes), and **2** less for a splat `*`. It sorts the paths by score and tries them from the top; the first that matches the whole URL wins.',
-      'So for `/tasks/new`, the path `/tasks/new` (3 segments + 1 + 10 + 10 = 24) is tried before `/tasks/:id` (3 + 1 + 10 + 3 = 17), and `*` (score 1) is tried last. Order only matters when two **sibling** routes have the **same** score and both match, for example `:lang/about` and `docs/:page` for `/docs/about`: then the one written first wins.',
-      'This is a real difference from server routers. Express tries routes in the order they were registered and the first match answers, so there `/tasks/new` must come before `/tasks/:id` (see [Route order](#/server/routes/route-order)). In React Router you can group routes the way that reads best.',
+    summary: 'When several routes match a URL, React Router does not take the first one written: it **ranks** them, and the most specific path wins (a literal segment beats a `:param`, which beats `*`), so `/tasks/new` and `/tasks/:id` can be written in any order.',
+    html: [
+      '<p>Every path gets a <strong>score</strong>: +1 per segment (the leading empty one counts), +10 per literal segment, +3 per <code>:param</code>, +1 for the empty root segment, +2 for an <a href="#/browser/routing/index-routes">index route</a> and −2 for a splat <code>*</code>. React Router tries the paths from the highest score down, and the first that matches the whole URL wins. Order only matters for two <strong>sibling</strong> routes with the <strong>same</strong> score that both match (<code>:lang/about</code> and <code>docs/:page</code> for <code>/docs/about</code>): then the one written first wins.</p>',
+      '<table><caption>Scores for some paths (React Router 6 and 7)</caption><thead><tr><th scope="col">Path</th><th scope="col">How the score is made</th><th scope="col">Score</th></tr></thead><tbody>'
+        + '<tr><th scope="row"><code>/tasks/:id/edit</code></th><td>4 segments + 1 + 10 + 3 + 10</td><td>28</td></tr>'
+        + '<tr><th scope="row"><code>/tasks/new</code></th><td>3 segments + 1 + 10 + 10</td><td>24</td></tr>'
+        + '<tr><th scope="row"><code>/tasks/:id</code></th><td>3 segments + 1 + 10 + 3</td><td>17</td></tr>'
+        + '<tr><th scope="row"><code>/tasks</code> (index child)</th><td>3 segments + 2 (index) + 1 + 10 + 1</td><td>17</td></tr>'
+        + '<tr><th scope="row"><code>/tasks</code></th><td>2 segments + 1 + 10</td><td>13</td></tr>'
+        + '<tr><th scope="row"><code>/</code></th><td>2 segments + 1 + 1</td><td>4</td></tr>'
+        + '<tr><th scope="row"><code>*</code></th><td>2 segments − 2 (splat) + 1</td><td>1</td></tr>'
+        + '</tbody></table>',
+      '<p>Server routers differ: Express tries routes in the order they were registered, so there <code>/tasks/new</code> must come before <code>/tasks/:id</code> (see <a href="#/server/routes/route-order">Order of routes</a>).</p>',
     ],
-    table: { caption: 'Scores for some paths (React Router 6 and 7)',
-      head: ['Path', 'How the score is made', 'Score'],
-      rows: [
-        ['`/tasks/:id/edit`', '4 segments + 1 + 10 + 3 + 10', '28'],
-        ['`/tasks/new`', '3 segments + 1 + 10 + 10', '24'],
-        ['`/tasks/:id`', '3 segments + 1 + 10 + 3', '17'],
-        ['`/tasks` (index child)', '3 segments + 2 (index) + 1 + 10 + 1', '17'],
-        ['`/tasks`', '2 segments + 1 + 10', '13'],
-        ['`/`', '2 segments + 1 + 1', '4'],
-        ['`*`', '2 segments − 2 (splat) + 1', '1'],
-      ] },
     widget: 'router-sim',
-    example: 'In the simulator above (example "A task app"), type `/tasks/new` and click the Link: the ranking table at the bottom shows `/tasks/:id/edit` (28) tried and rejected, then `/tasks/new` (24) matching. `/tasks/:id` (17) is never tried. Challenge 2 asks you to predict this, and challenge 6 shows the one case where order decides.',
-    mistake: 'Carrying the Express habit over and worrying that `:id` "swallows" `new`, then renaming the route to `/new-task` or adding checks such as `if (id === \'new\')` in `TaskDetail`. React Router already picks `/tasks/new`; the workaround only adds confusion.' },
+    example: 'In the router simulator (example "A task app"), type `/tasks/new` and click the Link: the ranking table at the bottom shows `/tasks/:id/edit` (28) tried and rejected, then `/tasks/new` (24) matching; `/tasks/:id` (17) is never tried. Challenge 2 asks you to predict this, and challenge 6 shows the one case where order decides.',
+    mistake: 'Carrying the Express habit over and worrying that `:id` "swallows" `new`, then renaming the route to `/new-task` or adding `if (id === \'new\')` checks in `TaskDetail`. React Router already picks `/tasks/new`; the workaround only adds confusion.' },
 
   { id: 'url-params', hub: 'routes', topic: 'matching',
     title: 'URL parameters: useParams (always strings)',
-    summary: 'A `:name` segment in a route path captures that part of the URL. Inside the route\'s components, `useParams()` returns them as an object: for `path="/tasks/:id"` and the URL `/tasks/7`, `useParams()` is `{ id: \'7\' }`, a **string**.',
-    body: [
-      'A parameter is a blank in a form: `/tasks/___` where `___` is "which task". The URL carries the answer, so the page can be bookmarked, shared and refreshed and still show the same task: the URL is the **source of truth** for "which one". The component reads it with `const { id } = useParams();` and uses it to fetch the data (see [Loading data for a route](#/browser/routing/data-per-route)).',
-      'Everything in a URL is text, so every param is a **string** (already decoded: `%20` becomes a space). `id === 7` is `false` when `id` is `\'7\'`; convert when you need a number, `Number(id)`, and check the result: `/tasks/abc` also matches `/tasks/:id`, giving `NaN`. A route can have several params (`/users/:userId/tasks/:taskId`); a layout route also sees the params of the child route that matched below it. A splat `*` puts the rest of the URL in `params[\'*\']`.',
-      'A param matches exactly one non-empty segment: `/tasks/:id` does not match `/tasks/` nor `/tasks/7/edit`. Name params after what they hold (`:taskId` rather than `:x`), especially when several routes are nested; and remember the server side does the same thing with `req.params` (see [Route parameters](#/server/routes/route-params)).',
+    summary: 'A `:name` segment in a route path captures that part of the URL; inside the route\'s components, `useParams()` returns the captured values as an object of **strings**: `{ id: \'7\' }` for `/tasks/7`.',
+    html: [
+      '<p>The URL carries the answer to "which one", so the page can be bookmarked, shared and refreshed and still show the same task: the URL is the <strong>source of truth</strong>. The component reads it with <code>const { id } = useParams();</code> and fetches that resource (see <a href="#/browser/routing/data-per-route">Loading data for a route</a>).</p>',
+      '<ul><li><strong>Always strings,</strong> already decoded (<code>%20</code> becomes a space): <code>id === 7</code> is false when <code>id</code> is <code>\'7\'</code>. Convert with <code>Number(id)</code> and check the result: <code>/tasks/abc</code> also matches, giving <code>NaN</code>.</li>'
+        + '<li><strong>One non-empty segment:</strong> <code>/tasks/:id</code> matches neither <code>/tasks/</code> nor <code>/tasks/7/edit</code>.</li>'
+        + '<li><strong>Several params</strong> are fine (<code>/users/:userId/tasks/:taskId</code>); a layout route also sees the params of the child that matched below it, and a splat puts the rest of the URL in <code>params[\'*\']</code>.</li>'
+        + '<li><strong>Name them</strong> after what they hold (<code>:taskId</code>, not <code>:x</code>). The server reads the same parts with <code>req.params</code> (see <a href="#/server/routes/route-params">Route parameters</a>).</li></ul>',
     ],
     code: `// App.jsx
 <Route path="/tasks/:id" element={<TaskDetail />} />
@@ -297,15 +417,17 @@ function App() {
   );
 }` },
     example: 'In the box, the URL `/tasks/7` gives `{"id":"7"}`: `typeof` is `string`, `params.id === 7` is false and `Number(params.id) === 7` is true. Type `/tasks/buy%20milk`: the param is decoded to `buy milk`. Type `/tasks/7/edit` or `/tasks/`: no match, the shape is different.',
-    mistake: 'Comparing the param with a number from the data: `tasks.find((t) => t.id === id)` finds nothing, because `t.id` is the number `7` and `id` is the string `\'7\'`, and the page shows "not found" for a task that exists. Convert once, `const taskId = Number(id)`, and compare numbers.' },
+    mistake: 'Comparing the param with a number from the data: `tasks.find((t) => t.id === id)` finds nothing, because `t.id` is the number `7` and `id` is the string `\'7\'`, so the page says "not found" for a task that exists. Convert once, `const taskId = Number(id)`, and compare numbers.' },
 
   { id: 'search-params', hub: 'routes', topic: 'matching',
     title: 'Query strings: useSearchParams',
-    summary: 'The query string (`?done=false&page=2`) holds **optional** settings of a screen: filters, search text, sort, page. React Router does not use it to choose a route; the page reads and changes it with `const [searchParams, setSearchParams] = useSearchParams()`.',
-    body: [
-      'Path or query? The path says **which** screen or resource (`/tasks/7`); the query says **how** to show it (`/tasks?done=false&sort=title`). Putting filters and the page number in the URL instead of in `useState` means a refresh keeps them, the Back button undoes a filter change, and a link like "my open tasks, page 2" can be shared. The same query string often goes straight to the API: `/tasks?done=false&page=2` in the address bar, `GET /api/tasks?done=false&page=2` to the server (see [Query parameters](#/http/api-design/query-params)).',
-      '`searchParams` is a standard `URLSearchParams` object: `searchParams.get(\'page\')` returns a **string** or `null` when absent, so give a default and convert, `Number(searchParams.get(\'page\') ?? 1)`. `setSearchParams({ done: \'false\', page: \'2\' })` replaces the whole query string and navigates (a new history entry; pass `{ replace: true }` as a second argument for keystrokes, so Back is not filled with one entry per letter).',
-      'To change one key and keep the others, start from a copy: `setSearchParams((prev) => { const next = new URLSearchParams(prev); next.set(\'page\', \'2\'); return next; })`. When a filter changes, reset the page to 1 (page 3 of the old results may not exist), and add the query values to the dependencies of the effect that fetches (see [Pagination controls](#/browser/data-fetching/pagination-ui)).',
+    summary: 'The query string (`?done=false&page=2`) holds the **optional** settings of a screen (filters, search text, sort, page); React Router does not use it to choose a route, and the page reads and changes it with `useSearchParams()`.',
+    html: [
+      '<p>The path says <strong>which</strong> screen (<code>/tasks/7</code>); the query says <strong>how</strong> to show it (<code>/tasks?done=false&amp;sort=title</code>). Filters kept in the URL instead of in <code>useState</code> survive a refresh, Back undoes a filter change, and "my open tasks, page 2" can be shared. The same query often goes straight to the API (see <a href="#/http/api-design/query-params">Filters, sorting and pagination</a>).</p>',
+      '<ul><li><strong>Reading:</strong> <code>const [searchParams, setSearchParams] = useSearchParams()</code>. <code>searchParams</code> is a standard <code>URLSearchParams</code>; <code>get(\'page\')</code> returns a <strong>string</strong>, or <code>null</code> when absent, so default and convert: <code>Number(searchParams.get(\'page\') ?? 1)</code>.</li>'
+        + '<li><strong>Writing:</strong> <code>setSearchParams({ done: \'false\', page: \'2\' })</code> replaces the whole query and navigates (a new history entry). For keystrokes pass <code>{ replace: true }</code> as a second argument, so Back is not one entry per letter.</li>'
+        + '<li><strong>Changing one key:</strong> start from a copy, <code>setSearchParams((prev) =&gt; { const next = new URLSearchParams(prev); next.set(\'page\', \'2\'); return next; })</code>.</li>'
+        + '<li><strong>A new filter resets the page to 1</strong> (page 3 of the old results may not exist), and the query values go in the dependencies of the effect that fetches (see <a href="#/browser/data-fetching/pagination-ui">Pagination controls</a>).</li></ul>',
     ],
     live: { kind: 'react', code: `import { useState } from 'react';
 
@@ -346,46 +468,30 @@ function App() {
     example: 'In the box, choose "All": the `done` key disappears from the URL and all three tasks show. Type "rep" in Search: the URL becomes `/tasks?q=rep` and the list follows. Every filter is in the URL, so a reload (or a shared link) would show exactly this list.',
     mistake: 'Writing the query string into the route path, `path="/tasks?done=:done"`. Route paths never include the query string (React Router matches only the path), so this route never matches. Keep `path="/tasks"` and read the filter with `useSearchParams`.' },
 
-  { id: 'not-found-route', hub: 'routes', topic: 'matching',
-    title: 'The catch-all route: a 404 page',
-    summary: 'A route with `path="*"` matches **any** URL, but it has the lowest score, so it only renders when no other route matches. Use it for a "Page not found" screen instead of a blank page.',
-    body: [
-      'Without a catch-all, a mistyped URL or an old link shows an empty page: React Router renders nothing and only logs `No routes matched location "/tsks"` in the console, which users never see. A catch-all is the "no such address" desk: `<Route path="*" element={<NotFound />} />` with a short message and a link back to somewhere useful.',
-      'Because of [ranking](#/browser/routing/route-ranking), its position in the list does not matter: `*` loses to every other matching path. Place it **inside** the layout route so the header and navigation stay on the not-found page. A splat can also sit under a path: `path="docs/*"` matches everything below `/docs`, and the rest of the URL is in `useParams()[\'*\']`.',
-      'There is a second kind of "not found": the URL is valid but the **data** is missing, such as `/tasks/999` when task 999 does not exist. The route matched, so the catch-all cannot help; the page itself must handle the API\'s `404` and show a message (see [Loading data for a route](#/browser/routing/data-per-route)). The server makes the same distinction (see [The 404 catch-all](#/server/routes/not-found)).',
-    ],
-    code: `<Routes>
-  <Route path="/" element={<AppLayout />}>
-    <Route index element={<Home />} />
-    <Route path="tasks" element={<TaskList />} />
-    <Route path="tasks/:id" element={<TaskDetail />} />
-    <Route path="*" element={<NotFound />} />     {/* last resort, inside the layout */}
-  </Route>
-</Routes>
-
-function NotFound() {
-  const location = useLocation();
-  return (
-    <section>
-      <h1>Page not found</h1>
-      <p>Nothing lives at <code>{location.pathname}</code>.</p>
-      <Link to="/tasks">Back to your tasks</Link>
-    </section>
-  );
-}`,
-    practice: { href: '#/browser/routing/practice/router-sim', label: 'Add a catch-all in the router simulator (challenge 5)' },
-    example: 'With the routes above, `/tsks` and `/tasks/7/oops` both render `AppLayout` with `NotFound` in its outlet: neither matches a real route (`/tasks/:id` takes exactly one segment after `tasks`), so only `*` is left.',
-    mistake: 'Redirecting unknown URLs to the home page with `<Route path="*" element={<Navigate to="/" />} />`. The user who mistyped never learns that the page does not exist, and a broken link in your own app becomes impossible to notice. Show a real not-found page.' },
-
-  /* ---- 3. Nested routes and layouts ---------------------------------------------------- */
+  /* ---- 3. Nested routes and layouts -------------------------------------------------------- */
   { id: 'nested-routes', hub: 'layouts', topic: 'layouts',
     title: 'Nested routes and layouts: <Outlet />',
-    summary: 'Routes can contain routes. The parent route\'s element is a **layout** (header, navigation, sidebar) and renders `<Outlet />` where the matching child goes. The layout stays mounted while the user moves between its children; only the outlet\'s content changes.',
-    body: [
-      'Think of a picture frame on a wall: the frame (the layout) stays, and you swap the picture inside it (the child route). Nesting `<Route>` elements describes this: for `/tasks/7`, React Router finds the branch "root layout → tasks layout → task detail" and renders each level, each one placing the next in its `<Outlet />`. The outlet works like `children` (see [children](#/browser/components/children)), except that the router chooses what goes in it from the URL.',
-      'Paths of child routes are **relative** to their parent: inside `<Route path="tasks">`, `path=":id"` means `/tasks/:id` (an absolute child path is allowed only if it starts with the parent\'s full path). A parent route may have **no path** at all: `<Route element={<AppLayout />}>` wraps its children with the layout without adding anything to the URL, which is how you put a layout (or a guard) around a group of unrelated URLs.',
-      'Because the layout is not unmounted, its state survives navigation: an open menu, a search box in the header, a scroll position in the sidebar. Its effects do not re-run either, so data the layout loads once (the user\'s name) is loaded once. Links inside nested routes can be relative too: in `/tasks/7`, `<Link to="edit">` goes to `/tasks/7/edit` and `<Link to="..">` to the parent route.',
+    summary: 'Routes can contain routes: the parent route\'s element is a **layout** (header, navigation, sidebar) that renders `<Outlet />` where the matching child goes, and it stays mounted while the user moves between its children.',
+    html: [
+      '<p>For <code>/tasks/7</code>, React Router finds the branch "root layout → tasks layout → task detail" and renders every level, each one placing the next in its <code>&lt;Outlet /&gt;</code>. The outlet works like <code>children</code> (see <a href="#/browser/components/children">children: components that wrap other content</a>), except that the router fills it from the URL.</p>',
+      '<ul><li><strong>Relative paths:</strong> inside <code>&lt;Route path="tasks"&gt;</code>, <code>path=":id"</code> means <code>/tasks/:id</code>.</li>'
+        + '<li><strong>Pathless layouts:</strong> <code>&lt;Route element={&lt;AppLayout /&gt;}&gt;</code> wraps its children in a layout (or a guard) without adding anything to their URLs.</li>'
+        + '<li><strong>The layout stays mounted:</strong> its state (an open menu, a search box) survives navigation, and its effects do not run again.</li>'
+        + '<li><strong>Relative links:</strong> in <code>/tasks/7</code>, <code>&lt;Link to="edit"&gt;</code> goes to <code>/tasks/7/edit</code> and <code>to=".."</code> to the parent route.</li></ul>',
     ],
+    diagram: {
+      kind: 'tree',
+      title: 'The route tree mirrors the screen: each layout draws the next level in its outlet.',
+      desc: 'AppLayout, at /, has two children: Home, its index route, and TasksLayout, at tasks. TasksLayout has two children: TaskList, its index route at /tasks, and TaskDetail, at :id, for /tasks/7. Each layout renders the matching child in its Outlet.',
+      nodes: [
+        { id: 'root', label: '`AppLayout`', note: '`/`: header and outlet', key: true },
+        { id: 'home', label: '`Home`', note: 'index: `/`' },
+        { id: 'tl', label: '`TasksLayout`', note: '`tasks`' },
+        { id: 'list', label: '`TaskList`', note: 'index: `/tasks`' },
+        { id: 'detail', label: '`TaskDetail`', note: '`:id`: `/tasks/7`' },
+      ],
+      edges: [['root', 'home'], ['root', 'tl'], ['tl', 'list'], ['tl', 'detail']],
+    },
     code: `// App.jsx: the route tree mirrors the screen tree
 <Routes>
   <Route path="/" element={<AppLayout />}>
@@ -445,98 +551,83 @@ function App() {
   return <AppLayout outlet={page} go={setPath} />;
 }` },
     practice: { href: '#/browser/routing/practice/router-sim', label: 'Nest pages in a layout in the router simulator (challenge 3)' },
-    example: 'In the box, type something in the header\'s input, then click Home, Tasks and Task 2: only the dashed area (the outlet) changes and your text stays, because `AppLayout` is never unmounted. With every page rendering its own copy of the header, the input would be recreated, and emptied, on every click.',
+    example: 'In the box, type something in the header\'s input, then click Home, Tasks and Task 2: only the dashed area (the outlet) changes and your text stays, because `AppLayout` is never unmounted. If every page rendered its own copy of the header, the input would be recreated, and emptied, on every click.',
     mistake: 'Nesting the routes but forgetting `<Outlet />` in the parent\'s element. The URL changes, the parent renders, and the child silently does not appear: there is no error, the router simply has nowhere to put it. If a child route "does not work", check that every element on the way down renders an outlet.' },
 
   { id: 'index-routes', hub: 'layouts', topic: 'layouts',
     title: 'Index routes: the default child',
-    summary: 'An **index route**, `<Route index element={<TaskList />} />`, renders in its parent\'s outlet when the URL is exactly the parent\'s path. It has no path of its own: it fills the outlet at `/tasks`, while `/tasks/7` shows another child.',
-    body: [
-      'A layout route with children has a gap at its own URL. With `<Route path="tasks" element={<TasksLayout />}>` and only a `:id` child, `/tasks/7` shows the layout and the task, but `/tasks` shows the layout with an **empty** outlet. The index route is the answer to "what goes in the outlet when no child path is added": the list of tasks, a dashboard, a "pick a task on the left" message.',
-      'Index routes get a small bonus in the ranking (+2), so at `/tasks` the branch "layout + index" beats the layout alone. An index route cannot have children (it is a leaf), and it should not have a path. A route can have at most one meaningful index child; it is commonly the first child, for readability.',
-      'Two uses at the root: `<Route index element={<Home />} />` inside the root layout gives the home page its header and navigation. And `<Route index element={<Navigate to="tasks" replace />} />` makes `/tasks` the real start page (see [Push or replace](#/browser/routing/push-vs-replace) for `replace`).',
+    summary: 'An **index route**, `<Route index element={<TaskList />} />`, renders in its parent\'s outlet when the URL is exactly the parent\'s path: it has no path of its own.',
+    html: [
+      '<p>A layout route with children has a gap at its own URL: with only a <code>:id</code> child, <code>/tasks/7</code> shows the layout and the task, but <code>/tasks</code> shows the layout with an <strong>empty</strong> outlet. The index route fills it: the list, a dashboard, a "pick a task" message.</p>',
+      '<ul><li><strong>A ranking bonus</strong> of +2, so at <code>/tasks</code> "layout + index" wins over the layout alone.</li>'
+        + '<li><strong>A leaf:</strong> no children and no path of its own; usually written first, for readability.</li>'
+        + '<li><strong>At the root:</strong> <code>&lt;Route index element={&lt;Home /&gt;} /&gt;</code> inside the root layout gives the home page its header and navigation.</li>'
+        + '<li><strong>A redirect as the index:</strong> <code>&lt;Route index element={&lt;Navigate to="tasks" replace /&gt;} /&gt;</code> makes <code>/tasks</code> the real start page. <code>&lt;Navigate&gt;</code> is a component that navigates as soon as it renders (see <a href="#/browser/routing/use-navigate">Navigating from code</a>, and for <code>replace</code>, <a href="#/browser/routing/push-vs-replace">Push or replace</a>).</li></ul>',
     ],
+    diagram: {
+      kind: 'tree',
+      title: 'The index child fills the outlet at the parent\'s own URL.',
+      desc: 'TasksLayout, at tasks, has three children. TaskList is the index route and renders at /tasks. NewTask renders at /tasks/new. TaskDetail renders at /tasks/7.',
+      nodes: [
+        { id: 'tl', label: '`TasksLayout`', note: '`path="tasks"`' },
+        { id: 'idx', label: '`TaskList`', note: 'index: `/tasks`', key: true },
+        { id: 'nw', label: '`NewTask`', note: '`new`: `/tasks/new`' },
+        { id: 'dt', label: '`TaskDetail`', note: '`:id`: `/tasks/7`' },
+      ],
+      edges: [['tl', 'idx'], ['tl', 'nw'], ['tl', 'dt']],
+    },
     code: `<Route path="tasks" element={<TasksLayout />}>
   <Route index element={<TaskList />} />     {/* /tasks */}
   <Route path="new" element={<NewTask />} />  {/* /tasks/new */}
   <Route path=":id" element={<TaskDetail />} />  {/* /tasks/7 */}
 </Route>`,
     practice: { href: '#/browser/routing/practice/router-sim', label: 'Fill an empty outlet in the router simulator (challenge 4)' },
-    example: 'With the routes above, `/tasks` renders `TasksLayout` with `TaskList` in the outlet. Remove the index route and `/tasks` still matches (the parent has a path), but the outlet is empty: the layout\'s title and buttons with a blank area below.',
+    example: 'With these routes, `/tasks` renders `TasksLayout` with `TaskList` in the outlet. Remove the index route and `/tasks` still matches (the parent has a path), but the outlet is empty: the layout\'s title and buttons with a blank area below.',
     mistake: 'Giving the index route the parent\'s path again, `<Route path="tasks" element={<TaskList />} />` inside `<Route path="tasks">`. Child paths are relative, so this child lives at `/tasks/tasks`, and `/tasks` still has an empty outlet. Use `index`.' },
 
-  /* ---- 4. Navigating -------------------------------------------------------------------- */
-  { id: 'link-vs-a', hub: 'navigation', topic: 'navigation',
-    title: '<Link> instead of <a href>',
-    summary: 'Inside the app, navigate with `<Link to="/tasks">`. It renders a normal `<a href>` (so it is accessible and can be opened in a new tab), but a click is handled by the router: no page load, no request, the app\'s state is kept. A plain `<a href="/tasks">` reloads the whole app.',
-    body: [
-      'A plain link is an order to the browser: "leave this document and load that one". The browser obeys, throws away the running app (every piece of state, the logged-in user if it was only in memory, the half-filled form) and downloads and starts the app again. `<Link>` intercepts the click, cancels the browser\'s navigation (`preventDefault`) and calls the router\'s navigate function: `pushState`, then render the matching route. The page never reloads.',
-      'Because `<Link>` renders a real `<a>` with a real `href`, everything users expect from links still works: Ctrl/Cmd-click or middle-click opens a new tab (the router lets the browser handle those), the URL shows on hover, screen readers announce a link, and the link can be focused with Tab. Use buttons for actions (save, delete, open a dialog) and links for going somewhere.',
-      '`<NavLink>` is a `<Link>` that knows whether it points at the current page: it adds the class `active` and `aria-current="page"`, so the navigation bar can highlight where the user is. By default a NavLink is active for its URL **and everything below it** (`/tasks` is active at `/tasks/7`); add `end` to require an exact match, which the link to `/` always needs. Links to other sites stay plain `<a href="https://…">`.',
+  { id: 'not-found-route', hub: 'layouts', topic: 'layouts',
+    title: 'The catch-all route: a 404 page',
+    summary: 'A route with `path="*"` matches **any** URL but has the lowest score, so it only renders when no other route matches: use it for a "Page not found" screen instead of a blank page.',
+    html: [
+      '<p>Without a catch-all, a mistyped URL or an old link shows an empty page: React Router renders nothing and only logs <code>No routes matched location "/tsks"</code> in the console, which users never see. <code>&lt;Route path="*" element={&lt;NotFound /&gt;} /&gt;</code> shows a short message and a link back.</p>',
+      '<ul><li><strong>Position does not matter:</strong> <code>*</code> has the lowest <a href="#/browser/routing/route-ranking">score</a>. Put it <strong>inside</strong> the layout route, so the header and navigation stay on the not-found page.</li>'
+        + '<li><strong>Under a path:</strong> <code>path="docs/*"</code> matches everything below <code>/docs</code>; the rest of the URL is in <code>useParams()[\'*\']</code>.</li>'
+        + '<li><strong>Missing data is another 404:</strong> <code>/tasks/999</code> matches <code>/tasks/:id</code>, so the catch-all cannot help; the page must handle the API\'s 404 (see <a href="#/browser/routing/data-per-route">Loading data for a route</a>). The server makes the same distinction (see <a href="#/server/routes/not-found">The 404 catch-all</a>).</li></ul>',
     ],
-    code: `import { Link, NavLink } from 'react-router';
+    code: `<Routes>
+  <Route path="/" element={<AppLayout />}>
+    <Route index element={<Home />} />
+    <Route path="tasks" element={<TaskList />} />
+    <Route path="tasks/:id" element={<TaskDetail />} />
+    <Route path="*" element={<NotFound />} />     {/* last resort, inside the layout */}
+  </Route>
+</Routes>
 
-function NavBar() {
+function NotFound() {
+  const location = useLocation();
   return (
-    <nav aria-label="Main">
-      <NavLink to="/" end>Home</NavLink>
-      <NavLink to="/tasks">Tasks</NavLink>
-      <NavLink to="/tasks/new" className={({ isActive }) => (isActive ? 'tab current' : 'tab')}>
-        New task
-      </NavLink>
-    </nav>
+    <section>
+      <h1>Page not found</h1>
+      <p>Nothing lives at <code>{location.pathname}</code>.</p>
+      <Link to="/tasks">Back to your tasks</Link>
+    </section>
   );
-}
+}`,
+    practice: { href: '#/browser/routing/practice/router-sim', label: 'Add a catch-all in the router simulator (challenge 5)' },
+    example: 'With these routes, `/tsks` and `/tasks/7/oops` both render `AppLayout` with `NotFound` in its outlet: neither matches a real route (`/tasks/:id` takes exactly one segment after `tasks`), so only `*` is left.',
+    mistake: 'Redirecting unknown URLs to the home page with `<Route path="*" element={<Navigate to="/" />} />`. The user who mistyped never learns that the page does not exist, and a broken link in your own app becomes impossible to notice. Show a real not-found page.' },
 
-// In a list: a link per item, built from the data
-<li key={task.id}><Link to={'/tasks/' + task.id}>{task.title}</Link></li>
-
-/* CSS: highlight the current page */
-/* nav a.active, nav a[aria-current="page"] { font-weight: 700; border-bottom: 3px solid; } */`,
-    live: { kind: 'react', code: `import { useState } from 'react';
-
-// Simulated: a full page load is a new start of the app,
-// imitated here by giving the app a new key (React remounts it from zero).
-function TheApp({ path, go, fullLoad }) {
-  const [clicks, setClicks] = useState(0);         // state kept in memory
-  return (
-    <>
-      <p>State in memory: <strong>{clicks}</strong>{' '}
-        <button onClick={() => setClicks(clicks + 1)}>+1</button></p>
-      <p>
-        <button onClick={() => go('/tasks')}>{'<Link to="/tasks">'}</button>{' '}
-        <button onClick={() => fullLoad('/tasks')}>{'<a href="/tasks">'}</button>{' '}
-        <button onClick={() => go('/')}>{'<Link to="/">'}</button>
-      </p>
-      <p>Page: <code>{path}</code></p>
-    </>
-  );
-}
-
-function App() {
-  const [path, setPath] = useState('/');
-  const [loads, setLoads] = useState(1);
-  function fullLoad(to) {
-    setPath(to);
-    setLoads(loads + 1);                           // the browser starts the app again
-  }
-  return (
-    <>
-      <p>Page loads (requests for index.html): {loads}</p>
-      <TheApp key={loads} path={path} go={setPath} fullLoad={fullLoad} />
-    </>
-  );
-}` },
-    example: 'In the box, press +1 a few times, then use the two "Link" buttons: the page changes and the counter stays. Press the `<a href>` button: "Page loads" goes up and the counter is back to 0, because the whole app started again, which is what a real `<a href>` inside an SPA does to all its state.',
-    mistake: 'Using `<button onClick={() => navigate(\'/tasks/\' + id)}>` for plain navigation in a list. It works with a mouse, but the user cannot open the task in a new tab, cannot see where it leads, and assistive technology announces a button, not a link. If clicking it goes somewhere, it is a `<Link>`.' },
-
+  /* ---- 4. Navigating from code ------------------------------------------------------------- */
   { id: 'use-navigate', hub: 'navigation', topic: 'navigation',
     title: 'Navigating from code: useNavigate',
-    summary: '`const navigate = useNavigate()` gives a function that changes the URL from code: `navigate(\'/tasks/12\')` after a form is saved, `navigate(\'/login\')` after logging out, `navigate(-1)` for "back". Use it when the navigation is the **result of an action**, not a place the user clicks.',
-    body: [
-      'Links are for "go there"; `navigate` is for "this happened, so now go there". The typical moment is the end of an event handler: the form was submitted, the API answered 201 with the new task, now show it with `navigate(\'/tasks/\' + created.id)`. Other examples: after log-in, after log-out, after deleting the item being viewed, and on a `401` from the API (see [Handling 401](#/browser/data-fetching/handle-401)).',
-      'The call takes the same kinds of target as a `<Link>`: an absolute path (`\'/tasks\'`), a path relative to the current route (`\'edit\'`, `\'..\'`), or a number to move in the history (`-1` is Back). Options go in a second argument: `{ replace: true }` overwrites the current history entry instead of adding one, and `{ state: { … } }` attaches data to the new entry that the next page can read with `useLocation().state`.',
-      'Call `navigate` in **event handlers** and effects, never in the body of a component while it renders: navigating is a side effect, and React Router warns "You should call navigate() in a React.useEffect(), not when your component is first rendered". To redirect as part of rendering ("this page is not for you"), render the `<Navigate to="…" />` component instead.',
+    summary: '`const navigate = useNavigate()` gives a function that changes the URL from code (`navigate(\'/tasks/12\')` after a save, `navigate(\'/login\')` after logging out, `navigate(-1)` for Back): use it when the navigation is the **result of an action**, not a place the user clicks.',
+    html: [
+      '<p>Links are for "go there"; <code>navigate</code> is for "this happened, so now go there". The typical moment is the end of an event handler: the API answered 201 with the new task, so <code>navigate(\'/tasks/\' + created.id)</code>. Others: after log-in or log-out, after deleting the item on screen, on a 401 from the API (see <a href="#/browser/data-fetching/handle-401">Handling 401</a>).</p>',
+      '<dl><dt><code>navigate(\'/tasks\')</code>, <code>navigate(\'edit\')</code>, <code>navigate(\'..\')</code></dt><dd>The same targets as a <code>&lt;Link&gt;</code>: absolute, or relative to the current route.</dd>'
+        + '<dt><code>navigate(-1)</code></dt><dd>A number moves through the history: <code>-1</code> is Back.</dd>'
+        + '<dt><code>{ replace: true }</code></dt><dd>Second argument: overwrite the current history entry instead of adding one.</dd>'
+        + '<dt><code>{ state: { … } }</code></dt><dd>Second argument: data attached to the new entry, read on the next page with <code>useLocation().state</code>.</dd></dl>',
+      '<p><strong>Only in handlers and effects,</strong> never in the body of a component while it renders: navigating is a side effect, and React Router warns "You should call navigate() in a React.useEffect(), not when your component is first rendered". To redirect as part of rendering, return <code>&lt;Navigate to="…" /&gt;</code> instead.</p>',
     ],
     live: { kind: 'react', code: `import { useState } from 'react';
 
@@ -580,33 +671,46 @@ function App() {
 
   { id: 'push-vs-replace', hub: 'navigation', topic: 'navigation',
     title: 'Push or replace: what the Back button will do',
-    summary: 'Every navigation either **pushes** a new history entry (Back returns to the current page) or **replaces** the current one (Back skips it). Use `replace` for pages the user should not come back to: redirects, the log-in page after logging in, a form after it was saved.',
-    body: [
-      'The history is a stack of pages with a pointer. **Push** cuts off anything after the pointer, puts the new URL on top and moves the pointer there. **Replace** writes the new URL over the current entry, so the stack does not grow. Choose by asking "if the user presses Back on the next page, should they see this one again?" A list → detail click: yes, push. A redirect from `/` to `/tasks`: no, otherwise Back takes them to `/`, which immediately sends them to `/tasks` again.',
-      'That second case is the **Back-button trap**, and redirects cause it. A guard sends a logged-out user from `/settings` to `/login`; with push, the history is `/tasks → /settings → /login`. Back goes to `/settings`, which redirects to `/login` again: the user cannot leave by pressing Back. With `<Navigate to="/login" replace />` the history is `/tasks → /login`, and Back works.',
-      'The same thinking applies after logging in. `navigate(from, { replace: true })` overwrites the `/login` entry with the page the user wanted, so Back from it does not show the log-in form to someone who is already logged in. In React Router, `replace` exists on `<Navigate replace>`, `<Link replace>`, `navigate(to, { replace: true })` and `setSearchParams(params, { replace: true })`.',
+    summary: 'Every navigation either **pushes** a new history entry (Back returns to the current page) or **replaces** the current one (Back skips it); use `replace` for pages the user should not come back to: redirects, the log-in page after logging in, a form after it was saved.',
+    html: [
+      '<p><strong>Push</strong> cuts off anything after the pointer, puts the new URL on top and moves there; <strong>replace</strong> writes the new URL over the current entry. Ask: "if the user presses Back on the next page, should they see this one again?" A list → detail click: yes, push. A redirect: no.</p>',
+      '<h3>The Back-button trap</h3>',
+      '<p>A guard sends a logged-out user from <code>/settings</code> to <code>/login</code>. With push, the history is <code>/tasks → /settings → /login</code>: Back goes to <code>/settings</code>, which redirects to <code>/login</code> again, and the user cannot leave by pressing Back. With <code>&lt;Navigate to="/login" replace /&gt;</code> the history is <code>/tasks → /login</code>. After logging in, <code>navigate(from, { replace: true })</code> removes the log-in form from the history the same way.</p>',
+      '<table><caption>History after logging in: the user started on /tasks and clicked Settings</caption><thead><tr><th scope="col">Guard</th><th scope="col">After log-in</th><th scope="col">History</th><th scope="col">Back from /settings goes to</th></tr></thead><tbody>'
+        + '<tr><th scope="row">push</th><td>push</td><td><code>/tasks</code> → <code>/settings</code> → <code>/login</code> → <code>/settings</code></td><td><code>/login</code> (the form, already logged in)</td></tr>'
+        + '<tr><th scope="row">replace</th><td>push</td><td><code>/tasks</code> → <code>/login</code> → <code>/settings</code></td><td><code>/login</code></td></tr>'
+        + '<tr><th scope="row">push</th><td>replace</td><td><code>/tasks</code> → <code>/settings</code> → <code>/settings</code></td><td><code>/settings</code> (nothing seems to happen)</td></tr>'
+        + '<tr><th scope="row">replace</th><td>replace</td><td><code>/tasks</code> → <code>/settings</code></td><td><code>/tasks</code></td></tr>'
+        + '</tbody></table>',
+      '<p><code>replace</code> exists on <code>&lt;Navigate replace&gt;</code>, <code>&lt;Link replace&gt;</code>, <code>navigate(to, { replace: true })</code> and <code>setSearchParams(params, { replace: true })</code>.</p>',
     ],
-    table: { caption: 'History after logging in: the user started on /tasks and clicked Settings',
-      head: ['Guard', 'After log-in', 'History', 'Back from /settings goes to'],
-      rows: [
-        ['push', 'push', '`/tasks` → `/settings` → `/login` → `/settings`', '`/login` (the form, already logged in)'],
-        ['replace', 'push', '`/tasks` → `/login` → `/settings`', '`/login`'],
-        ['push', 'replace', '`/tasks` → `/settings` → `/settings`', '`/settings` (nothing seems to happen)'],
-        ['replace', 'replace', '`/tasks` → `/settings`', '`/tasks`'],
-      ] },
     practice: { href: '#/browser/routing/practice/router-sim', label: 'Make Back skip the log-in page (router simulator, challenge 8)' },
     example: 'In the router simulator, open challenge 8: both switches start off. Click Settings while logged out, log in, then press Back and watch the history stack: you land on `/login`. Switch on the guard\'s replace and the log-in replace, run the story again, and Back returns to `/tasks`.',
     mistake: 'Using `replace` everywhere "to keep the history clean". Then Back skips pages the user did want: from a task\'s detail, Back leaves the app instead of returning to the list. Push is the default for a reason; replace only the entries that should not be revisited.' },
 
-  /* ---- 5. Protected routes and data ---------------------------------------------------- */
+  /* ---- 5. Protected routes and data -------------------------------------------------------- */
   { id: 'protected-routes', hub: 'guards', topic: 'guards',
     title: 'Protected routes: a guard component',
-    summary: 'A **protected route** renders its page only for a logged-in user. It is a small wrapper component, often called `RequireAuth`: it reads the auth state and renders the page (or `<Outlet />`), or `<Navigate to="/login" replace />` when nobody is logged in.',
-    body: [
-      'A guard is the receptionist in front of the offices: logged in, you go through; otherwise you are sent to the front desk, the log-in page. In React it is an ordinary component that decides what to render. It reads the user from wherever the app keeps authentication, usually a context shared by every page (see [Shared state](#/browser/shared-state)), and either returns its `children` or a `<Navigate>` element, which navigates as soon as it renders.',
-      'There are two ways to place it. Wrap one page: `element={<RequireAuth><Settings /></RequireAuth>}`. Or make it a **pathless layout route** and nest every private route inside it, `<Route element={<RequireAuth />}>…</Route>`, where the guard renders `<Outlet />`. Never put the log-in page behind the guard: a logged-out user would be sent from `/login` to `/login` forever.',
-      'A guard on the front end is about **user experience**, not security. Anyone can open the developer tools and render the settings page, or call the API directly. What protects the data is the server, which checks the token on every request and answers `401` or `403` (see [Authentication and security](#/server/auth)). The guard just avoids showing a page that would fail, and sends the user to log in first.',
+    summary: 'A **protected route** renders its page only for a logged-in user: a small wrapper component, often called `RequireAuth`, renders the page (or `<Outlet />`), or `<Navigate to="/login" replace />` when nobody is logged in.',
+    html: [
+      '<p>A guard is an ordinary component that decides what to render. It reads the user from wherever the app keeps the logged-in user, usually a context shared by every page (see <a href="#/browser/shared-state/auth-context">An authentication context</a>), and returns its <code>children</code>, or a <code>&lt;Navigate&gt;</code>, which navigates as soon as it renders.</p>',
+      '<ul><li><strong>Around one page:</strong> <code>element={&lt;RequireAuth&gt;&lt;Settings /&gt;&lt;/RequireAuth&gt;}</code>.</li>'
+        + '<li><strong>Around a group:</strong> a pathless layout route, <code>&lt;Route element={&lt;RequireAuth /&gt;}&gt;…&lt;/Route&gt;</code>, whose guard renders <code>&lt;Outlet /&gt;</code>.</li>'
+        + '<li><strong>Never guard <code>/login</code>:</strong> a logged-out user would be sent from <code>/login</code> to <code>/login</code> forever.</li>'
+        + '<li><strong>User experience, not security:</strong> anyone can bypass front-end code or call the API directly. The server protects the data by checking the token on every request (see <a href="#/server/auth">Authentication and security</a>).</li></ul>',
     ],
+    diagram: {
+      kind: 'branch',
+      title: 'The guard decides what renders: a wait, a redirect or the page.',
+      desc: 'RequireAuth reads the logged-in user. While the saved token is still being read, it shows a loading message. With no user, it renders Navigate to /login with replace. With a user, it renders the page: its children or the Outlet.',
+      nodes: [
+        { id: 'guard', label: '`RequireAuth`', note: 'reads the logged-in user', key: true },
+        { id: 'wait', label: 'A loading message', note: 'token not read yet' },
+        { id: 'nav', label: '`<Navigate>`', note: 'to `/login`, `replace`' },
+        { id: 'page', label: 'The page', note: 'children or `<Outlet />`' },
+      ],
+      edges: [['guard', 'wait', 'still checking'], ['guard', 'nav', 'no user'], ['guard', 'page', 'a user']],
+    },
     code: `// RequireAuth.jsx
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuth } from './AuthContext.jsx';
@@ -675,16 +779,32 @@ function App() {
 }` },
     practice: { href: '#/browser/routing/practice/router-sim', label: 'Protect two pages in the router simulator (challenge 7)' },
     example: 'In the box, click Settings while logged out: the guard renders the redirect, the URL becomes `/login` and the state remembers `{"from":"/settings"}`. Log in: you land on Settings. Click Log out while on Settings: the guard runs again and sends you back to `/login`.',
-    mistake: 'Starting the auth state as "logged out" and restoring the saved token in an effect. On a refresh of `/settings`, the first render has no user yet, the guard redirects to `/login`, and only then does the effect find the token: logged-in users are thrown out on every reload. Read the token synchronously in the initial state (`useState(() => localStorage.getItem(\'token\'))`), or keep a `checking` flag and render "Loading…" until it is known, as the code above does.' },
+    mistake: 'Starting the auth state as "logged out" and restoring the saved token later, in an effect: on a refresh of `/settings` the guard redirects before the token is read, so logged-in users are thrown out on every reload. Read the token in the initial state, or keep a `checking` flag as the code does (see [Staying logged in after a reload](#/browser/shared-state/persist-session)).' },
 
   { id: 'redirect-after-login', hub: 'guards', topic: 'guards',
     title: 'Back to where you were after log-in',
-    summary: 'When the guard redirects, it stores the page the user wanted in the navigation **state**: `<Navigate to="/login" replace state={{ from: location }} />`. After a successful log-in, the log-in page reads it with `useLocation().state?.from` and navigates there, with `replace`.',
-    body: [
-      'Picture a cloakroom ticket. The guard takes the user\'s destination and hands over a ticket (`state.from`); the log-in page reads the ticket and sends the user to the right place. Without it, every log-in lands on the home page and users must find their way back to the link they had opened, a small annoyance that becomes a real one with shared links.',
-      'History **state** is data attached to a history entry, invisible in the URL: it survives a refresh of that entry, but not a URL typed by hand or a shared link. So `from` must always have a fallback, `location.state?.from?.pathname ?? \'/\'`. Include `search` too if the page had a query string (`from.pathname + from.search`), so `/tasks?page=3` does not come back as `/tasks`.',
-      'Navigate after the log-in has **succeeded**: `await login(email, password)` (which calls the API and stores the token, see [The log-in request](#/browser/data-fetching/login-request)), then `navigate(from, { replace: true })`. With `replace`, the log-in page disappears from the history (see [Push or replace](#/browser/routing/push-vs-replace)). If the log-in fails, stay on the page and show the error.',
+    summary: 'When the guard redirects, it stores the page the user wanted in the navigation **state** (`<Navigate to="/login" replace state={{ from: location }} />`); after a successful log-in, the log-in page reads `useLocation().state?.from` and navigates there, with `replace`.',
+    html: [
+      '<p>Without it, every log-in lands on the home page, and a link someone shared loses its target. With it, the guard writes down the destination and the log-in page reads it back.</p>',
+      '<ul><li><strong>History state</strong> is data attached to a history entry, invisible in the URL: it survives a refresh of that entry, but not a typed URL or a shared link. Always keep a fallback: <code>location.state?.from?.pathname ?? \'/\'</code>.</li>'
+        + '<li><strong>Keep the query string:</strong> <code>from.pathname + from.search</code>, so <code>/tasks?page=3</code> does not come back as <code>/tasks</code>.</li>'
+        + '<li><strong>Navigate after success:</strong> <code>await login(email, password)</code> (see <a href="#/browser/data-fetching/login-request">Logging in from the front end</a>), then <code>navigate(from, { replace: true })</code>; on failure, stay and show the error.</li>'
+        + '<li><strong>Where the pieces come from:</strong> the form is read with <code>new FormData(e.currentTarget)</code> (see <a href="#/browser/components/uncontrolled-inputs">Uncontrolled inputs</a>); <code>login</code> comes from wherever the app keeps the logged-in user (see <a href="#/browser/shared-state/auth-context">An authentication context</a>).</li></ul>',
     ],
+    diagram: {
+      kind: 'flow',
+      numbered: true,
+      title: 'The guard writes down the destination; the log-in page reads it back.',
+      desc: 'Step 1: a logged-out user opens /settings. Step 2: the guard redirects to /login and stores from = /settings in the history state. Step 3: the log-in page shows the form. Step 4: the user logs in and the request succeeds. Step 5: the page navigates to from with replace, so Back skips the form.',
+      nodes: [
+        { id: 'open', label: 'Open `/settings`', note: 'logged out' },
+        { id: 'guard', label: 'The guard', note: '`state.from = /settings`' },
+        { id: 'login', label: '`/login`', note: 'the form says why' },
+        { id: 'ok', label: 'Log in', note: '`await login(…)`' },
+        { id: 'back', label: '`navigate(from)`', note: '`replace: true`', key: true },
+      ],
+      edges: [['open', 'guard'], ['guard', 'login'], ['login', 'ok'], ['ok', 'back']],
+    },
     code: `// Login.jsx
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
@@ -721,11 +841,13 @@ export default function Login() {
 
   { id: 'data-per-route', hub: 'guards', topic: 'guards',
     title: 'Loading data for a route',
-    summary: 'A page for one resource reads the param (`useParams()`) and fetches that resource in an **effect with the param in its dependencies**: `useEffect(…, [id])`. When the user moves from `/tasks/1` to `/tasks/2`, the same component stays mounted, so only the dependency makes it fetch again.',
-    body: [
-      'The URL decides **what** to show; the page component decides **how** to get it. The detail page is the standard case: `const { id } = useParams();` then an effect that fetches `/api/tasks/` + id and keeps the usual loading / error / data states (see [The four states of a request](#/browser/state-effects/four-ui-states)). Each route\'s page loads its own data; the list page does not pass its tasks to the detail page, because the detail page must also work when opened directly from a link.',
-      'Why `[id]` and not `[]`: when the user clicks from task 1 to task 2, React Router renders the **same** `TaskDetail` element at the same place in the tree, so React keeps the component mounted and only its params change. With `[]` the effect ran once, for task 1, and the page keeps showing task 1 under the URL `/tasks/2`. With `[id]`, the effect runs again for every new id (see [The dependency array](#/browser/state-effects/dependency-array)), and its cleanup ignores the answer for the old id if it arrives late (see [Race conditions](#/browser/data-fetching/race-conditions)).',
-      'Handle the answers that are specific to a URL: `404` (the task was deleted, or the id was mistyped) deserves a "This task does not exist" message with a link to the list, not a generic error; `400` usually means the param is not a valid id; and `401` on a private page means the session expired. React Router\'s data mode can move the fetch into a route `loader` (`loader: ({ params }) => …`, read with `useLoaderData()`), which starts it before the page renders; the rules about ids and errors are the same.',
+    summary: 'A page for one resource reads the param (`useParams()`) and fetches that resource in an **effect with the param in its dependencies**, `useEffect(…, [id])`: moving from `/tasks/1` to `/tasks/2` keeps the same component mounted, so only the dependency makes it fetch again.',
+    html: [
+      '<p>For <code>/tasks/1</code> and <code>/tasks/2</code>, React Router renders the <strong>same</strong> <code>TaskDetail</code> at the same place, so React keeps it mounted and only its params change. With <code>[]</code> the effect ran once, for task 1, and the page keeps showing it under <code>/tasks/2</code>; with <code>[id]</code> it runs again for every new id (see <a href="#/browser/state-effects/dependency-array">The dependency array</a>).</p>',
+      '<ul><li><strong>Each page loads its own data:</strong> the detail page must also work when opened from a bookmark, so the list does not hand it the task.</li>'
+        + '<li><strong>Handle the answers that belong to a URL:</strong> a <code>404</code> deserves "This task does not exist" and a link to the list; a <code>400</code> usually means the param is not a valid id.</li>'
+        + '<li><strong>The rest of the request:</strong> the loading, error, empty and success states in <a href="#/browser/data-fetching/request-states">Loading, error, empty, success</a>; a late answer for the old id in <a href="#/browser/data-fetching/race-conditions">Race conditions</a>.</li>'
+        + '<li><strong>Data mode:</strong> a route <code>loader</code> (<code>loader: ({ params }) =&gt; …</code>, read with <code>useLoaderData()</code>) starts the fetch before the page renders; the rules about ids and errors are the same.</li></ul>',
     ],
     live: { kind: 'react', api: true, code: `import { useEffect, useState } from 'react';
 
@@ -810,7 +932,7 @@ DATA.en.ROUTING_QUIZ = [
     answer: 1, why: 'Query values are strings; a missing key gives `null`. Convert with `Number(searchParams.get(\'page\') ?? 1)`.' },
   { type: 'tf', topic: 'matching', q: '`<Route path="/tasks?done=:done" … />` lets the router choose a route by the query string.',
     answer: false, why: 'Route paths never contain the query string. Match `/tasks` and read the query with `useSearchParams`.' },
-  { type: 'fib', topic: 'matching', q: 'A route whose path is ___ matches any URL that no other route matches, and is used for a "Page not found" screen.',
+  { type: 'fib', topic: 'layouts', q: 'A route whose path is ___ matches any URL that no other route matches, and is used for a "Page not found" screen.',
     accept: ['*', '"*"', "'*'", '/*'], why: 'The splat has the lowest score, so it only wins when nothing else matches.' },
   { type: 'mc', topic: 'matching', q: 'What does `<Route exact path="/" component={Home} />` render with React Router 6 or 7?',
     choices: ['`Home`, only at `/`', '`Home` on every page', 'Nothing: `component` is an old prop that is ignored', 'An error at start-up'],
@@ -842,7 +964,7 @@ DATA.en.ROUTING_QUIZ = [
     answer: false, why: 'Index routes are leaves: React Router throws "An index route cannot have child routes".' },
 
   /* ---- navigation ---- */
-  { type: 'mc', topic: 'navigation', q: 'Inside a React app, what is the difference between `<a href="/tasks">` and `<Link to="/tasks">`?',
+  { type: 'mc', topic: 'matching', q: 'Inside a React app, what is the difference between `<a href="/tasks">` and `<Link to="/tasks">`?',
     choices: ['None: `Link` is a styled `a`', '`<a href>` reloads the whole page and the app restarts; `<Link>` changes the URL through the router and keeps the app running', '`<Link>` cannot be opened in a new tab', '`<a href>` does not change the URL'],
     answer: 1, why: '`Link` renders an `<a>`, but intercepts normal clicks and navigates with the History API.' },
   { type: 'mc', topic: 'navigation', q: 'After a form creates a task and the API answers 201, how do you show the new task?',
@@ -855,10 +977,10 @@ DATA.en.ROUTING_QUIZ = [
     answer: 1, why: 'The redirect pushed `/login` on top of `/settings`. Back returns to `/settings`, whose guard redirects again: a Back-button trap. Use `replace`.' },
   { type: 'tf', topic: 'navigation', q: '`navigate(\'/tasks\', { replace: true })` adds a new entry to the history.',
     answer: false, why: 'It overwrites the current entry, so Back skips the page you were on.' },
-  { type: 'mc', topic: 'navigation', q: 'What does `<NavLink to="/tasks">` add when the current URL is `/tasks/7`?',
+  { type: 'mc', topic: 'matching', q: 'What does `<NavLink to="/tasks">` add when the current URL is `/tasks/7`?',
     choices: ['Nothing: it only matches `/tasks` exactly', 'The class `active` and `aria-current="page"`', 'A `disabled` attribute', 'A redirect to `/tasks`'],
     answer: 1, why: 'By default a NavLink is active for its URL and everything below it; `end` makes it exact (needed for `/`).' },
-  { type: 'mc', topic: 'navigation', q: 'Which element should navigate to a task\'s detail page from a list?',
+  { type: 'mc', topic: 'matching', q: 'Which element should navigate to a task\'s detail page from a list?',
     choices: ['`<button onClick={() => navigate(url)}>`', '`<Link to={url}>`', '`<div onClick={() => navigate(url)}>`', '`<span role="link">`'],
     answer: 1, why: 'It is a navigation, so it is a link: it can be opened in a new tab, shows its target, and is announced as a link.' },
   { type: 'tf', topic: 'navigation', q: 'Calling `navigate(\'/login\')` directly in the body of a component, while it renders, is the recommended way to redirect.',
