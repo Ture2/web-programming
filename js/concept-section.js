@@ -3,12 +3,14 @@
 /* ==========================================================================
    Concept section engine, shared by every section (Web overview, HTML, CSS,
    JavaScript, DOM, Git): a navigation rail with hubs (the active hub lists its pages,
-   the others open a flyout; the rail collapses to icons), one concept card per
-   page with Previous / Next, an optional quiz (multiple choice, true/false,
-   fill in the blank) with the best score per topic, and an optional practice
-   module drawn inside the same layout.
-   Routes, below cfg.base: '' or <conceptId> (a card), quiz[/<topic>], summary (the printable
-   summary sheet, source of the section's PDF), and whatever cfg.practice.match(rest) accepts.
+   the others open a flyout; the rail collapses to icons), an overview of the
+   section, one page per hub (its concepts open one at a time, "Show all" opens
+   them all) with Previous / Next between hubs, an optional quiz (multiple choice,
+   true/false, fill in the blank) with the best score per topic, and an optional
+   practice module drawn inside the same layout.
+   Routes, below cfg.base: '' (the overview), <conceptId> (its hub's page, with that concept
+   open), quiz[/<topic>], summary (the printable summary sheet, source of the section's PDF),
+   and whatever cfg.practice.match(rest) accepts.
 
    Card fields: id, title, summary, body[], points[], html[] (authored HTML blocks, the
    tag allowlist is in test/card-html.test.mjs), diagram (js/diagram.js), table { caption,
@@ -83,7 +85,8 @@ const readCards = (() => {
   };
 })();
 
-/* The rail layout choice (collapsed or not) is this viewer's, shared by every section. */
+/* This viewer's layout choices, shared by every section: the rail collapsed, every concept of
+   a hub shown (allOpen), "Try it" boxes open (tryOpen). */
 const railUi = (() => {
   const store = makeStore('rail-ui-v1');
   const ui = Object.assign({ sideCollapsed: false }, store.load());
@@ -109,8 +112,8 @@ function ConceptSection(cfg) {
 
   /* ---- Layout: sidebar (a dropdown on narrow screens) + main area ------------ */
 
-  const conceptHref = (i) => (i === 0 ? BASE : `${BASE}/${CONCEPTS[i].id}`);
-
+  /* The section root is the overview; every concept, the first included, has its own route. */
+  const conceptHref = (i) => `${BASE}/${CONCEPTS[i].id}`;
 
   /* Hubs with their concept indexes (static, computed once); a card whose hub is unknown joins the last hub. */
   const HUBS = (() => {
@@ -118,9 +121,10 @@ function ConceptSection(cfg) {
     CONCEPTS.forEach((c, k) => (list.find((g) => g.key === c.hub) || list[list.length - 1]).items.push(k));
     return list.filter((g) => g.items.length);
   })();
+  const hubOf = (k) => HUBS.findIndex((h) => h.items.includes(k));
 
   function sideHtml() {
-    const onQuiz = route.page !== 'concept';         // a quiz or a practice page: no card is current
+    const onQuiz = route.page !== 'concept';         // the overview, a quiz or a practice page: no card is current
     const collapsed = ui.sideCollapsed;
     const conceptLink = (k) => `<li><a href="${conceptHref(k)}"${!onQuiz && k === route.concept ? ' aria-current="page"' : ''}><span class="rail-n">${k + 1}</span><span class="rail-text">${esc(CONCEPTS[k].title)}</span></a></li>`;
 
@@ -139,12 +143,13 @@ function ConceptSection(cfg) {
     const quizLink = (tp) => {
       const n = pool(tp).length;
       const b = best[tp] ? `<span class="rail-score" title="${esc(t('Best: {score} of {total}', { score: best[tp], total: n }))}">${best[tp]}/${n}</span>` : `<span class="rail-count">${n}</span>`;
-      const cur = onQuiz && route.topic === tp;
+      const cur = onQuizPage && route.topic === tp;
       return `<li><a href="${BASE}/quiz${tp === 'all' ? '' : `/${tp}`}"${cur ? ' aria-current="page"' : ''}><span class="rail-text">${esc(tp === 'all' ? t('All topics') : TOPICS[tp])}</span>${b}</a></li>`;
     };
     const quizLabel = esc(t('Test yourself'));
-    const quizHub = !HAS_QUIZ ? '' : `<li class="rail-hub rail-quiz${onQuiz ? ' is-active' : ''}">
-        <a class="rail-head" href="${BASE}/quiz"${onQuiz ? ' aria-current="true"' : ''} title="${quizLabel}">${railIcon('quiz')}<span class="rail-label">${quizLabel}</span></a>
+    const onQuizPage = route.page === 'quiz';
+    const quizHub = !HAS_QUIZ ? '' : `<li class="rail-hub rail-quiz${onQuizPage ? ' is-active' : ''}">
+        <a class="rail-head" href="${BASE}/quiz"${onQuizPage ? ' aria-current="true"' : ''} title="${quizLabel}">${railIcon('quiz')}<span class="rail-label">${quizLabel}</span></a>
         <div class="rail-pages">
           <p class="rail-fly-title" aria-hidden="true">${quizLabel}</p>
           <ol>${QUIZ_TOPICS.map(quizLink).join('')}</ol>
@@ -168,7 +173,7 @@ function ConceptSection(cfg) {
     const quizOption = esc(t('Quiz: {n} questions', { n: QUIZ.length }));
     return `
       <nav class="rail" id="cs-side" aria-label="${esc(cfg.title())}">
-        <a class="rail-top" href="${BASE}" title="${esc(cfg.title())}"><span class="rail-badge" aria-hidden="true">${esc(cfg.badge)}</span><span class="rail-label">${esc(cfg.title())}</span></a>
+        <a class="rail-top" href="${BASE}" title="${esc(cfg.title())}"${route.page === 'overview' ? ' aria-current="page"' : ''}><span class="rail-badge" aria-hidden="true">${esc(cfg.badge)}</span><span class="rail-label">${esc(cfg.title())}</span></a>
         ${pdfLink('rail-pdf')}
         <ul class="rail-hubs">${HUBS.map(hubHtml).join('')}</ul>
         <ul class="rail-hubs rail-hubs-end">${practiceHub}${quizHub}</ul>
@@ -177,6 +182,7 @@ function ConceptSection(cfg) {
       <div class="side-select">
         <label for="side-go">${esc(t('Go to'))}</label>
         <select id="side-go">
+          <option value="${BASE}"${route.page === 'overview' ? ' selected' : ''}>${esc(t('Overview'))}</option>
           <optgroup label="${esc(t('Concepts'))}">${options}</optgroup>
           ${PRACTICE ? `<optgroup label="${pLabel}">${pLinks.map((l) => `<option value="${l.href}"${l.current ? ' selected' : ''}>${esc(l.label)}</option>`).join('')}</optgroup>` : ''}
           ${HAS_QUIZ ? `<optgroup label="${esc(t('Test yourself'))}"><option value="${BASE}/quiz"${route.page === 'quiz' ? ' selected' : ''}>${quizOption}</option></optgroup>` : ''}
@@ -255,14 +261,34 @@ function ConceptSection(cfg) {
   }
   const cxHtml = (c, only) => (c.html || c.diagram ? `<div class="cx">${htmlBlocks(c, only)}</div>` : '');
 
-  function cardHtml(c) {
-    const n = c.topic ? pool(c.topic).length : 0;
+  const CHEVRON = '<svg class="cc-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6"/></svg>';
+
+  /* On a group page a "Try it" box or a tool is a disclosure. It starts closed until the reader
+     opens one; from then on they start open on this device (closing one makes them start closed). */
+  const tryHtml = (g, inner, label) => (!g ? inner : `<details class="try"${ui.tryOpen ? ' open' : ''}>
+      <summary><span class="tool-badge">${esc(t('Try it'))}</span><span class="try-label">${esc(label)}</span>${CHEVRON}</summary>
+      ${inner}
+    </details>`);
+
+  /* On a group page (g = { n, open, next? }) a concept is a disclosure: its title (a button)
+     and its definition always show, the rest is a panel that opens one concept at a time.
+     hidden="until-found" lets find-in-page reach a closed panel (beforematch opens it).
+     The quiz call-out moves to the end of the group (groupQuizHtml). */
+  function cardHtml(c, g) {
+    const n = c.topic && !g ? pool(c.topic).length : 0;
     const topic = TOPICS[c.topic] || c.topic;
-    return `
-      <article class="concept" id="c-${esc(c.id)}" aria-labelledby="c-${esc(c.id)}-h">
-        <div class="concept-text">
-          <h2 id="c-${esc(c.id)}-h" tabindex="-1">${esc(c.title)}</h2>
+    const id = esc(c.id);
+    const head = g
+      ? `<h2 id="c-${id}-h" class="cc-h"><button type="button" class="cc-toggle" data-action="concept-toggle" data-id="${id}" data-fid="cc-${id}" aria-expanded="${g.open}" aria-controls="c-${id}-p"><span class="cc-n" aria-hidden="true">${g.n}</span><span class="cc-title">${esc(c.title)}</span>${CHEVRON}</button></h2>
           <p class="summary">${md(c.summary)}</p>
+          <div class="concept-panel" id="c-${id}-p"${g.open ? '' : ' hidden="until-found"'}>`
+      : `<h2 id="c-${id}-h" tabindex="-1">${esc(c.title)}</h2>
+          <p class="summary">${md(c.summary)}</p>`;
+    return `
+      <article class="concept${g ? ` cc${g.open ? ' is-open' : ''}` : ''}" id="c-${id}" aria-labelledby="c-${id}-h">
+        ${g ? head : ''}
+        <div class="concept-text">
+          ${g ? '' : head}
           ${(c.body || []).map((p) => `<p>${md(p)}</p>`).join('')}
           ${pointsHtml(c)}
           ${cxHtml(c)}
@@ -271,8 +297,8 @@ function ConceptSection(cfg) {
           ${c.html ? '' : `${tablesHtml(c)}${c.code ? codeHtml(c) : ''}`}
           ${noteHtml('mistake', 'Common mistake.', c.mistake)}
         </div>
-        ${c.live ? LiveRunner.html(c) : ''}
-        ${c.widget ? Tools.html(c.widget) : ''}
+        ${c.live ? tryHtml(g, LiveRunner.html(c), t({ js: 'Edit the code and run it', react: 'Edit the component: the preview updates as you type' }[c.live.kind] || 'Edit the code: the preview updates as you type')) : ''}
+        ${c.widget ? tryHtml(g, Tools.html(c.widget), Tools.title(c.widget)) : ''}
         ${c.practice ? `<aside class="concept-quiz concept-practice" aria-labelledby="cp-${esc(c.id)}">
             ${railIcon('practice').replace('rail-icon', 'cq-icon')}
             <div class="cq-text">
@@ -288,6 +314,8 @@ function ConceptSection(cfg) {
             </div>
             <a class="btn" href="${BASE}/quiz/${esc(c.topic)}">${esc(t('Start the quiz'))}</a>
           </aside>` : ''}
+        ${g && g.next ? `<p class="cc-next"><button type="button" class="btn ghost" data-action="concept-next" data-id="${esc(g.next.id)}">${esc(t('Next: {title}', { title: g.next.title }))} ↓</button></p>` : ''}
+        ${g ? `<span class="concept-end" data-read="${id}" aria-hidden="true"></span></div>` : ''}
       </article>`;
   }
 
@@ -299,34 +327,187 @@ function ConceptSection(cfg) {
       <thead><tr>${tb.head.map((h) => `<th scope="col">${md(h)}</th>`).join('')}</tr></thead>
       <tbody>${tb.rows.map((r) => `<tr>${r.map((v, k) => (k === 0 ? `<th scope="row">${md(v)}</th>` : `<td>${md(v)}</td>`)).join('')}</tr>`).join('')}</tbody></table></div>`;
 
-  /* Opening a card counts as reading it (js/progress.js). */
-  function markRead(c) {
-    if (readCards.mine(BASE)[c.id]) return;
-    readCards.mark(BASE, c.id);
+  /* A concept counts as read when the end of it scrolls into view (js/progress.js). */
+  function markRead(id) {
+    if (readCards.mine(BASE)[id]) return;
+    readCards.mark(BASE, id);
   }
 
-  function renderConcept() {
-    if (!CONCEPTS.length) {
-      view().innerHTML = layout(`<p class="story">${esc(t('This section is being written.'))}</p>`);
-      return;
-    }
-    const i = route.concept;
-    const c = CONCEPTS[i];
-    markRead(c);
-    const prev = i > 0 ? { href: conceptHref(i - 1), label: `${i} · ${CONCEPTS[i - 1].title}`, kind: t('Previous') } : null;
-    let last = { href: `${BASE}/quiz`, label: t('Test yourself') };
-    if (!HAS_QUIZ && PRACTICE) last = { href: PRACTICE.links(null)[0].href, label: t(PRACTICE.label) };
-    else if (!HAS_QUIZ) last = cfg.nextLink ? { href: cfg.nextLink.href, label: cfg.nextLink.label() } : null;
-    const next = i < CONCEPTS.length - 1
-      ? { href: conceptHref(i + 1), label: `${i + 2} · ${CONCEPTS[i + 1].title}`, kind: t('Next') }
+  /* Reading time: the card's own text (not the "Try it" code), at 200 words a minute. */
+  const plain = (s) => String(s || '').replace(/<[^>]*>/g, ' ').replace(/&\w+;/g, ' ').replace(/\*\*|`/g, '');
+  const wordsOf = (c) => plain([c.summary, ...(c.body || []), ...(c.points || []), ...(c.html || []), c.example, c.mistake].join(' ')).split(/\s+/).filter(Boolean).length;
+  const minutes = (ks) => Math.max(1, Math.round(ks.reduce((n, k) => n + wordsOf(CONCEPTS[k]), 0) / 200));
+  const groupMeta = (h) => {
+    const tries = h.items.filter((k) => CONCEPTS[k].live || CONCEPTS[k].widget).length;
+    return [
+      h.items.length === 1 ? t('1 concept') : t('{n} concepts', { n: h.items.length }),
+      t('about {n} min', { n: minutes(h.items) }),
+      tries ? (tries === 1 ? t('1 thing to try') : t('{n} things to try', { n: tries })) : '',
+    ].filter(Boolean).join(' · ');
+  };
+
+  /* Where the section goes when the last group is done. */
+  function afterLastGroup() {
+    if (HAS_QUIZ) return { href: `${BASE}/quiz`, label: t('Test yourself') };
+    if (PRACTICE) return { href: PRACTICE.links(null)[0].href, label: t(PRACTICE.label) };
+    return cfg.nextLink ? { href: cfg.nextLink.href, label: cfg.nextLink.label() } : null;
+  }
+
+  /* One "Test yourself" per group, with a button per quiz topic its concepts belong to
+     (quiz topics were cut per card, so a group can span two). */
+  function groupQuizHtml(h) {
+    const topics = [...new Set(h.items.map((k) => CONCEPTS[k].topic).filter((tp) => tp && pool(tp).length))];
+    if (!topics.length) return '';
+    const n = topics.reduce((sum, tp) => sum + pool(tp).length, 0);
+    const one = topics.length === 1;
+    return `<aside class="concept-quiz" aria-labelledby="gq-title">
+        ${railIcon('quiz').replace('rail-icon', 'cq-icon')}
+        <div class="cq-text">
+          <p class="cq-title" id="gq-title">${esc(t('Test yourself'))}</p>
+          <p class="cq-sub">${esc(one ? t('{n} questions on {topic}', { n, topic: TOPICS[topics[0]] }) : t('{n} questions on this group', { n }))}</p>
+        </div>
+        <div class="gq-actions">${topics.map((tp) => `<a class="btn${one ? '' : ' ghost'}" href="${BASE}/quiz/${esc(tp)}">${esc(one ? t('Start the quiz') : `${TOPICS[tp]} (${pool(tp).length})`)}</a>`).join('')}</div>
+      </aside>`;
+  }
+
+  /* The section root: every group with its concepts and their one-sentence definitions. */
+  function renderOverview() {
+    const all = CONCEPTS.map((c, k) => k);
+    const blurb = cfg.blurb ? cfg.blurb() : '';
+    view().innerHTML = layout(`
+      <header class="group-head">
+        <h1 id="ov-h" tabindex="-1">${esc(cfg.title())}</h1>
+        ${blurb ? `<p class="story">${esc(blurb)}</p>` : ''}
+        <p class="group-meta">${esc([HUBS.length === 1 ? t('1 group') : t('{n} groups', { n: HUBS.length }), t('{n} concepts', { n: CONCEPTS.length }), t('about {n} min of reading', { n: minutes(all) })].join(' · '))}</p>
+        <p class="ov-actions">
+          <a class="btn" href="${conceptHref(HUBS[0].items[0])}">${esc(t('Start with {group}', { group: t(HUBS[0].label) }))}</a>
+          ${HAS_QUIZ ? `<a class="btn ghost" href="${BASE}/quiz">${esc(t('Test yourself'))}</a>` : ''}
+          ${cfg.pdf ? `<a class="btn ghost" href="${summaryPdf(cfg.pdf)}" download>${esc(t('Summary (PDF)'))}</a>` : ''}
+        </p>
+      </header>
+      <ol class="ov-groups">
+        ${HUBS.map((h, g) => `<li class="ov-group">
+            <h2><span class="ov-n" aria-hidden="true">${g + 1}</span><a href="${conceptHref(h.items[0])}">${esc(t(h.label))}</a></h2>
+            <p class="group-meta">${esc(groupMeta(h))}</p>
+            <ul class="ov-list">${h.items.map((k) => `<li><a href="${conceptHref(k)}">${esc(CONCEPTS[k].title)}</a><span class="ov-sum">${md(CONCEPTS[k].summary)}</span></li>`).join('')}</ul>
+          </li>`).join('')}
+      </ol>`);
+  }
+
+  /* A group page: the group's concepts one after another, then its quiz and the next group. */
+  function renderGroup() {
+    const g = hubOf(route.concept);
+    const h = HUBS[g];
+    const prev = g > 0 ? { href: conceptHref(HUBS[g - 1].items[0]), label: t(HUBS[g - 1].label), kind: t('Previous') } : null;
+    const last = afterLastGroup();
+    const next = g < HUBS.length - 1
+      ? { href: conceptHref(HUBS[g + 1].items[0]), label: t(HUBS[g + 1].label), kind: t('Next') }
       : last && { ...last, kind: t('Finished reading?') };
     view().innerHTML = layout(`
-      <p class="concept-count">${esc(t('Concept {n} of {total}', { n: i + 1, total: CONCEPTS.length }))}</p>
-      ${cardHtml(c)}
-      <nav class="pager" aria-label="${esc(t('Concepts'))}">
+      <header class="group-head">
+        <p class="concept-count"><a href="${BASE}">${esc(cfg.title())}</a> · ${esc(t('Group {n} of {total}', { n: g + 1, total: HUBS.length }))}</p>
+        <h1 id="group-h" tabindex="-1">${esc(t(h.label))}</h1>
+        <p class="group-meta">${esc(groupMeta(h))}</p>
+      </header>
+      ${h.items.length > 1 ? `<p class="group-tools"><button type="button" class="btn ghost" data-action="concepts-all" data-fid="concepts-all" aria-pressed="${!!ui.allOpen}">${esc(t('Show all concepts'))}</button></p>` : ''}
+      <div class="group-body">${h.items.map((k, j) => cardHtml(CONCEPTS[k], {
+        n: j + 1,
+        open: !!ui.allOpen || h.items.length === 1 || k === route.concept,
+        next: j < h.items.length - 1 ? CONCEPTS[h.items[j + 1]] : null,
+      })).join('')}</div>
+      <div class="group-end">${groupQuizHtml(h)}</div>
+      <nav class="pager" aria-label="${esc(t('Groups'))}">
         ${prev ? `<a class="prev" href="${prev.href}"><span>← ${esc(prev.kind)}</span>${esc(prev.label)}</a>` : ''}
         ${next ? `<a class="next" href="${next.href}"><span>${esc(next.kind)} →</span>${esc(next.label)}</a>` : ''}
       </nav>`);
+    watchGroup();
+  }
+
+  /* While a group page is open: mark each concept read when its end is seen, and keep the
+     rail, the dropdown and the address on the concept being read (without a new history entry). */
+  let observers = [];
+  function watchGroup() {
+    observers.forEach((o) => o.disconnect());
+    observers = [];
+    if (typeof IntersectionObserver === 'undefined') return;
+    const ends = new IntersectionObserver((entries) => entries.forEach((e) => {
+      if (e.isIntersecting) { markRead(e.target.dataset.read); ProgressPage.updateButton(); }
+    }), { rootMargin: '-120px 0px 0px 0px' });   // not the end of the concept just above a jump target
+    view().querySelectorAll('.concept-end').forEach((el) => ends.observe(el));
+    // With every concept shown, the one crossing the top quarter of the screen is the current one.
+    const spy = new IntersectionObserver((entries) => {
+      const hit = entries.filter((e) => e.isIntersecting && e.target.classList.contains('is-open')).pop();
+      if (hit && hit.target.isConnected) setCurrent(CONCEPTS.findIndex((c) => `c-${c.id}` === hit.target.id));
+    }, { rootMargin: '0px 0px -75% 0px' });
+    view().querySelectorAll('.group-body > .concept').forEach((el) => spy.observe(el));
+    observers = [ends, spy];
+    // Find-in-page reached a closed panel: open it the same way a click would.
+    view().querySelectorAll('.concept-panel').forEach((p) => p.addEventListener('beforematch', () => openConcept(p.closest('.concept'), false)));
+    // An opened "Try it" box or tool measures itself again (it was laid out while closed).
+    // The last choice becomes the default for every "Try it". A newly opened one measures itself again.
+    view().querySelectorAll('details.try').forEach((d) => d.addEventListener('toggle', () => {
+      if (!!ui.tryOpen !== d.open) { ui.tryOpen = d.open; railUi.save(); }
+      if (d.open) window.dispatchEvent(new Event('resize'));
+    }));
+  }
+
+  /* Rail, dropdown and address follow the current concept (no new history entry). */
+  function setCurrent(k) {
+    if (k < 0 || k === route.concept) return;
+    route = { ...route, concept: k, rest: CONCEPTS[k].id };
+    document.querySelectorAll('.rail-pages a[aria-current="page"]').forEach((a) => a.removeAttribute('aria-current'));
+    $(`.rail-pages a[href="${conceptHref(k)}"]`)?.setAttribute('aria-current', 'page');
+    const sel = $('#side-go');
+    if (sel) sel.value = conceptHref(k);
+    try { history.replaceState(null, '', conceptHref(k)); } catch (e) { /* file:// or sandbox */ }
+  }
+
+  function setOpen(art, open) {
+    art.classList.toggle('is-open', open);
+    art.querySelector('.cc-toggle').setAttribute('aria-expanded', String(open));
+    const panel = art.querySelector('.concept-panel');
+    if (open) panel.removeAttribute('hidden'); else panel.setAttribute('hidden', 'until-found');
+  }
+
+  /* Opens one concept and, unless every concept is shown, closes the others. Closing a long
+     concept above it moves the page, so the opened title is brought back to the top. */
+  function openConcept(art, scroll) {
+    if (!ui.allOpen) view().querySelectorAll('.group-body > .cc.is-open').forEach((o) => { if (o !== art) setOpen(o, false); });
+    setOpen(art, true);
+    setCurrent(CONCEPTS.findIndex((c) => `c-${c.id}` === art.id));
+    window.dispatchEvent(new Event('resize'));   // tools and scrollers measure again now that they are visible
+    if (scroll && (art.getBoundingClientRect().top < 0 || art.getBoundingClientRect().top > innerHeight / 3)) art.scrollIntoView({ block: 'start' });
+  }
+
+  function toggleConcept(el) {
+    const art = el.closest('.concept');
+    if (art.classList.contains('is-open')) setOpen(art, false);
+    else openConcept(art, true);
+  }
+
+  /* "Show all concepts": every panel open (to read straight through or print), remembered. */
+  function toggleAll(btn) {
+    ui.allOpen = !ui.allOpen;
+    railUi.save();
+    btn.setAttribute('aria-pressed', String(ui.allOpen));
+    const arts = [...view().querySelectorAll('.group-body > .cc')];
+    if (ui.allOpen) arts.forEach((a) => setOpen(a, true));
+    else arts.forEach((a) => setOpen(a, a.id === `c-${CONCEPTS[route.concept].id}`));
+    window.dispatchEvent(new Event('resize'));
+    announce(ui.allOpen ? t('All concepts shown') : t('One concept at a time'));
+  }
+
+  /* Called by the router after it scrolled to the top: a link to a concept that is not the
+     first of its group scrolls to it. Focus goes to the heading the reader lands on. */
+  let target = null;
+  function afterNavigate() {
+    const t0 = target;
+    target = null;
+    if (!t0) return;
+    const el = $(t0.selector);
+    if (!el) return;
+    if (t0.scroll) el.closest('.concept')?.scrollIntoView({ block: 'start' });
+    if (t0.focus) el.focus({ preventScroll: true });
   }
 
   /* ---- Summary sheet (print source of the section PDF) ------------------------- */
@@ -488,6 +669,13 @@ function ConceptSection(cfg) {
         (quiz.done ? $('#q-title') : $('#fib-in') || $('.options .opt'))?.focus({ preventScroll: true });
         break;
       case 'toggle-side': toggleSide(); break;
+      case 'concept-toggle': toggleConcept(el); break;
+      case 'concept-next': {
+        const art = $(`#c-${CSS.escape(el.dataset.id)}`);
+        if (art) { openConcept(art, true); art.querySelector('.cc-toggle').focus({ preventScroll: true }); }
+        break;
+      }
+      case 'concepts-all': toggleAll(el); break;
       case 'restart':
         startQuiz(quiz.topic);
         renderQuiz();
@@ -541,12 +729,27 @@ function ConceptSection(cfg) {
       location.replace(cfg.moved[r]);
       return cfg.title();
     }
-    route = { page: 'concept', concept: i < 0 ? 0 : i, topic: 'all', rest: r };
-    lastPage = `concept-${route.concept}`;
-    renderConcept();
-    // Moving between concepts: put screen readers on the new heading (the router already scrolled to the top).
-    if (from && from !== lastPage) $('.concept h2')?.focus({ preventScroll: true });
-    return CONCEPTS.length ? `${CONCEPTS[route.concept].title} · ${cfg.title()}` : cfg.title();
+    observers.forEach((o) => o.disconnect());
+    if (!CONCEPTS.length) {
+      view().innerHTML = layout(`<p class="story">${esc(t('This section is being written.'))}</p>`);
+      return cfg.title();
+    }
+    if (i < 0) {
+      route = { page: 'overview', concept: route.concept, topic: 'all', rest: '' };
+      lastPage = 'overview';
+      renderOverview();
+      target = from && from !== lastPage ? { selector: '#ov-h', focus: true } : null;
+      return cfg.title();
+    }
+    route = { page: 'concept', concept: i, topic: 'all', rest: r };
+    const h = HUBS[hubOf(i)];
+    const first = h.items[0] === i;
+    const page = `group-${hubOf(i)}`;
+    renderGroup();
+    // Put screen readers on the heading the reader lands on: the group's, or the concept's.
+    target = { selector: first ? '#group-h' : `#c-${CSS.escape(CONCEPTS[i].id)}-h .cc-toggle`, scroll: !first, focus: !!from && (from !== page || !first) };
+    lastPage = page;
+    return first ? `${t(h.label)} · ${cfg.title()}` : `${CONCEPTS[i].title} · ${cfg.title()}`;
   }
 
   /* Console warnings for inconsistent quiz data. */
@@ -578,5 +781,5 @@ function ConceptSection(cfg) {
     }));
   }
 
-  return { render, onClick, onChange, onSubmit, progress, topicScores, progressKeys: HAS_QUIZ ? ['read-v1', cfg.quizKey] : ['read-v1'], wide: true };
+  return { render, afterNavigate, onClick, onChange, onSubmit, progress, topicScores, progressKeys: HAS_QUIZ ? ['read-v1', cfg.quizKey] : ['read-v1'], wide: true };
 }

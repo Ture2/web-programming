@@ -159,10 +159,14 @@
     if (!claim('onSubmit', e.target) && current && current.onSubmit) current.onSubmit(e.target);
   });
 
+  // After the page is drawn and scrolled to the top, a module may scroll to a part of it (a concept on a group page).
+  const settle = () => { if (current && current.afterNavigate) current.afterNavigate(); };
   window.addEventListener('hashchange', () => {
     render();
     try { window.scrollTo(0, 0); } catch (e) { /* environments without scrolling */ }
+    settle();
   });
 
   render();
+  settle();
 })();

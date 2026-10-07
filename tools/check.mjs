@@ -7,7 +7,7 @@
 //   node site/tools/check.mjs --only server   routes whose hash contains "server"
 //   node site/tools/check.mjs --axe           also the accessibility audit
 //
-// Routes are read from the page (SECTIONS): each card, the quiz, each tool page and the
+// Routes are read from the page (SECTIONS): the overview, each card, the quiz, each tool page and the
 // summary, plus #/ and #/progress. Exit code 1 when anything is found.
 // Browser: $CHROME_PATH, else an installed Chrome / Edge, else Playwright's Chromium.
 import { chromium } from '@playwright/test';
@@ -42,6 +42,7 @@ const browser = await chromium.launch(executablePath ? { executablePath } : {});
 const probe = await browser.newPage();
 await probe.goto(base);
 const routes = (await probe.evaluate(() => ['#/', '#/progress', ...SECTIONS.filter((s) => s.data.concepts.length).flatMap((s) => [
+  s.base,
   ...s.data.concepts.map((c) => `${s.base}/${c.id}`),
   `${s.base}/quiz`,
   ...s.tools.map((id) => `${s.base}/practice/${id}`),

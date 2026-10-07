@@ -85,6 +85,7 @@ const SECTIONS = (() => {
     s.module = ConceptSection({
       base: s.base,
       title: () => t(s.title),
+      blurb: () => (s.blurb ? t(s.blurb) : ''),
       course: () => t(AREAS[s.area].title),
       badge: s.badge,
       pdf: s.id,

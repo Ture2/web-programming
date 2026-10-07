@@ -603,6 +603,76 @@ main.is-wide{ max-width: none; padding: 0; }
 .pager a:hover{ background: var(--hover); }
 .pager a span{ color: var(--muted); font-size: var(--fs-xs); font-weight: 400; }
 .pager .next{ margin-left: auto; text-align: right; }
+
+/* ---- Group pages and the section overview ------------------------------- */
+
+.group-head{ margin: 0 0 18px; }
+.group-head h1{ margin: 0 0 6px; color: var(--ink); font: 700 var(--fs-h1)/1.15 var(--display); text-wrap: balance; }
+.group-head h1:focus{ outline: none; }
+.group-head .story{ margin: 0 0 8px; }
+.concept-count a{ color: inherit; }
+.group-meta{ margin: 0; color: var(--muted); font-size: var(--fs-md); }
+
+/* One surface for the whole group; its concepts are sections divided by a rule. */
+.group-body{ background: var(--surface); border: 1px solid var(--rule); }
+.group-body > .concept{ border: 0; padding: 26px 22px 22px; scroll-margin-top: 12px; }
+.group-body > .concept + .concept{ border-top: 6px solid var(--paper); }
+.concept-end{ display: block; height: 1px; }
+
+/* A concept on a group page: the title is the button that opens it; its definition always shows. */
+.cc-h{ margin: 0 0 6px; }
+.cc-toggle{
+  display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 0; border: 0; background: none;
+  color: var(--ink); font: 700 var(--fs-h2)/1.2 var(--display); text-align: left; cursor: pointer;
+}
+.cc-title{ flex: 1; min-width: 0; text-wrap: balance; }
+.cc-toggle:hover .cc-title{ text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.cc-n{
+  flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; margin-top: 2px; border-radius: 50%;
+  background: var(--tint); border: 1px solid var(--rule-strong); font-size: var(--fs-sm);
+}
+.cc.is-open .cc-n{ background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
+.cc-chev{ flex: none; width: 26px; height: 26px; margin-top: 3px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
+.cc.is-open > .cc-h .cc-chev, details.try[open] > summary .cc-chev{ transform: rotate(180deg); }
+.group-body > .cc:not(.is-open){ padding-top: 18px; padding-bottom: 16px; }
+.cc:not(.is-open) > .summary{ margin: 0 0 0 42px; font-weight: 400; color: var(--text); }
+.cc:not(.is-open) .cc-toggle{ font-size: var(--fs-xl); }   /* the open concept keeps the large title */
+.cc-next{ display: flex; justify-content: flex-end; margin: 18px 0 0; }
+.group-tools{ display: flex; justify-content: flex-end; margin: 0 0 10px; }
+.group-tools .btn[aria-pressed="true"]{ background: var(--ink); color: var(--on-ink); }
+@media (prefers-reduced-motion: reduce) { .cc-chev{ transition: none; } }
+@media print { .concept-panel[hidden]{ display: block !important; } }
+
+/* "Try it" boxes and tools start closed on a group page. */
+details.try{ clear: both; margin-top: 18px; border: 1px solid var(--rule); border-top: 3px solid var(--brand-turquoise); border-radius: var(--r-control); background: var(--surface); }
+details.try > summary{
+  display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 14px; cursor: pointer; list-style: none;
+  color: var(--ink); font-weight: 700;
+}
+details.try > summary::-webkit-details-marker{ display: none; }
+details.try > summary:hover{ background: var(--hover); }
+details.try > summary .try-label{ flex: 1; min-width: 0; }
+details.try > summary .cc-chev{ width: 22px; height: 22px; margin: 0; }
+details.try[open] > summary{ border-bottom: 1px solid var(--rule); }
+details.try > .live-box, details.try > .tool{ margin: 0; border: 0; }
+.group-end:empty{ display: none; }
+.group-end .concept-quiz{ margin-top: 16px; }
+.group-end .cq-title{ margin: 0; color: var(--ink); font-weight: 700; font-size: var(--fs-base); }
+.group-end .cq-sub{ margin: 2px 0 0; color: var(--muted); font-size: var(--fs-md); }
+.gq-actions{ display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+@media (max-width: 560px) { .group-end .concept-quiz{ flex-wrap: wrap; } .gq-actions{ justify-content: flex-start; width: 100%; } }
+
+.ov-actions{ display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 0; }
+.ov-groups{ display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
+.ov-group{ padding: 16px 18px 12px; background: var(--surface); border: 1px solid var(--rule); }
+.ov-group h2{ display: flex; align-items: baseline; gap: 10px; margin: 0 0 2px; font: 700 var(--fs-xl)/1.25 var(--display); }
+.ov-group h2 a{ color: var(--ink); text-decoration: none; }
+.ov-group h2 a:hover{ text-decoration: underline; }
+.ov-n{ flex: none; display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: var(--on-ink); font-size: var(--fs-sm); }
+.ov-list{ margin: 10px 0 0; padding: 0; list-style: none; }
+.ov-list li{ padding: 8px 0; border-top: 1px solid var(--rule); }
+.ov-list a{ display: block; color: var(--ink); font-weight: 700; }
+.ov-sum{ display: block; margin-top: 2px; color: var(--text); font-size: var(--fs-md); }
 .topic-pick{ display: flex; align-items: center; gap: 10px; max-width: 420px; }
 .topic-pick label{ font-weight: 700; color: var(--ink); flex: none; }
 /* On wide screens the rail already lists the quiz topics; the dropdown is for narrow screens. */
@@ -831,3 +901,7 @@ main.is-wide{ max-width: none; padding: 0; }
 @media (prefers-reduced-motion: reduce) {
   *{ transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
+/* Inside an opened "Try it", the summary already says what the box is. */
+details.try .lr-head .tool-badge, details.try .lr-head .lr-title,
+details.try .tool-head .tool-badge, details.try .tool-head .tool-title{ display: none; }
+details.try .lr-head, details.try .tool-head{ justify-content: flex-end; }
