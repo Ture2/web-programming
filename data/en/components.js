@@ -103,7 +103,7 @@ function App() {
     </main>
   );
 }` },
-    example: 'In the box, `App` uses `TaskItem` twice, so React calls the `TaskItem` function twice and the list shows two items. Rename `TaskItem` to `taskItem` (both the function and the tags): the items disappear, and React warns in the console about the casing of the tag. A lowercase tag means "an HTML element called taskitem", not "my component". Both items say "Buy milk" because the component has no input yet: [Props](#/browser/components/props) fixes that.',
+    example: 'In the Try it box, `App` uses `TaskItem` twice, so React calls the `TaskItem` function twice and the list shows two items. Rename `TaskItem` to `taskItem` (both the function and the tags): the items disappear, and React warns in the console about the casing of the tag. A lowercase tag means "an HTML element called taskitem", not "my component". Both items say "Buy milk" because the component has no input yet: [Props](#/browser/components/props) fixes that.',
     mistake: 'Calling a component as a function, `{TaskItem()}`, instead of rendering it as `<TaskItem />`. It may seem to work, but React no longer sees a separate component, so anything React keeps for each component (its state, see [useState](#/browser/state-effects/use-state)) ends up attached to the parent and breaks in confusing ways. Render components with the tag syntax and let React call them.' },
 
   { id: 'declarative-ui', hub: 'idea', topic: 'jsx',
@@ -215,7 +215,7 @@ function App() {
     </div>
   );
 }` },
-    example: 'In the box, look at the console: `App` creates the element once, and it is only an object with `type` (the `Greeting` function) and `props` (`{ name: \'Ana\' }`). `Greeting` runs **twice**, once for each place the element appears in the tree, because rendering means React calling the component for every place it is used.',
+    example: 'In the Try it box, look at the console: `App` creates the element once, and it is only an object with `type` (the `Greeting` function) and `props` (`{ name: \'Ana\' }`). `Greeting` runs **twice**, once for each place the element appears in the tree, because rendering means React calling the component for every place it is used.',
     mistake: 'Expecting a component to run once, like a script at the end of `<body>`. It runs on every render, possibly many times; a `console.log` in it prints again and again (and twice per render in development, see [StrictMode](#/browser/state-effects/strict-mode)). Code that must run once, or that talks to the outside world (fetching, timers), does not belong in the body of the component.' },
 
   { id: 'pure-render', hub: 'idea', topic: 'jsx',
@@ -284,7 +284,7 @@ function App() {
     </>
   );
 }` },
-    example: 'In the box, delete the `/` of `<input … />`: the preview stops updating and a syntax error points at the line, because the compiler cannot tell where the input ends. Change `className` to `class`: it still renders, but React warns `Invalid DOM property \'class\'. Did you mean \'className\'?` in the console.',
+    example: 'In the Try it box, delete the `/` of `<input … />`: the preview stops updating and a syntax error points at the line, because the compiler cannot tell where the input ends. Change `className` to `class`: it still renders, but React warns `Invalid DOM property \'class\'. Did you mean \'className\'?` in the console.',
     mistake: 'Wrapping everything in an extra `<div>` "to make the error go away". It works, but it adds a real element to the page: inside a `<ul>` you end up with `<div>` between `<ul>` and `<li>` (invalid HTML), and in a flex or grid container the wrapper becomes the only item, breaking the layout. Use a fragment when you only need grouping.' },
 
   { id: 'jsx-expressions', hub: 'idea', topic: 'jsx',
@@ -315,7 +315,7 @@ function App() {
     </article>
   );
 }` },
-    example: 'In the box, add `<p>{task}</p>`: the preview shows the error "Objects are not valid as a React child (found: object with keys {title, due, done})". React cannot guess how to display an object; `{task.title}` or `{JSON.stringify(task)}` (for debugging) can be displayed.',
+    example: 'In the Try it box, add `<p>{task}</p>`: the preview shows the error "Objects are not valid as a React child (found: object with keys {title, due, done})". React cannot guess how to display an object; `{task.title}` or `{JSON.stringify(task)}` (for debugging) can be displayed.',
     mistake: 'Putting an `if` inside JSX: `{if (done) { <p>Done</p> }}` is a syntax error, because braces expect a value. Compute it before the `return` (`let badge = null; if (done) badge = <p>Done</p>;` then `{badge}`), or use an expression: `{done ? <p>Done</p> : null}`. See [Conditional rendering](#/browser/components/conditional-rendering).' },
 
   /* ---- 2. Props and composition ------------------------------------------------------------ */
@@ -356,7 +356,7 @@ function App() {
     summary: 'A component must never change its props: data flows **one way**, from parent to child, and a child that needs a change asks the parent by calling a function the parent passed down.',
     html: [
       '<p>Props belong to the parent: they are a snapshot of its data at render time. If a child edited them, the parent would not know (React renders again on new data, not on mutation), and the change could leak into other components sharing the same object. In development React freezes the props object, so <code>props.title = …</code> throws.</p>',
-      '<p><strong>State, in one paragraph:</strong> the box keeps its tasks in <strong>state</strong>, a value React remembers between renders. <code>const [tasks, setTasks] = useState(initialTasks)</code> gives the current value and a function to replace it; calling <code>setTasks(newArray)</code> makes React render again with the new value. The full story is in <a href="#/browser/state-effects/use-state">useState and what a re-render is</a>.</p>',
+      '<p><strong>State, in one paragraph:</strong> the Try it box keeps its tasks in <strong>state</strong>, a value React remembers between renders. <code>const [tasks, setTasks] = useState(initialTasks)</code> gives the current value and a function to replace it; calling <code>setTasks(newArray)</code> makes React render again with the new value. The full story is in <a href="#/browser/state-effects/use-state">useState and what a re-render is</a>.</p>',
       '<figure data-diagram></figure>',
       '<p>This is <strong>one-way data flow</strong>: data travels down as props, requests travel up as <strong>callbacks</strong>. To find out who can change a value, look upwards for its owner. Choosing which component should own it is <a href="#/browser/shared-state/lifting-state">lifting state up</a>.</p>',
     ],
@@ -404,7 +404,7 @@ function App() {
     </>
   );
 }` },
-    example: 'Tick "Buy milk" in the box. `TaskItem` does not change anything itself: it calls `onToggle`, the parent\'s `toggle` builds a **new** array with a new task object, and React re-renders `App`, so both the checkbox and the "left" counter update together. The counter could never update if the child had flipped `task.done` on its own copy.',
+    example: 'Tick "Buy milk" in the Try it box. `TaskItem` does not change anything itself: it calls `onToggle`, the parent\'s `toggle` builds a **new** array with a new task object, and React re-renders `App`, so both the checkbox and the "left" counter update together. The counter could never update if the child had flipped `task.done` on its own copy.',
     mistake: 'Copying a prop into the child\'s own state "so it can be edited": `const [title, setTitle] = useState(props.title)`. The copy is taken once, so when the parent later passes a new title the child keeps showing the old one, and now two components disagree about the data. Read the prop directly, and send changes up with a callback (see [State, props and derived values](#/browser/state-effects/what-is-state)).' },
 
   { id: 'children', hub: 'props', topic: 'props',
@@ -576,7 +576,7 @@ function App() {
   );
 }` },
     practice: { href: '#/browser/components/practice/jsx-viewer', label: 'Fix a list without keys in the JSX viewer' },
-    example: 'In the box, type "2 litres" in the note next to "Buy milk", then press **Add at the top**. The note stays in the **first** row, now next to the new task: with `key={index}` React thinks row 0 is the same item as before and keeps its input. Change it to `key={task.id}` (the preview starts afresh), repeat, and the note travels with "Buy milk".',
+    example: 'In the Try it box, type "2 litres" in the note next to "Buy milk", then press **Add at the top**. The note stays in the **first** row, now next to the new task: with `key={index}` React thinks row 0 is the same item as before and keeps its input. Change it to `key={task.id}` (the preview starts afresh), repeat, and the note travels with "Buy milk".',
     mistake: 'Silencing the warning with `key={index}` or `key={Math.random()}`. The first hides the bug until the list is reordered, filtered or prepended (wrong rows keep the wrong inputs, checkboxes or animations); the second destroys every row on every render (inputs lose focus while you type). Use an id that belongs to the item.' },
 
   { id: 'conditional-rendering', hub: 'lists', topic: 'conditions',
@@ -620,7 +620,7 @@ function App() {
   );
 }` },
     practice: { href: '#/browser/components/practice/component-playground', label: 'Fix an empty-list message in the component playground' },
-    example: 'The last line of the box shows `[0]`: `none.length` is `0`, so `0 && …` evaluates to `0` and React prints it. Change it to `none.length > 0 && …` and the brackets are empty. The empty `TaskList` uses an early return, so its main JSX never has to think about the empty case.',
+    example: 'The last line of the Try it box shows `[0]`: `none.length` is `0`, so `0 && …` evaluates to `0` and React prints it. Change it to `none.length > 0 && …` and the brackets are empty. The empty `TaskList` uses an early return, so its main JSX never has to think about the empty case.',
     mistake: 'Writing `{count && <Badge count={count} />}` for a counter that can be zero, or `{items.length && …}` for a list. The page shows a lone 0 exactly when there is nothing to show. Compare explicitly (`count > 0`) or use a ternary.' },
 
   /* ---- 4. Events and forms ----------------------------------------------------------------- */
@@ -656,7 +656,7 @@ function App() {
   );
 }` },
     practice: { href: '#/browser/components/practice/component-playground', label: 'Fix a click handler in the component playground' },
-    example: 'Each button in the box adds a line. `handleClick` receives the event and reads the button text; the Delete button needs an argument, so it is wrapped in an arrow. Change `onClick={() => setLog([])}` to `onClick={setLog([])}`: the preview crashes with "Too many re-renders", because clearing during render triggers another render, forever. (The log uses the index as key: acceptable here, lines are only appended, never reordered.)',
+    example: 'Each button in the Try it box adds a line. `handleClick` receives the event and reads the button text; the Delete button needs an argument, so it is wrapped in an arrow. Change `onClick={() => setLog([])}` to `onClick={setLog([])}`: the preview crashes with "Too many re-renders", because clearing during render triggers another render, forever. (The log uses the index as key: acceptable here, lines are only appended, never reordered.)',
     mistake: 'Writing `onClick={handleDelete(task.id)}` to pass the id. It calls `handleDelete` for every task as soon as the list renders, deleting everything or looping. Use `onClick={() => handleDelete(task.id)}`.' },
 
   { id: 'controlled-inputs', hub: 'events', topic: 'events',
@@ -702,7 +702,7 @@ function App() {
   );
 }` },
     practice: { href: '#/browser/components/practice/component-playground', label: 'Build a controlled input in the component playground' },
-    example: 'Type in the box: the preview and the counter follow every keystroke, and **Clear** empties the input because the input displays `title`. Remove the `onChange` from the text input: typing does nothing (the input keeps showing `title`, which never changes) and the console shows React\'s warning about `value` without `onChange`.',
+    example: 'Type in the Try it box: the preview and the counter follow every keystroke, and **Clear** empties the input because the input displays `title`. Remove the `onChange` from the text input: typing does nothing (the input keeps showing `title`, which never changes) and the console shows React\'s warning about `value` without `onChange`.',
     mistake: 'Writing `value={title}` and reading the text later with `document.getElementById(\'t\').value`, or forgetting `onChange`. In React the state is the truth: if it does not change, the input cannot change. Either control the input fully (`value` + `onChange`) or leave it uncontrolled and read it on submit (see [Uncontrolled inputs](#/browser/components/uncontrolled-inputs)).' },
 
   { id: 'uncontrolled-inputs', hub: 'events', topic: 'events',
@@ -743,7 +743,7 @@ function App() {
     </form>
   );
 }` },
-    example: 'In the box, type a password and press **Log in**: the object shows all three fields, `remember: "on"`, and the form goes back to its defaults. Untick **Remember me** and log in again: `remember` is missing from the object, because `FormData` leaves unchecked boxes out. Nothing re-rendered while you typed.',
+    example: 'In the Try it box, type a password and press **Log in**: the object shows all three fields, `remember: "on"`, and the form goes back to its defaults. Untick **Remember me** and log in again: `remember` is missing from the object, because `FormData` leaves unchecked boxes out. Nothing re-rendered while you typed.',
     mistake: 'Writing `value="ana@example.com"` instead of `defaultValue`. `value` makes the input controlled: without an `onChange` it is read-only, and React warns about it. Use `defaultValue` for a starting value you will read on submit, or control the input fully (see [Controlled inputs](#/browser/components/controlled-inputs)).' },
 
   { id: 'form-submit', hub: 'events', topic: 'events',
@@ -801,7 +801,7 @@ function App() {
   );
 }` },
     practice: { href: '#/browser/components/practice/component-playground', label: 'Handle a submit in the component playground' },
-    example: 'Add two tasks in the box, once with the button and once by pressing Enter: both go through `onSubmit`. Submit an empty title: the error appears and nothing is added. Now delete the line `e.preventDefault();` and add a task: the browser submits the form, the preview reloads and both the list and the input are gone.',
+    example: 'Add two tasks in the Try it box, once with the button and once by pressing Enter: both go through `onSubmit`. Submit an empty title: the error appears and nothing is added. Now delete the line `e.preventDefault();` and add a task: the browser submits the form, the preview reloads and both the list and the input are gone.',
     mistake: 'Putting the logic in `onClick` of the submit button and skipping `preventDefault`. Pressing Enter in the input bypasses the click handler, and the default submission reloads the page; the symptom is "my list flashes and disappears". Use `onSubmit` on the form with `e.preventDefault()` as its first line.' },
 
   { id: 'form-fields', hub: 'events', topic: 'events',

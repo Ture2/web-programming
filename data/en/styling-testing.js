@@ -71,7 +71,7 @@ export default function App() {
 
 /* ProfileCard.css (loaded later) */
 .title { color: #1a1f6c; text-transform: uppercase; }` },
-    example: 'In the box, the author of `TaskCard` wrote an orange title, yet both titles are blue and uppercase. Both `.title` rules score (0, 1, 0), so the one later in the stylesheet wins, and it applies to **every** `.title`, not just the profile card. Delete the second rule: now both titles are orange. Rename the classes to `task-card__title` and `profile-card__title` (in the JSX and the CSS) and each card keeps its own look, whatever the order.',
+    example: 'In the Try it box, the author of `TaskCard` wrote an orange title, yet both titles are blue and uppercase. Both `.title` rules score (0, 1, 0), so the one later in the stylesheet wins, and it applies to **every** `.title`, not just the profile card. Delete the second rule: now both titles are orange. Rename the classes to `task-card__title` and `profile-card__title` (in the JSX and the CSS) and each card keeps its own look, whatever the order.',
     mistake: 'Fixing a collision by making the selector heavier: `.task-list .card .title`, or `!important`. It wins today and starts a specificity war tomorrow, when someone needs to override it. A collision is a **naming** problem: fix the name, not the weight.' },
 
   { id: 'css-per-component', hub: 'scoping', topic: 'scoping',
@@ -122,7 +122,7 @@ export default function App() {
 .task-card__button { padding: 4px 10px; }
 .task-card--done { background: #eef6ee; }
 .task-card--done .task-card__title { text-decoration: line-through; color: #555; }` },
-    example: 'In the box, press **Done** on the first card. Only that `<article>` gets the modifier class `task-card--done`; the CSS for the modifier strikes through the title inside it. The second card is untouched because the modifier is on its own block. The class names tell you, in the DevTools Elements panel, exactly which component and which part you are looking at.',
+    example: 'In the Try it box, press **Done** on the first card. Only that `<article>` gets the modifier class `task-card--done`; the CSS for the modifier strikes through the title inside it. The second card is untouched because the modifier is on its own block. The class names tell you, in the DevTools Elements panel, exactly which component and which part you are looking at.',
     mistake: 'Believing the import scopes the CSS: "these rules are in `TaskCard.css`, so they only affect `TaskCard`". Once loaded, they are global, and they stay on the page even when no `TaskCard` is rendered. A rule like `.task-card h2 { … }` is safe only because of the `task-card` prefix; a bare `h2 { … }` in that file restyles every heading in the app.' },
 
   { id: 'css-modules', hub: 'scoping', topic: 'scoping',
@@ -176,7 +176,7 @@ export default function App() {
 .button { padding: 4px 10px; }
 .done { background: #eef6ee; }
 .done .title { text-decoration: line-through; color: #555; }` },
-    example: 'In a Vite app, open the Elements panel after rendering this card: you see `<h2 class="_title_1hy3p_5">`, not `title`. Another component can declare its own `.title` in its own module and both keep their colours, in any import order. In the box, press **Done** and watch the class list of the `<article>` become `card done`.',
+    example: 'In a Vite app, open the Elements panel after rendering this card: you see `<h2 class="_title_1hy3p_5">`, not `title`. Another component can declare its own `.title` in its own module and both keep their colours, in any import order. In the Try it box, press **Done** and watch the class list of the `<article>` become `card done`.',
     mistake: 'Writing the class as a string after importing the module: `className="title"`. The real class is `_title_1hy3p_5`, so the string matches no rule and the styles silently vanish (no error). Always read the name from the object, `className={styles.title}`. A misspelled property, `styles.titel`, is `undefined`, and fails just as silently.' },
 
   { id: 'conditional-classes', hub: 'scoping', topic: 'scoping',
@@ -216,7 +216,7 @@ export default function App() {
 .done { opacity: .6; }
 .done span { text-decoration: line-through; }
 button[aria-pressed="true"] { background: #1a1f6c; color: #fff; }` },
-    example: 'In the box, "Pay the rent" starts with `task urgent` (red border). Press its **Done**: the class list becomes `task done urgent` and the button gets `aria-pressed="true"`, which the CSS uses to fill it in. The same attribute tells a screen-reader user that the button is now pressed.',
+    example: 'In the Try it box, "Pay the rent" starts with `task urgent` (red border). Press its **Done**: the class list becomes `task done urgent` and the button gets `aria-pressed="true"`, which the CSS uses to fill it in. The same attribute tells a screen-reader user that the button is now pressed.',
     mistake: 'Gluing a condition into a template literal, such as `task ${done && \'done\'}` between backticks. When `done` is false the result is `"task false"` (and `"task undefined"` for a missing prop): a junk class that looks harmless until someone names a class `false`. Use a ternary that returns `\'\'`, or `filter(Boolean)`.' },
 
   { id: 'inline-styles', hub: 'scoping', topic: 'scoping',
@@ -322,7 +322,7 @@ export default function App() {
 .font-bold { font-weight: 700; }
 .bg-blue-600 { background: #2563eb; }
 .text-white { color: #fff; border: 0; }` },
-    example: 'In the box, change `p-4` to `p-1` in the JSX: the card shrinks, without touching the CSS. That is the workflow with utilities: you edit the markup, choosing from a scale, and never write a new rule for one component.',
+    example: 'In the Try it box, change `p-4` to `p-1` in the JSX: the card shrinks, without touching the CSS. That is the workflow with utilities: you edit the markup, choosing from a scale, and never write a new rule for one component.',
     mistake: 'Building class names at runtime, such as the template literal `bg-${color}-600`. Tailwind finds classes by scanning the **source text** for complete names; `bg-red-600` never appears whole in the file, so it is never generated and the style silently does not exist. Write the full names and pick one: `{ red: \'bg-red-600\', blue: \'bg-blue-600\' }[color]`.' },
 
   { id: 'css-in-js', hub: 'approaches', topic: 'approaches',
@@ -446,7 +446,7 @@ body { background: var(--color-bg); color: var(--color-text); }
   background: var(--color-primary); color: var(--color-on-primary);
   border: 0; border-radius: var(--radius); padding: var(--space) calc(var(--space) * 2);
 }` },
-    example: 'In the box, press **Dark theme**. The effect sets `data-theme="dark"` on `<html>`, the second `:root` rule redefines five tokens, and every rule that uses them repaints: no component rule was duplicated. Change `--radius` to `0` in the first block: the card and the button both become square.',
+    example: 'In the Try it box, press **Dark theme**. The effect sets `data-theme="dark"` on `<html>`, the second `:root` rule redefines five tokens, and every rule that uses them repaints: no component rule was duplicated. Change `--radius` to `0` in the first block: the card and the button both become square.',
     mistake: 'Writing dark mode as a second copy of every component rule: `.dark .card { background: … }`, `.dark .button { … }`, and so on for each component. The copies drift apart and every new component needs two sets of rules. Redefine the **tokens** once per theme; components keep using `var(--…)`.' },
 
   { id: 'responsive-component', hub: 'approaches', topic: 'approaches',
@@ -487,7 +487,7 @@ export default function App() {
 @container (min-width: 560px) {
   .task-grid__list { grid-template-columns: repeat(4, 1fr); }
 }` },
-    example: 'In the box, drag the corner of the dashed box: below 320px the tasks stack in one column, from 320px they form two, from 560px four. The window did not change size, only the container did; a media query could not have reacted to that.',
+    example: 'In the Try it box, drag the corner of the dashed box: below 320px the tasks stack in one column, from 320px they form two, from 560px four. The window did not change size, only the container did; a media query could not have reacted to that.',
     mistake: 'Giving a component a fixed width, `.task-grid { width: 800px; }`, and testing only on a laptop. On a 375px phone it overflows and the page scrolls sideways. Let components fill the space they get (`max-width` instead of `width`) and add columns with a breakpoint.' },
 
   { id: 'interaction-states', hub: 'approaches', topic: 'approaches',
@@ -523,7 +523,7 @@ export default function App() {
 .nav__link[aria-current="page"] { background: #1a1f6c; color: #fff; }
 .nav__button { margin-left: auto; padding: 6px 12px; }
 .nav__button:disabled { opacity: .5; cursor: not-allowed; }` },
-    example: 'In the box, click inside the preview and press Tab: each link shows the orange ring, but clicking with the mouse does not. Choose **Calendar**: React moves `aria-current="page"` to it, the CSS fills it in, and a screen reader announces "current page". The disabled **Log out** is skipped by Tab and looks unavailable.',
+    example: 'In the Try it box, click inside the preview and press Tab: each link shows the orange ring, but clicking with the mouse does not. Choose **Calendar**: React moves `aria-current="page"` to it, the CSS fills it in, and a screen reader announces "current page". The disabled **Log out** is skipped by Tab and looks unavailable.',
     mistake: 'Removing focus rings because they look "ugly": `*:focus { outline: none; }`. Keyboard users can no longer see where they are, which fails accessibility guidelines. Style `:focus-visible` the way you want instead; mouse users will not see it.' },
 
   /* ---- 3. Tests and tooling ------------------------------------------------------------------- */

@@ -143,7 +143,7 @@ function App() {
   return <TaskPage />;
 }`,
     },
-    example: 'The box lifts the filter into `TaskPage`. `Toolbar` is a controlled input that reports each keystroke with `onFilterChange`; `TaskPage` derives the visible tasks and passes them to `TaskList`. Type in the box: both children update together, because they read the same state.',
+    example: 'The box lifts the filter into `TaskPage`. `Toolbar` is a controlled input that reports each keystroke with `onFilterChange`; `TaskPage` derives the visible tasks and passes them to `TaskList`. Type in the Try it box: both children update together, because they read the same state.',
     mistake: 'Lifting the value but not the change: the parent passes `filter` down, but the child keeps calling its own local `setFilter`. The input then shows what was typed while the list filters by the parent\'s old value. When state moves up, the child loses its `useState` and reports changes through the callback.' },
 
   { id: 'single-source-of-truth', hub: 'where', topic: 'where',
@@ -344,7 +344,7 @@ function App() {
       css: `.layout header { padding: 6px 10px; background: #e8eefc; }
 .layout main { padding: 6px 10px; border: 1px solid #ccd; }`,
     },
-    example: 'In the box, `Layout` takes a `header` slot and `children`; it never sees `user`. `App` owns the user and passes it straight to `Avatar` and `TaskPage`. Switch the user: both update, and `Layout`\'s code did not have to change.',
+    example: 'In the Try it box, `Layout` takes a `header` slot and `children`; it never sees `user`. `App` owns the user and passes it straight to `Avatar` and `TaskPage`. Switch the user: both update, and `Layout`\'s code did not have to change.',
     mistake: 'Thinking composition means "the Layout must render TaskPage itself". As soon as `Layout` writes `<TaskPage />` in its own JSX, it is the one that must provide TaskPage\'s props, and drilling is back. Let the owner of the data write the tag and hand the element over.' },
 
   /* ---- 3. Context ---------------------------------------------------------------------------------- */
@@ -494,7 +494,7 @@ function App() {
 .page.dark { background: #1d1f33; color: #eee; }
 .page.light { background: #fff; color: #111; }`,
     },
-    example: 'In the box, `ThemeToggle` sits inside `Sidebar`, which passes nothing on, yet it reads and changes the theme owned by `ThemeProvider`. `Page` reads the same value to choose its colours.',
+    example: 'In the Try it box, `ThemeToggle` sits inside `Sidebar`, which passes nothing on, yet it reads and changes the theme owned by `ThemeProvider`. `Page` reads the same value to choose its colours.',
     mistake: 'Calling `useContext(ThemeContext)` in the same component that renders the provider and expecting the new value. `useContext` looks **above** the calling component, so the provider\'s own component never sees its own provider: it already has the state in a variable; use that.' },
 
   { id: 'use-context-hook', hub: 'context', topic: 'context',
@@ -609,7 +609,7 @@ function App() {
   );
 }`,
     },
-    example: 'In the box, `TaskList` is wrapped in `memo` and shows how many times it rendered. Type in the field: `App` re-renders on every key, `onSelect` is a new function each time, and the count climbs. Tick **Stable callback** and type again: `useCallback` keeps the same function, the props are equal, and `memo` skips the list.',
+    example: 'In the Try it box, `TaskList` is wrapped in `memo` and shows how many times it rendered. Type in the field: `App` re-renders on every key, `onSelect` is a new function each time, and the count climbs. Tick **Stable callback** and type again: `useCallback` keeps the same function, the props are equal, and `memo` skips the list.',
     mistake: 'Wrapping every function in `useCallback` and every value in `useMemo` "for performance". Each one costs memory and a dependency array to keep right, and saves nothing unless something compares the identity. A wrong dependency array is worse than none: it keeps a stale value.' },
 
   { id: 'context-rerenders', hub: 'context', topic: 'context',
@@ -665,7 +665,7 @@ function App() {
   );
 }`,
     },
-    example: 'In the box, `UserBadge` is wrapped in `memo` and reads the context. Press **Unrelated click** and watch the console: `App` re-renders, the value object is new, and the badge re-renders although the user did not change. Tick "Memoise the value" and click again: the badge stays quiet.',
+    example: 'In the Try it box, `UserBadge` is wrapped in `memo` and reads the context. Press **Unrelated click** and watch the console: `App` re-renders, the value object is new, and the badge re-renders although the user did not change. Tick "Memoise the value" and click again: the badge stays quiet.',
     mistake: 'Putting everything into one big `AppContext` "to keep it simple". Every consumer then re-renders whenever any part changes: typing in a search field stored there re-renders the header, the sidebar and every list item. Separate contexts for separate concerns, and local state for anything only one area uses.' },
 
   /* ---- 4. An authentication context ---------------------------------------------------------------- */
@@ -981,7 +981,7 @@ function App() {
   return <><TaskCount /><TaskList /></>;
 }`,
     },
-    example: 'In the box, the header and the list both call the same `useTasks()` hook. The console shows **two** identical requests. Add a task from the list: the list refetches its copy, the header keeps its old count. Two copies of server state, two truths.',
+    example: 'In the Try it box, the header and the list both call the same `useTasks()` hook. The console shows **two** identical requests. Add a task from the list: the list refetches its copy, the header keeps its old count. Two copies of server state, two truths.',
     mistake: 'Loading the tasks once into a global context "so every screen has them" and never refetching. The context now holds a snapshot that ages: another user\'s changes never appear, and each write needs hand-written code to patch the global list. Server data needs a plan for staleness, not just a place to live.' },
 
   { id: 'query-cache', hub: 'stores', topic: 'stores',

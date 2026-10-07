@@ -445,7 +445,7 @@ function App() {
       'There are two honest fixes. **List the value as a dependency** (`[count]`): every change of `count` cleans up the old interval and starts a new one with a fresh closure. Or **stop reading the value**: if the callback only needs to change the state, give the setter an updater, `setCount((c) => c + 1)`; it receives the current value from React, so `[]` is truthful and one interval is enough.',
       'Stale closures are the reason the dependency rule exists: an incomplete array is not an optimisation, it is a bug that shows up later. The same applies to event listeners added in an effect, `setTimeout` callbacks and promise callbacks that read state.',
     ],
-    example: 'In the box, the button belongs to `App`, which passes `count` to a ticker. The **stale** ticker\'s effect has `[]`, so its interval logs 0 forever while you click. Switch to the **fixed** ticker: its effect lists `count`, re-runs after every click, and the log follows the button.',
+    example: 'In the Try it box, the button belongs to `App`, which passes `count` to a ticker. The **stale** ticker\'s effect has `[]`, so its interval logs 0 forever while you click. Switch to the **fixed** ticker: its effect lists `count`, re-runs after every click, and the log follows the button.',
     live: { kind: 'react', code: `import { useState, useEffect } from 'react';
 
 function StaleTicker({ count }) {
@@ -489,7 +489,7 @@ function App() {
       'Every setup that starts something that keeps running needs a matching cleanup: `setInterval` ↔ `clearInterval`, `setTimeout` ↔ `clearTimeout`, `addEventListener` ↔ `removeEventListener` (with the **same** function), `connect()` ↔ `disconnect()`, `subscribe()` ↔ `unsubscribe()`, `fetch` ↔ `controller.abort()` (see [Cancelling a fetch](#/browser/state-effects/abort-fetch)). An effect that only does a one-off job with nothing left running needs no cleanup.',
       'Without a cleanup, the work outlives the component: an interval keeps firing after the page changed, every remount adds one more listener, and a slow response arrives and sets state for a screen the user already left. React silently ignores a `setState` on an unmounted component, but the code that called it, and the memory it holds, keep going.',
     ],
-    example: 'In the box, the chat room "connects" in an effect that depends on `roomId`. Change the room: the console shows the disconnect from the old room **before** the connect to the new one. Then click **Close the chat**: the last cleanup runs.',
+    example: 'In the Try it box, the chat room "connects" in an effect that depends on `roomId`. Change the room: the console shows the disconnect from the old room **before** the connect to the new one. Then click **Close the chat**: the last cleanup runs.',
     live: { kind: 'react', code: `import { useState, useEffect } from 'react';
 
 function ChatRoom({ roomId }) {

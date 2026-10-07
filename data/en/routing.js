@@ -259,7 +259,7 @@ function App() {
     </>
   );
 }` },
-    example: 'In the box, click `/Tasks/`: it still shows "All tasks", because the toy matcher, like React Router, ignores case and a trailing slash. Click `/nope`: no route matches and nothing renders, which is what React Router does too (plus a console warning `No routes matched location "/nope"`).',
+    example: 'In the Try it box, click `/Tasks/`: it still shows "All tasks", because the toy matcher, like React Router, ignores case and a trailing slash. Click `/nope`: no route matches and nothing renders, which is what React Router does too (plus a console warning `No routes matched location "/nope"`).',
     mistake: 'Writing routes in the React Router 5 style of old tutorials: `<Route exact path="/" component={Home} />` inside a `<Switch>`. In current versions `Switch` does not exist (it is `Routes`), `exact` is gone (every path is exact unless it ends in `/*`) and `component` is ignored, so the route renders nothing. Write `<Route path="/" element={<Home />} />`.' },
 
   { id: 'link-vs-a', hub: 'routes', topic: 'matching',
@@ -336,7 +336,7 @@ function App() {
     </>
   );
 }` },
-    example: 'In the box, press +1 a few times, then use the two "Link" buttons: the page changes and the counter stays. Press the `<a href>` button: "Page loads" goes up and the counter is back to 0, because the whole app started again, which is what a real `<a href>` inside an SPA does to all its state.',
+    example: 'In the Try it box, press +1 a few times, then use the two "Link" buttons: the page changes and the counter stays. Press the `<a href>` button: "Page loads" goes up and the counter is back to 0, because the whole app started again, which is what a real `<a href>` inside an SPA does to all its state.',
     mistake: 'Using `<button onClick={() => navigate(\'/tasks/\' + id)}>` for plain navigation in a list. It works with a mouse, but the user cannot open the task in a new tab or see where it leads, and assistive technology announces a button, not a link. If clicking it goes somewhere, it is a `<Link>`.' },
 
   { id: 'route-ranking', hub: 'routes', topic: 'matching',
@@ -416,7 +416,7 @@ function App() {
     </>
   );
 }` },
-    example: 'In the box, the URL `/tasks/7` gives `{"id":"7"}`: `typeof` is `string`, `params.id === 7` is false and `Number(params.id) === 7` is true. Type `/tasks/buy%20milk`: the param is decoded to `buy milk`. Type `/tasks/7/edit` or `/tasks/`: no match, the shape is different.',
+    example: 'In the Try it box, the URL `/tasks/7` gives `{"id":"7"}`: `typeof` is `string`, `params.id === 7` is false and `Number(params.id) === 7` is true. Type `/tasks/buy%20milk`: the param is decoded to `buy milk`. Type `/tasks/7/edit` or `/tasks/`: no match, the shape is different.',
     mistake: 'Comparing the param with a number from the data: `tasks.find((t) => t.id === id)` finds nothing, because `t.id` is the number `7` and `id` is the string `\'7\'`, so the page says "not found" for a task that exists. Convert once, `const taskId = Number(id)`, and compare numbers.' },
 
   { id: 'search-params', hub: 'routes', topic: 'matching',
@@ -465,7 +465,7 @@ function App() {
     </>
   );
 }` },
-    example: 'In the box, choose "All": the `done` key disappears from the URL and all three tasks show. Type "rep" in Search: the URL becomes `/tasks?q=rep` and the list follows. Every filter is in the URL, so a reload (or a shared link) would show exactly this list.',
+    example: 'In the Try it box, choose "All": the `done` key disappears from the URL and all three tasks show. Type "rep" in Search: the URL becomes `/tasks?q=rep` and the list follows. Every filter is in the URL, so a reload (or a shared link) would show exactly this list.',
     mistake: 'Writing the query string into the route path, `path="/tasks?done=:done"`. Route paths never include the query string (React Router matches only the path), so this route never matches. Keep `path="/tasks"` and read the filter with `useSearchParams`.' },
 
   /* ---- 3. Nested routes and layouts -------------------------------------------------------- */
@@ -551,7 +551,7 @@ function App() {
   return <AppLayout outlet={page} go={setPath} />;
 }` },
     practice: { href: '#/browser/routing/practice/router-sim', label: 'Nest pages in a layout in the router simulator (challenge 3)' },
-    example: 'In the box, type something in the header\'s input, then click Home, Tasks and Task 2: only the dashed area (the outlet) changes and your text stays, because `AppLayout` is never unmounted. If every page rendered its own copy of the header, the input would be recreated, and emptied, on every click.',
+    example: 'In the Try it box, type something in the header\'s input, then click Home, Tasks and Task 2: only the dashed area (the outlet) changes and your text stays, because `AppLayout` is never unmounted. If every page rendered its own copy of the header, the input would be recreated, and emptied, on every click.',
     mistake: 'Nesting the routes but forgetting `<Outlet />` in the parent\'s element. The URL changes, the parent renders, and the child silently does not appear: there is no error, the router simply has nowhere to put it. If a child route "does not work", check that every element on the way down renders an outlet.' },
 
   { id: 'index-routes', hub: 'layouts', topic: 'layouts',
@@ -666,7 +666,7 @@ function App() {
     </>
   );
 }` },
-    example: 'In the box, save a task called "Call Ana": the app shows it at `/tasks/2` and the history is `/tasks → /tasks/new → /tasks/2`. Press Back: you land on the empty form again, which is rarely what users want. Change the call to `navigate(\'/tasks/\' + task.id, { replace: true })` and repeat: the form\'s entry is overwritten, and Back goes straight to the list.',
+    example: 'In the Try it box, save a task called "Call Ana": the app shows it at `/tasks/2` and the history is `/tasks → /tasks/new → /tasks/2`. Press Back: you land on the empty form again, which is rarely what users want. Change the call to `navigate(\'/tasks/\' + task.id, { replace: true })` and repeat: the form\'s entry is overwritten, and Back goes straight to the list.',
     mistake: 'Navigating before the work is done: `api.createTask(values); navigate(\'/tasks\');` without `await`. The list page mounts and fetches while the POST is still on its way, so the new task is missing, and if the POST fails the user never sees the error. `await` the request, check it succeeded, then navigate.' },
 
   { id: 'push-vs-replace', hub: 'navigation', topic: 'navigation',
@@ -778,7 +778,7 @@ function App() {
   );
 }` },
     practice: { href: '#/browser/routing/practice/router-sim', label: 'Protect two pages in the router simulator (challenge 7)' },
-    example: 'In the box, click Settings while logged out: the guard renders the redirect, the URL becomes `/login` and the state remembers `{"from":"/settings"}`. Log in: you land on Settings. Click Log out while on Settings: the guard runs again and sends you back to `/login`.',
+    example: 'In the Try it box, click Settings while logged out: the guard renders the redirect, the URL becomes `/login` and the state remembers `{"from":"/settings"}`. Log in: you land on Settings. Click Log out while on Settings: the guard runs again and sends you back to `/login`.',
     mistake: 'Starting the auth state as "logged out" and restoring the saved token later, in an effect: on a refresh of `/settings` the guard redirects before the token is read, so logged-in users are thrown out on every reload. Read the token in the initial state, or keep a `checking` flag as the code does (see [Staying logged in after a reload](#/browser/shared-state/persist-session)).' },
 
   { id: 'redirect-after-login', hub: 'guards', topic: 'guards',
@@ -888,7 +888,7 @@ function App() {
     </>
   );
 }` },
-    example: 'In the box, click through `/tasks/1`, `/tasks/2` and `/tasks/3`: each click shows "Loading…" then the task, because `id` changed and the effect ran again (the console lists one request per click). `/tasks/999` shows "This task does not exist." (the API answered 404) and `/tasks/abc` the API\'s validation error (400). Change `[id]` to `[]` and click around: the URL changes, the task does not.',
+    example: 'In the Try it box, click through `/tasks/1`, `/tasks/2` and `/tasks/3`: each click shows "Loading…" then the task, because `id` changed and the effect ran again (the console lists one request per click). `/tasks/999` shows "This task does not exist." (the API answered 404) and `/tasks/abc` the API\'s validation error (400). Change `[id]` to `[]` and click around: the URL changes, the task does not.',
     mistake: 'Fetching all tasks on the detail page and picking one, `tasks.find((t) => t.id === id)`, or relying on the list page to pass the task in navigation state. The first downloads everything to show one item (and compares a number with the string param); the second breaks as soon as someone opens `/tasks/7` from a bookmark. Fetch the one resource the URL names.' },
 ];
 
