@@ -22,14 +22,15 @@ const url = new URL(`../data/en/${file}.js`, import.meta.url);
 const src = readFileSync(url, 'utf8');
 const card = readFileSync(cardPath, 'utf8').replace(/\s+$/, '');
 
-const start = src.indexOf(`\n  { id: '${id}'`) + 1;
+// A card starts "  { id: '…', hub:". Sample objects inside a card's code ("  { id: 't1', …")
+// have no hub, so they never look like a card. The array ends at a "];" followed by a blank
+// line and the next DATA assignment (or the end of the file), not at a "];" inside code.
+const start = src.indexOf(`\n  { id: '${id}', hub:`) + 1;
 if (start <= 0) {
   console.error(`card ${id} not found in ${file}.js`);
   process.exit(1);
 }
-// The array ends at a "];" followed by a blank line and the next DATA assignment (or the end
-// of the file): a "];" inside a card's code sample must not end it.
-const rest = /\n(?:  \{ id: '|  \/\* ----|\];(?=\r?\n\r?\nDATA\.en\.|\s*$))/g;
+const rest = /\n(?:  \{ id: '[\w-]+', hub:|  \/\* ----|\];(?=\r?\n\r?\nDATA\.en\.|\s*$))/g;
 rest.lastIndex = start + 1;
 const end = rest.exec(src).index + 1;
 const segment = src.slice(start, end);

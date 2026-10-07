@@ -1,8 +1,8 @@
 'use strict';
 /* DOM and events: concept cards, rail groups and self-check quiz. Cards explain with `html`
-   blocks and `diagram` specs (js/concept-section.js, js/diagram.js). `live` boxes run in a
-   sandboxed iframe without `allow-forms`, so they use buttons and key events instead of form
-   submission; the form version of each pattern is shown as static `code`. */
+   blocks and `diagram` specs (js/concept-section.js, js/diagram.js). `live` boxes use buttons
+   and key events rather than form submission to stay small; the form version of each pattern is
+   shown as static `code`. */
 
 DATA.en.DOM_QUIZ_TOPICS = {
   tree: 'The DOM tree and selecting',
@@ -274,7 +274,7 @@ document.querySelector('#list').addEventListener('click', (e) => {
     input.focus();
   });
 </script>`,
-    example: 'The classic to-do form handler: `form.addEventListener("submit", (e) => { e.preventDefault(); … })`. Remove the `preventDefault()` line and the page reloads on every submit, so the `<li>` you just appended is gone. (The Try it box cannot submit forms, so it shows the same idea on a link and a checkbox.)',
+    example: 'The classic to-do form handler: `form.addEventListener("submit", (e) => { e.preventDefault(); … })`. Remove the `preventDefault()` line and the page reloads on every submit, so the `<li>` you just appended is gone. (The Try it box shows the same idea on a link and a checkbox.)',
     mistake: 'Attaching a `click` listener to the submit button and forgetting `preventDefault()`: the item is added, the form submits, the page reloads, and the item vanishes. The button\'s `click` also fires before HTML validation, whereas `submit` waits for it.',
     live: {
       kind: 'html',
@@ -689,7 +689,7 @@ document.querySelector('#add').addEventListener('click', () => {
         + '</dl>',
       '<ul><li><strong>Clean the input:</strong> <code>input.value.trim()</code>, and ignore empty text.</li>'
         + '<li><strong>Keyboard users:</strong> put the toggle on a real <code>&lt;button&gt;</code> inside the item, not on the <code>&lt;li&gt;</code> (see <a href="#/browser/dom/aria-focus">ARIA and keyboard focus</a>).</li>'
-        + '<li><strong>In your own page, use a <code>&lt;form&gt;</code></strong> with a <code>submit</code> listener and <code>preventDefault()</code> (see <a href="#/browser/dom/prevent-default">preventDefault</a>). The sandboxed Try it box cannot submit forms, so it listens to the button and to the Enter key directly.</li>'
+        + '<li><strong>In your own page, use a <code>&lt;form&gt;</code></strong> with a <code>submit</code> listener and <code>preventDefault()</code> (see <a href="#/browser/dom/prevent-default">preventDefault</a>). The Try it box keeps it smaller: it listens to the button and to the Enter key directly.</li>'
         + '</ul>',
     ],
     diagram: {
