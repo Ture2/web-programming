@@ -22,7 +22,7 @@ const RULES = [
   { name: 'class', re: /\bin class\b|\bclassroom\b|\bin the course\b|\bthe course (?:labs?|practice|project|quiz)/i },
   { name: 'grading', re: /\bgrad(?:ed|ing|er)\b|\brubric\b/i },
   { name: 'solutions folder', re: /\bsolutions\// },
-  { name: 'teaching context', re: /\byour (?:instructor|teacher|lecturer)\b|\bthis course\b|\bthe slides\b|\b(?:at this|intro) level\b|\bstudent-sized\b/i },
+  { name: 'teaching context', re: /\b(?:my|your|the|a|our) (?:instructor|teacher|lecturer|professor)s?\b|\bthis course\b|\bthe slides\b|\b(?:at this|intro) level\b|\bstudent-sized\b/i },
   { name: 'lab project name', re: /\bDevNews\b/ },
 ];
 

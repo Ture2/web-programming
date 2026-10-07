@@ -37,6 +37,7 @@ const Diagram = (() => {
   const WIDE_MAX = 880;          // wider than this, only the narrow drawing is used
   const STEPS = [480, 520, 560, 600, 640, 680, 720, 760, 800, 840, 880];   // .dg-w<step> in styles.css
   const NARROW_W = 300;          // natural width of the narrow drawing
+  const NUM_PAD = 14;            // room for a step number in a box (numbered: true)
 
   const escText = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   const words = (s) => String(s || '').trim().split(/\s+/).filter(Boolean);
@@ -172,7 +173,9 @@ const Diagram = (() => {
 
   function boxSvg(n, b, num) {
     const top = b.y + (b.h - b.lines.length * LINE) / 2 + 13;
-    const text = b.lines.map((l, i) => `<text class="${l.cls}" x="${b.x + b.w / 2}" y="${top + i * LINE}" text-anchor="middle">${tspans(l.text)}</text>`).join('');
+    // A step number sits in the top-left corner: centre the text in the rest of the box.
+    const cx = num ? b.x + NUM_PAD + (b.w - NUM_PAD) / 2 : b.x + b.w / 2;
+    const text = b.lines.map((l, i) => `<text class="${l.cls}" x="${cx}" y="${top + i * LINE}" text-anchor="middle">${tspans(l.text)}</text>`).join('');
     const badge = num ? `<text class="dg-num" x="${b.x + 8}" y="${b.y + 15}">${num}</text>` : '';
     return `<g class="dg-node${n.key ? ' dg-key' : ''}"><rect class="dg-box" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="2"/>${badge}${text}</g>`;
   }
@@ -207,7 +210,7 @@ const Diagram = (() => {
   function wide(d) {
     const cols = columns(d);
     const boxes = {};
-    const colW = cols.map((col) => Math.max(...col.map((n) => Math.max(textW(n.label, FS), n.note ? textW(n.note, FS_NOTE) : 0))) + 2 * PAD_X);
+    const colW = cols.map((col) => Math.max(...col.map((n) => Math.max(textW(n.label, FS), n.note ? textW(n.note, FS_NOTE) : 0))) + 2 * PAD_X + (d.numbered ? NUM_PAD : 0));
     cols.forEach((col, c) => col.forEach((n) => {
       const lines = boxLines(n, '', 220);
       boxes[n.id] = { w: Math.max(84, Math.min(240, colW[c])), lines, h: boxH(lines) };
@@ -252,10 +255,10 @@ const Diagram = (() => {
     let y = 2;
     cols.forEach((row) => {
       const max = (NARROW_W - 4 - (row.length - 1) * GAP_X) / row.length;
-      const ws = row.map((n) => Math.min(max, Math.max(84, Math.max(textW(n.label, FS), n.note ? textW(n.note, FS_NOTE) : 0, textW(edgeLabelInto(d, n.id), FS_NOTE)) + 2 * PAD_X)));
+      const ws = row.map((n) => Math.min(max, Math.max(84, Math.max(textW(n.label, FS), n.note ? textW(n.note, FS_NOTE) : 0, textW(edgeLabelInto(d, n.id), FS_NOTE)) + 2 * PAD_X + (d.numbered ? NUM_PAD : 0))));
       const total = ws.reduce((a, b) => a + b, 0) + (row.length - 1) * GAP_X;
       let x = (NARROW_W - total) / 2;
-      const lines = row.map((n, i) => boxLines(n, edgeLabelInto(d, n.id), ws[i] - 2 * 8));
+      const lines = row.map((n, i) => boxLines(n, edgeLabelInto(d, n.id), ws[i] - 2 * 8 - (d.numbered ? NUM_PAD : 0)));
       const h = Math.max(...lines.map(boxH));
       row.forEach((n, i) => { boxes[n.id] = { x, y, w: ws[i], h, lines: lines[i] }; x += ws[i] + GAP_X; });
       y += h + GAP_Y;
@@ -306,7 +309,7 @@ const Diagram = (() => {
     const boxes = {};
     d.nodes.forEach((n) => {
       const lines = boxLines(n, '', 200);
-      boxes[n.id] = { w: Math.max(84, Math.min(220, Math.max(textW(n.label, FS), n.note ? textW(n.note, FS_NOTE) : 0) + 2 * PAD_X)), lines, h: boxH(lines) };
+      boxes[n.id] = { w: Math.max(84, Math.min(220, Math.max(textW(n.label, FS), n.note ? textW(n.note, FS_NOTE) : 0) + 2 * PAD_X + (d.numbered ? NUM_PAD : 0))), lines, h: boxH(lines) };
     });
     const rowH = Math.max(...Object.values(boxes).map((b) => b.h));
     const label = (i) => (d.edges.find(([a]) => a === d.nodes[i].id) || [])[2] || '';
@@ -341,7 +344,7 @@ const Diagram = (() => {
     const boxes = {};
     let y = 2;
     d.nodes.forEach((n) => {
-      const lines = boxLines(n, edgeLabelInto(d, n.id), w - 16);
+      const lines = boxLines(n, edgeLabelInto(d, n.id), w - 16 - (d.numbered ? NUM_PAD : 0));
       boxes[n.id] = { x: 2, y, w, h: boxH(lines), lines };
       y += boxH(lines) + GAP_Y;
     });
