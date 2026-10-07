@@ -17,7 +17,7 @@ const SearchBar = (() => {
   if (!form) return {};
   const input = form.querySelector('input');
   const list = form.querySelector('.search-list');
-  const { plain, strings } = SearchEngine;
+  const { plain, stripTags, strings } = SearchEngine;
   // Technical fields of a card: ids, routing and demo wiring, not prose.
   const SKIP = new Set(['id', 'hub', 'topic', 'icon', 'dialect', 'live', 'widget', 'practice', 'answer', 'accept']);
 
@@ -34,7 +34,8 @@ const SearchBar = (() => {
     SECTIONS.forEach((s) => {
       const where = `${t(AREAS[s.area].title)} › ${t(s.title)}`;
       (s.data.concepts || []).forEach((c, k) => {
-        const rest = strings({ ...c, title: undefined, summary: undefined }, SKIP);
+        const rest = strings({ ...c, title: undefined, summary: undefined, html: undefined, diagram: undefined }, SKIP)
+          .concat((c.html || []).map(stripTags), c.diagram ? [Diagram.text(c.diagram)] : []);
         docs.push({ section: where, kind: t('Concept'), href: k === 0 ? s.base : `${s.base}/${c.id}`, title: plain(c.title || ''), summary: plain(c.summary || ''), body: rest.join(' · ') });
       });
       (s.data.quiz || []).forEach((q) => {
@@ -69,7 +70,7 @@ const SearchBar = (() => {
     const re = new RegExp(`(?<![\\p{L}\\p{N}])(?:${wordList.map(pattern).join('|')})[\\p{L}\\p{N}]*`, 'giu');
     const nodes = [];
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-      acceptNode: (n) => (n.parentElement.closest('textarea, script, style, mark, .sr-only') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+      acceptNode: (n) => (n.parentElement.closest('textarea, script, style, mark, .sr-only, svg') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
     });
     for (let n = walker.nextNode(); n; n = walker.nextNode()) { re.lastIndex = 0; if (re.test(n.nodeValue)) nodes.push(n); }
     let first = null;

@@ -34,7 +34,12 @@ test('sections were found', () => assert.ok(sections.length >= 12));
 for (const f of files) {
   test(`links in data/en/${f} resolve`, () => {
     const text = readFileSync(new URL(f, DATA), 'utf8');
-    const hrefs = [...text.matchAll(/\]\((#\/[^)\s]*)\)/g), ...text.matchAll(/href: ['"](#\/[^'"]*)['"]/g)].map((m) => m[1]);
+    // Links inside authored `html` blocks (not the demo pages of "Try it" boxes).
+    const one = { DATA: { en: {} } };
+    vm.runInNewContext(text, one, { filename: f });
+    const html = Object.entries(one.DATA.en).filter(([k]) => k.endsWith('_CONCEPTS'))
+      .flatMap(([, list]) => list.flatMap((c) => c.html || [])).join(' ');
+    const hrefs = [...text.matchAll(/\]\((#\/[^)\s]*)\)/g), ...text.matchAll(/href: ['"](#\/[^'"]*)['"]/g), ...html.matchAll(/<a href="([^"]*)"/g)].map((m) => m[1]);
     const bad = hrefs.filter((h) => !valid(h));
     assert.deepEqual(bad, []);
   });

@@ -433,6 +433,74 @@ table{ border-collapse: collapse; }
 .concept-text > .example, .concept-text > .mistake, .concept-text > .concept-code, .concept-text > .plain{ display: flow-root; }
 .concept-text > .plain{ padding-left: 20px; }
 
+/* ---- Authored explanations (card field `html`) -------------------------
+   One left-aligned column held to a reading measure; the form follows the idea:
+   a list for properties, numbers only for real steps, a two-column list for
+   terms and meanings. Only the diagram may use the card's full width. */
+
+.cx{ container-type: inline-size; }
+.cx > p, .cx > ul, .cx > ol, .cx > h3{ max-width: 66ch; }
+.cx > h3{ margin: 20px 0 6px; font: 700 var(--fs-lg)/1.3 var(--display); color: var(--ink); }
+.cx > ul, .cx > ol{ margin: 0 0 12px; padding-left: 22px; }
+.cx li{ margin-bottom: 5px; }
+.cx li::marker{ color: var(--muted); }
+.cx > ol > li::marker{ color: var(--ink); font-weight: 700; }
+.cx > dl{ display: grid; grid-template-columns: fit-content(22rem) minmax(0, 60ch); gap: 6px 20px; margin: 0 0 14px; }
+.cx dt{ font-weight: 700; color: var(--ink); }
+.cx dt code{ font-weight: 700; }
+.cx dd{ margin: 0; }
+/* Code in a table cell never breaks mid-word: the table scrolls sideways instead. */
+.cx .concept-table code{ overflow-wrap: normal; white-space: nowrap; }
+/* A narrow card stacks each row: its header, then every cell under its column's name. */
+@container (max-width: 34rem) {
+  .cx .concept-table table, .cx .concept-table tbody, .cx .concept-table tr,
+  .cx .concept-table th, .cx .concept-table td{ display: block; }
+  .cx .concept-table caption{ display: block; }
+  .cx .concept-table thead{ position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .cx .concept-table tr{ margin-bottom: 8px; border: 1px solid var(--rule); }
+  .cx .concept-table tbody th, .cx .concept-table td{ border: 0; padding: 6px 12px; }
+  .cx .concept-table tbody th{ background: var(--tint); }
+  .cx .concept-table td + td, .cx .concept-table th + td{ border-top: 1px solid var(--rule); }
+  .cx .concept-table td[data-label]::before{ content: attr(data-label); display: block; color: var(--muted); font-size: var(--fs-xs); font-weight: 700; }
+  .cx .concept-table code{ white-space: normal; overflow-wrap: anywhere; }
+}
+@container (max-width: 34rem) {
+  .cx > dl{ grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .cx dd{ margin-bottom: 8px; }
+}
+
+/* ---- Concept diagrams (js/diagram.js) -----------------------------------
+   A whiteboard sketch: plain boxes and arrows in ink on a tinted panel, one
+   emphasised box (the card's subject), the caption states the takeaway. The
+   figure holds a wide and a narrow drawing; the one that fits is shown, so
+   labels keep their size on phones. */
+
+.dg{ container-type: inline-size; margin: 6px 0 16px; padding: 16px 16px 12px; background: var(--tint); border-radius: var(--r-card); }
+.dg-svg{ display: block; max-width: 100%; height: auto; margin: 0 auto; overflow: visible; }
+.dg-narrow{ display: none; }
+.dg-one .dg-narrow{ display: block; }
+/* The figure's content box must be as wide as the wide drawing (js/diagram.js, STEPS). */
+@container (max-width: 479px) { .dg-w480 .dg-wide{ display: none; } .dg-w480 .dg-narrow{ display: block; } }
+@container (max-width: 519px) { .dg-w520 .dg-wide{ display: none; } .dg-w520 .dg-narrow{ display: block; } }
+@container (max-width: 559px) { .dg-w560 .dg-wide{ display: none; } .dg-w560 .dg-narrow{ display: block; } }
+@container (max-width: 599px) { .dg-w600 .dg-wide{ display: none; } .dg-w600 .dg-narrow{ display: block; } }
+@container (max-width: 639px) { .dg-w640 .dg-wide{ display: none; } .dg-w640 .dg-narrow{ display: block; } }
+@container (max-width: 679px) { .dg-w680 .dg-wide{ display: none; } .dg-w680 .dg-narrow{ display: block; } }
+@container (max-width: 719px) { .dg-w720 .dg-wide{ display: none; } .dg-w720 .dg-narrow{ display: block; } }
+@container (max-width: 759px) { .dg-w760 .dg-wide{ display: none; } .dg-w760 .dg-narrow{ display: block; } }
+@container (max-width: 799px) { .dg-w800 .dg-wide{ display: none; } .dg-w800 .dg-narrow{ display: block; } }
+@container (max-width: 839px) { .dg-w840 .dg-wide{ display: none; } .dg-w840 .dg-narrow{ display: block; } }
+@container (max-width: 879px) { .dg-w880 .dg-wide{ display: none; } .dg-w880 .dg-narrow{ display: block; } }
+.dg figcaption{ max-width: 66ch; margin: 12px auto 0; color: var(--text); font-size: var(--fs-md); text-align: center; text-wrap: balance; }
+.dg-box{ fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.dg-key .dg-box{ fill: var(--h3s); stroke: var(--accent); stroke-width: 2.5; }
+.dg-label{ fill: var(--text); font: 600 14px var(--sans); }
+.dg-note, .dg-elabel{ fill: var(--muted); font: 12.5px var(--sans); }
+.dg-num{ fill: var(--ink); font: 700 11px var(--sans); }
+.dg-code{ font-family: var(--mono); font-weight: 500; }
+.dg-edge{ fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.dg-head{ fill: var(--ink); }
+
 /* ---- Concept sections: navigation rail + one card per page --------------
    A full-height rail on the left edge with hubs. The active hub lists its
    pages; the others, and every hub when the rail is collapsed to icons, open
@@ -685,6 +753,8 @@ main.is-wide{ max-width: none; padding: 0; }
 .ss-card .example, .ss-card .mistake{ padding: 6px 10px; }
 .ss-card .concept-code{ white-space: pre-wrap; font-size: var(--fs-2xs); }
 .ss-card .concept-table .src{ font-size: var(--fs-xs); }
+.ss-card .dg{ margin: 6px 0 10px; }
+.ss-card .cx > ul, .ss-card .cx > ol{ margin-bottom: 8px; }
 
 .ss-label, .ss-card .dialect{ margin: 4px 0 4px; color: var(--muted); font-size: var(--fs-xs); font-weight: 700; }
 
@@ -702,6 +772,7 @@ main.is-wide{ max-width: none; padding: 0; }
   .ss-card .src th, .ss-card .src td{ padding: 3px 8px; }
   .ss-card .concept-code{ padding: 6px 10px; }
   .ss-hub > h2{ margin-top: 16px; }
+  .dg{ padding: 8px; break-inside: avoid; }
 }
 
 /* ---- Narrow screens ---------------------------------------------------- */

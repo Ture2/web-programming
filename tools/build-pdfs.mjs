@@ -4,6 +4,7 @@
 // Output: site/assets/pdf/<section>-<lang>.pdf. Re-run after editing anything in site/data/.
 //
 //   npm run site:pdfs
+//   node site/tools/build-pdfs.mjs node css    only these sections (ids from SECTIONS)
 //
 // Browser: $CHROME_PATH, else an installed Chrome / Edge, else Playwright's Chromium
 // (`npx playwright install chromium`).
@@ -13,6 +14,7 @@ import { join } from 'node:path';
 import { ROOT, serve } from './serve.mjs';
 
 const OUT = join(ROOT, 'assets', 'pdf');
+const ONLY = process.argv.slice(2);
 
 function browserPath() {
   const candidates = [
@@ -41,6 +43,7 @@ const { LANGS, SECTIONS } = await probe.evaluate(() => ({
   LANGS,
   SECTIONS: SECTIONS.filter((s) => s.data.concepts.length).map((s) => [s.id, `${s.base}/summary`]),
 }));
+if (ONLY.length) SECTIONS.splice(0, SECTIONS.length, ...SECTIONS.filter(([id]) => ONLY.includes(id)));
 await probe.close();
 
 for (const lang of LANGS) {

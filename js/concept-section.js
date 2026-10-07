@@ -10,8 +10,9 @@
    Routes, below cfg.base: '' or <conceptId> (a card), quiz[/<topic>], summary (the printable
    summary sheet, source of the section's PDF), and whatever cfg.practice.match(rest) accepts.
 
-   Card fields: id, title, summary, body[], points[], table { caption, head, rows },
-   tables [table, …], code, dialect, example, mistake, practice { href, label? },
+   Card fields: id, title, summary, body[], points[], html[] (authored HTML blocks, the
+   tag allowlist is in test/card-html.test.mjs), diagram (js/diagram.js), table { caption,
+   head, rows }, tables [table, …], code, dialect, example, mistake, practice { href, label? },
    live (a "Try it" box, js/live-runner.js), widget (a tool id, js/tools/registry.js).
    cfg: { base, title(), course(), badge, groups: [{ key, label, icon }] (a hub takes the cards
           whose `hub` is its key), concepts, quiz?, topics?, quizKey?, perfectText(),
@@ -216,6 +217,43 @@ function ConceptSection(cfg) {
   const noteHtml = (cls, label, text) => (text ? `<p class="${cls}"><strong>${esc(t(label))}</strong> ${md(text)}</p>` : '');
   const tablesHtml = (c) => [c.table, ...(c.tables || [])].filter(Boolean).map(tableHtml).join('');
 
+  /* Authored HTML blocks (trusted, allowlisted by a test): tables and code blocks get the
+     card's own classes; the diagram goes where a block is <figure data-diagram></figure>,
+     else after the first block. `only` filters the blocks (the summary sheet keeps lists). */
+  const DIAGRAM_SLOT = '<figure data-diagram></figure>';
+  const diagramHtml = (c) => (c.diagram ? Diagram.html(c.diagram, `dg-${c.id}`, md) : '');
+  const blockHtml = (b) => (b.startsWith('<table') ? stackableTable(b) : b.replace(/^<pre>/, '<pre class="concept-code">'));
+
+  /* On a narrow card the rows of an authored table stack (styles.css): each cell carries its
+     column's name in data-label, and explicit roles keep the table semantics when the CSS
+     changes its display. */
+  function stackableTable(b) {
+    const head = ((b.match(/<thead>([\s\S]*?)<\/thead>/) || [])[1] || '').match(/<th\b[^>]*>[\s\S]*?<\/th>/g) || [];
+    const labels = head.map((h) => esc(h.replace(/<[^>]*>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').trim()));
+    const rows = b.replace(/<tr>([\s\S]*?)<\/tr>/g, (m, cells) => {
+      let k = 0;
+      return `<tr role="row">${cells.replace(/<(th|td)\b([^>]*)>/g, (c, tag, attrs) => {
+        const label = labels[k++] || '';
+        const role = tag === 'td' ? 'cell' : / scope="col"/.test(attrs) ? 'columnheader' : 'rowheader';
+        return `<${tag}${attrs} role="${role}"${tag === 'td' && label ? ` data-label="${label}"` : ''}>`;
+      })}</tr>`;
+    });
+    const table = rows.replace('<table>', '<table class="src" role="table">').replace('<thead>', '<thead role="rowgroup">').replace('<tbody>', '<tbody role="rowgroup">');
+    return `<div class="scroll concept-table">${table}</div>`;
+  }
+  function htmlBlocks(c, only) {
+    const all = c.html || [];
+    const keep = (b) => b === DIAGRAM_SLOT || !only || only.test(b);
+    // A heading stays when the block it introduces stays.
+    const blocks = all.filter((b, i) => keep(b) || (/^<h3>/.test(b) && i + 1 < all.length && keep(all[i + 1])));
+    const dg = diagramHtml(c);
+    // On the card the diagram follows the first block (the mental model); on the summary,
+    // which drops paragraphs, it comes first.
+    if (dg && !blocks.includes(DIAGRAM_SLOT)) blocks.splice(only ? 0 : Math.min(1, blocks.length), 0, DIAGRAM_SLOT);
+    return blocks.map((b) => (b === DIAGRAM_SLOT ? dg : blockHtml(b))).join('');
+  }
+  const cxHtml = (c, only) => (c.html || c.diagram ? `<div class="cx">${htmlBlocks(c, only)}</div>` : '');
+
   function cardHtml(c) {
     const n = c.topic ? pool(c.topic).length : 0;
     const topic = TOPICS[c.topic] || c.topic;
@@ -226,9 +264,10 @@ function ConceptSection(cfg) {
           <p class="summary">${md(c.summary)}</p>
           ${(c.body || []).map((p) => `<p>${md(p)}</p>`).join('')}
           ${pointsHtml(c)}
+          ${cxHtml(c)}
+          ${c.html ? `${tablesHtml(c)}${c.code ? codeHtml(c) : ''}` : ''}
           ${noteHtml('example', 'Example.', c.example)}
-          ${tablesHtml(c)}
-          ${c.code ? codeHtml(c) : ''}
+          ${c.html ? '' : `${tablesHtml(c)}${c.code ? codeHtml(c) : ''}`}
           ${noteHtml('mistake', 'Common mistake.', c.mistake)}
         </div>
         ${c.live ? LiveRunner.html(c) : ''}
@@ -296,6 +335,7 @@ function ConceptSection(cfg) {
       <h3>${esc(c.title)}</h3>
       <p class="summary">${md(c.summary)}</p>
       ${pointsHtml(c)}
+      ${cxHtml(c, /^<(ul|ol|dl|table|pre)\b/)}
       ${tablesHtml(c)}
       ${c.code ? codeHtml(c) : ''}
       ${c.live && (c.live.kind === 'js' || c.live.kind === 'react') ? `<pre class="concept-code"><code>${esc(c.live.code)}</code></pre>` : ''}

@@ -25,6 +25,11 @@ test('plain strips markdown markers', () => {
   assert.equal(S.plain('a **bold** `code`  word'), 'a bold code word');
 });
 
+test('stripTags keeps the words of an HTML block, not its tags', () => {
+  assert.equal(S.stripTags('<ul><li><strong>No page:</strong> <code>document</code> is &lt;undefined&gt;.</li></ul>'), 'No page: document is <undefined>.');
+  assert.equal(S.stripTags('<p>a <a href="#/server/runtime">link</a> &amp; more</p>'), 'a link & more');
+});
+
 test('strings collects nested strings and honours the skip set', () => {
   const out = S.strings({ id: 'x', body: ['one', { text: 'two' }], live: { code: 'no' } }, new Set(['id', 'live']));
   assert.deepEqual(out, ['one', 'two']);

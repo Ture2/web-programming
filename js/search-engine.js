@@ -15,6 +15,9 @@ const SearchEngine = (() => {
 
   const fold = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const plain = (s) => String(s).replace(/\*\*|`/g, '').replace(/\s+/g, ' ').trim();
+  /* Text of an authored HTML block: tags dropped, the few entities it may use decoded. */
+  const ENTITY = { '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&nbsp;': ' ', '&amp;': '&' };
+  const stripTags = (s) => plain(String(s).replace(/<[^>]*>/g, ' ').replace(/&(?:lt|gt|quot|#39|nbsp|amp);/g, (m) => ENTITY[m]));
   const tokenize = (s) => fold(s).split(/[^a-z0-9]+/).filter((w) => w.length > 1 || /\d/.test(w));
 
   /* Every string inside a value (arrays and nested objects included), minus the technical keys. */
@@ -132,7 +135,7 @@ const SearchEngine = (() => {
     return { search, size: () => ({ docs: docs.length, terms: terms.length }) };
   }
 
-  return { create, fold, plain, tokenize, strings };
+  return { create, fold, plain, stripTags, tokenize, strings };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = SearchEngine;
