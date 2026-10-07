@@ -1,5 +1,6 @@
 'use strict';
-/* Shared state: concept cards, rail groups and self-check quiz (React context as the worked example). */
+/* Shared state: concept cards, rail groups and self-check quiz (React context as the worked example).
+   Cards explain with `html` blocks and `diagram` specs (js/concept-section.js, js/diagram.js). */
 
 DATA.en.SHARED_QUIZ_TOPICS = {
   where: 'Where state lives',
@@ -20,36 +21,75 @@ DATA.en.SHARED_GROUPS = [
 const SHARED_TREE_LINK = { href: '#/browser/shared-state/practice/state-tree', label: 'Open the state-tree tool' };
 
 DATA.en.SHARED_CONCEPTS = [
-  /* ---- 1. Where state lives ----------------------------------------------------------------- */
+  /* ---- 1. Where state lives ------------------------------------------------------------------------ */
   { id: 'where-state-lives', hub: 'where', topic: 'where',
     title: 'Where a piece of state lives',
-    summary: 'Every piece of state has exactly one **owner**: the component that declares it. Put it in the **closest common parent** of every component that reads or changes it, and no higher.',
-    body: [
-      'An interface is a tree of components, and data in that tree only flows **down**: a parent can hand a value to a child as a prop, but a child cannot reach up or sideways. So the question "where does this state live?" has a mechanical answer. List every component that **reads** the value or **changes** it, then walk up the tree from each of them until the paths meet. That meeting point, the **closest common parent** (in computer-science terms, the lowest common ancestor), is the lowest component that can hand the value to all of them.',
-      'Lower than that does not work: a component outside the owner\'s subtree cannot read it. Higher works, but every component on the extra path has to pass the value along, and every state change re-renders the owner and, by default, everything it renders. So the rule has two halves: **high enough** to reach every user, **as low as possible** to keep the change local. A value that only one component uses stays in that component.',
-      'The idea is the same in any component framework (Vue, Svelte, Angular, native mobile): only the syntax of "pass it down" changes. In React, state is declared with `useState` in the owner (see [useState and what a re-render is](#/browser/state-effects/use-state)), passed down as props, and changed through functions the owner passes down too ([next card](#/browser/shared-state/lifting-state)). Before you place anything, check it really is state: a value you can compute from other state or props is a [derived value](#/browser/state-effects/derived-values) and is not stored anywhere.',
+    summary: 'Every piece of state has one **owner**, the component that declares it: put it in the **closest common parent** of every component that reads or changes it, and no higher.',
+    html: [
+      '<p>Data in a component tree only flows <strong>down</strong>: a parent hands values to its children as props, and a child cannot reach up or sideways. So "where does this state live?" has a mechanical answer. List every component that reads or changes the value, walk up the tree from each one, and stop where the paths meet: that <strong>closest common parent</strong> is the lowest component that can hand the value to all of them.</p>',
+      '<ul>'
+        + '<li><strong>Lower breaks it:</strong> a component outside the owner\'s subtree cannot read the value.</li>'
+        + '<li><strong>Higher works, at a cost:</strong> every component on the extra path passes the prop along, and each change re-renders the owner and what it renders.</li>'
+        + '<li><strong>Used by one component?</strong> It stays local, in that component.</li>'
+        + '<li><strong>Computable from other state or props?</strong> It is a <a href="#/browser/state-effects/derived-values">derived value</a>, not state: store it nowhere.</li></ul>',
+      '<table><caption>A task screen: who uses what, and where it lives</caption><thead>'
+        + '<tr><th scope="col">Value</th><th scope="col">Read or changed by</th><th scope="col">Lives in</th></tr></thead><tbody>'
+        + '<tr><th scope="row">The text being typed in the new-task form</th><td>TaskForm only</td><td>TaskForm (local)</td></tr>'
+        + '<tr><th scope="row">The search filter</th><td>Toolbar (the input) and TaskList</td><td>TaskPage, their closest common parent</td></tr>'
+        + '<tr><th scope="row">The list of tasks</th><td>Toolbar (count), TaskList, TaskItem (toggle), TaskForm (add)</td><td>TaskPage</td></tr>'
+        + '<tr><th scope="row">The logged-in user</th><td>Avatar in the header, TaskList, LogoutButton</td><td>App, or a context provider near the root</td></tr>'
+        + '<tr><th scope="row">How many tasks match the filter</th><td>Toolbar</td><td>Nowhere: derived during render</td></tr></tbody></table>',
+      '<p>The rule is the same in any component framework; only the syntax of passing values down changes. In React, the owner declares the state with <code>useState</code> (see <a href="#/browser/state-effects/use-state">useState and what a re-render is</a>), passes it down as props, and passes down the functions that change it (see <a href="#/browser/shared-state/lifting-state">Lifting state up</a>).</p>',
     ],
-    table: { caption: 'A task screen: who uses what, and where it lives',
-      head: ['Value', 'Read or changed by', 'Lives in'],
-      rows: [
-        ['text being typed in the new-task form', 'TaskForm only', 'TaskForm (local)'],
-        ['search filter', 'Toolbar (the input) and TaskList', 'TaskPage, their closest common parent'],
-        ['the list of tasks', 'Toolbar (count), TaskList, TaskItem (toggle), TaskForm (add)', 'TaskPage'],
-        ['the logged-in user', 'Avatar in the header, TaskList, LogoutButton', 'App, or a context provider near the root'],
-        ['how many tasks match the filter', 'Toolbar', 'nowhere: derived during render'],
-      ] },
-    example: 'In the tool below, choose "Search filter text", then press **Place here** on Toolbar: TaskList is flagged because it is outside Toolbar\'s subtree. Remove it and place it on App: it works, but Layout and TaskPage pass a prop they never use. Place it on TaskPage: everyone can reach it and nothing is passed on for nothing. Then try the first challenges.',
+    diagram: {
+      kind: 'tree',
+      title: 'The filter lives in TaskPage: the closest parent of both components that use it.',
+      desc: 'App renders Layout, which renders Header and TaskPage. TaskPage renders Toolbar, which changes the search filter, and TaskList, which reads it. TaskPage is the closest common parent of the two, so it owns the filter; Header and Layout never see it.',
+      nodes: [
+        { id: 'app', label: 'App' },
+        { id: 'layout', label: 'Layout' },
+        { id: 'header', label: 'Header' },
+        { id: 'page', label: 'TaskPage', note: 'owns the filter', key: true },
+        { id: 'toolbar', label: 'Toolbar', note: 'changes it' },
+        { id: 'list', label: 'TaskList', note: 'reads it' },
+      ],
+      edges: [
+        ['app', 'layout'],
+        ['layout', 'header'],
+        ['layout', 'page'],
+        ['page', 'toolbar'],
+        ['page', 'list'],
+      ],
+    },
     widget: 'state-tree',
-    mistake: 'Putting every piece of state at the top "so everything can reach it". It works, but each keystroke in a search box then re-renders the whole app, and every component in between has to pass props it does not care about. Start local and move state up only when a second component needs it.' },
+    example: 'In the state-tree tool, choose "Search filter text", then press **Place here** on Toolbar: TaskList is flagged, because it is outside Toolbar\'s subtree. Remove it and place it on App: it works, but Layout and TaskPage pass a prop they never use. Place it on TaskPage: everyone can reach it and nothing is passed on for nothing. Then try the first challenges.',
+    mistake: 'Putting every piece of state at the top "so everything can reach it". It works, but each keystroke in a search box then re-renders the whole app, and every component in between has to pass props it does not care about. Start local, and move state up only when a second component needs it.' },
 
   { id: 'lifting-state', hub: 'where', topic: 'where',
     title: 'Lifting state up: data down, events up',
-    summary: '**Lifting state up** means moving a piece of state from a child into a parent so siblings can share it. The parent passes the **value** down as a prop and a **callback** down so children can ask it to change.',
-    body: [
-      'When two siblings need the same value, neither can own it: a sibling cannot pass props to another sibling. So you move the state up to their closest common parent. The parent becomes the owner; the children become **controlled** by it: they show what they are given and report what happened. That is the whole pattern, often summarised as **data down, events up**.',
-      'The child never changes the value itself (props are read-only, see [Props are read-only](#/browser/components/props-read-only)). It calls a function received as a prop, by convention named `on` + event: `onFilterChange(text)`, `onToggle(id)`, `onAdd(task)`. The parent decides what that means and updates its state; React re-renders the parent and its children with the new value. Passing the setter itself (`onFilterChange={setFilter}`) is fine when the child should be able to set any value; a named function (`onToggle={toggleTask}`) keeps the rules in the owner.',
-      'Lifting also lets the owner **derive** things for the children: the parent that owns the filter and the list can compute the visible tasks once and pass the result, so the list stays a simple component that just shows what it gets.',
+    summary: '**Lifting state up** moves a piece of state from a child into a parent so siblings can share it: the parent passes the **value** down, and a **callback** so the children can ask it to change.',
+    html: [
+      '<p>Two siblings cannot share state directly: a component cannot pass props to its sibling. So the state moves up to their closest common parent, which becomes the owner, and the children become <strong>controlled</strong>: they show what they are given and report what happened. In short: <strong>data down, events up</strong>.</p>',
+      '<dl>'
+        + '<dt>The value, down</dt><dd>As a prop: <code>filter={filter}</code>. The child never changes it (see <a href="#/browser/components/props-read-only">Props are read-only</a>).</dd>'
+        + '<dt>The change, up</dt><dd>A callback prop named <code>on</code> + the event: <code>onFilterChange(text)</code>, <code>onToggle(id)</code>, <code>onAdd(task)</code>. The owner updates its state, and React re-renders it and its children with the new value.</dd>'
+        + '<dt>Setter or named function?</dt><dd>Passing the setter (<code>onFilterChange={setFilter}</code>) is fine when the child may set any value; a named function (<code>onToggle={toggleTask}</code>) keeps the rules in the owner.</dd></dl>',
+      '<p>The owner can also <strong>derive</strong> for its children: owning both the filter and the list, it computes the visible tasks once and passes the result, so the list just shows what it gets.</p>',
     ],
+    diagram: {
+      kind: 'branch',
+      title: 'The owner passes the value down and a callback for changes; the children never own a copy.',
+      desc: 'TaskPage owns the filter. It passes Toolbar the filter value and the onFilterChange callback, and passes TaskList the visible tasks it derived from the filter. When the user types, Toolbar calls onFilterChange and TaskPage updates its state.',
+      nodes: [
+        { id: 'page', label: 'TaskPage', note: 'owns `filter`', key: true },
+        { id: 'toolbar', label: 'Toolbar', note: 'calls `onFilterChange`' },
+        { id: 'list', label: 'TaskList', note: 'shows what it gets' },
+      ],
+      edges: [
+        ['page', 'toolbar', 'value + callback'],
+        ['page', 'list', 'visible tasks'],
+      ],
+    },
     code: `function TaskPage() {
   const [filter, setFilter] = useState('');                 // lifted here
   return (
@@ -63,8 +103,10 @@ DATA.en.SHARED_CONCEPTS = [
 function Toolbar({ filter, onFilterChange }) {
   return <input value={filter} onChange={(e) => onFilterChange(e.target.value)} />;
 }`,
-    example: 'The box lifts the filter into `TaskPage`. `Toolbar` is a controlled input that reports each keystroke with `onFilterChange`; `TaskPage` derives the visible tasks and passes them to `TaskList`. Type in the box: both children update together because they read the same state.',
-    live: { kind: 'react', code: `import { useState } from 'react';
+    practice: { href: '#/browser/shared-state/practice/state-tree', label: 'Solve "Lift the filter" in the state-tree tool' },
+    live: {
+      kind: 'react',
+      code: `import { useState } from 'react';
 
 const TASKS = [
   { id: 1, title: 'Write the API skeleton' },
@@ -99,20 +141,27 @@ function TaskPage() {
 
 function App() {
   return <TaskPage />;
-}` },
-    practice: { href: '#/browser/shared-state/practice/state-tree', label: 'Solve "Lift the filter" in the state-tree tool' },
-    mistake: 'Lifting the value but not the change: the parent passes `filter` down, but the child keeps calling its own local `setFilter`. The input then shows what it typed while the list filters by the parent\'s old value. When state moves up, the child must lose its `useState` and report changes through the callback.' },
+}`,
+    },
+    example: 'The box lifts the filter into `TaskPage`. `Toolbar` is a controlled input that reports each keystroke with `onFilterChange`; `TaskPage` derives the visible tasks and passes them to `TaskList`. Type in the box: both children update together, because they read the same state.',
+    mistake: 'Lifting the value but not the change: the parent passes `filter` down, but the child keeps calling its own local `setFilter`. The input then shows what was typed while the list filters by the parent\'s old value. When state moves up, the child loses its `useState` and reports changes through the callback.' },
 
   { id: 'single-source-of-truth', hub: 'where', topic: 'where',
     title: 'A single source of truth',
-    summary: 'Each fact the interface shows should be stored **once**. Every other place that needs it receives it (as a prop or from a context) or computes it. Two stored copies of the same fact always end up disagreeing.',
-    body: [
-      'Think of a team that keeps the same budget in two spreadsheets. Each update goes into one of them, and sooner or later someone forgets the other. State works the same way: if the header keeps its own "number of tasks" and the list keeps the tasks, adding a task updates the list, and the header now lies. No effect, event or careful code fixes this for good; the cure is to **delete the copy** and let the header read from the owner.',
-      'Duplication sneaks in three ways. **Copying a prop into state** (`useState(props.count)`, which also ignores later changes; see [State, props and derived values](#/browser/state-effects/what-is-state)). **Storing something you could compute** (a count, a filtered list, an "is valid" flag; see [Derived values](#/browser/state-effects/derived-values)). **Two components each declaring the "same" state** because each needed it before anyone lifted it. In all three, the fix is the same: one owner, everyone else reads.',
-      'One copy is fine, and useful: a **draft**. An edit form may copy a task\'s title into local state so the user can type without touching the real task until they press Save. That copy is deliberate: it is a different fact ("what the user is typing"), and Save hands it back to the owner. The [next card](#/browser/shared-state/state-and-position) shows how to reset such a draft.',
+    summary: 'Each fact the interface shows is stored **once**; every other place receives it (as a prop or from a context) or computes it, because two stored copies of the same fact end up disagreeing.',
+    html: [
+      '<p>If the header keeps its own "number of tasks" and the list keeps the tasks, adding a task updates the list, and the header now lies. No effect or careful code fixes that for good: <strong>delete the copy</strong> and let the header read from the owner.</p>',
+      '<h3>How copies sneak in</h3>',
+      '<ul>'
+        + '<li><strong>Copying a prop into state:</strong> <code>useState(props.count)</code> reads the prop once and ignores later changes (see <a href="#/browser/state-effects/what-is-state">State, props and derived values</a>).</li>'
+        + '<li><strong>Storing what you could compute:</strong> a count, a filtered list, an "is valid" flag (see <a href="#/browser/state-effects/derived-values">Don\'t store what you can compute</a>).</li>'
+        + '<li><strong>Two components declaring the "same" state,</strong> because each needed it before anyone lifted it.</li></ul>',
+      '<p>The fix is always the same: one owner, everyone else reads. One copy is fine on purpose: a <strong>draft</strong>. An edit form may copy a task\'s title into local state so the user can type without touching the real task until Save. That is a different fact ("what is being typed"), and Save hands it back to the owner. Resetting such a draft: <a href="#/browser/shared-state/state-and-position">State belongs to a place in the tree</a>.</p>',
     ],
-    example: 'The box has the bug on purpose: `Counter` copies `tasks.length` into its own state. Add a task: the list says 3, the header still says 2, because `useState` read its argument only once. Fix it: delete the `useState` line in `Counter` and render `{count}` from a prop `<Counter count={tasks.length} />`.',
-    live: { kind: 'react', code: `import { useState } from 'react';
+    practice: { href: '#/browser/shared-state/practice/state-tree', label: 'Solve "One source of truth" in the state-tree tool' },
+    live: {
+      kind: 'react',
+      code: `import { useState } from 'react';
 
 function Counter({ initial }) {
   const [count] = useState(initial);    // a second copy of "how many tasks"
@@ -134,20 +183,26 @@ function App() {
       <ul>{tasks.map((t) => <li key={t}>{t}</li>)}</ul>
     </main>
   );
-}` },
-    practice: { href: '#/browser/shared-state/practice/state-tree', label: 'Solve "One source of truth" in the state-tree tool' },
+}`,
+    },
+    example: 'The box has the bug on purpose: `Counter` copies `tasks.length` into its own state. Add a task: the list says 3, the header still says 2, because `useState` read its argument only once. Fix it: delete the `useState` line in `Counter` and render `{count}` from a prop, `<Counter count={tasks.length} />`.',
     mistake: 'Keeping the copies and "syncing" them with an effect: `useEffect(() => setCount(tasks.length), [tasks])`. It renders once with the wrong number, then again with the right one, and every new copy needs another effect. If a value can be read from the owner or computed, it is not state.' },
 
   { id: 'state-and-position', hub: 'where', topic: 'where',
     title: 'State belongs to a place in the tree (and key resets it)',
-    summary: 'React keeps a component\'s state as long as the **same component type** is rendered at the **same position** in the tree. Changing its props does not reset its state; giving it a different `key` does.',
-    body: [
-      'React does not attach state to your variables or to a prop value; it attaches it to a **slot** in the tree: "the `EditTask` that is the second child of `App`". Re-render with different props and the slot is the same, so the state survives. That is usually what you want (a text box keeps its text while the parent re-renders), and it is also the source of a classic bug: switch from task 1 to task 2, and the edit form still shows the draft typed for task 1, because the form\'s state was created from task 1\'s title and the slot never changed.',
-      'A `key` is part of a slot\'s identity, not only for lists (see [Keys](#/browser/components/keys)). `<EditTask key={task.id} task={task} />` tells React "the form for task 2 is a different component from the form for task 1". When the key changes, React throws away the old instance and its state and mounts a fresh one, so the draft is initialised from the new task. No effect is needed to "reset the form when the task changes".',
-      'The same rule explains two surprises: rendering a **different component type** in the same place resets the state (`{isAdmin ? <AdminPanel /> : <UserPanel />}`), and moving a component to another position (inside a new wrapper `<div>`, for example) loses its state.',
+    summary: 'React keeps a component\'s state as long as the **same component type** stays at the **same position** in the tree: changing its props does not reset it; giving it a different `key` does.',
+    html: [
+      '<p>React attaches state to a <strong>slot</strong> in the tree ("the <code>EditTask</code> that is the second child of <code>App</code>"), not to your variables or props. Re-render with different props and the slot is the same, so the state survives. Usually that is what you want; it is also why switching from task 1 to task 2 can leave task 1\'s draft in the edit form.</p>',
+      '<dl>'
+        + '<dt>Same type, same position</dt><dd>The state is kept, whatever the props.</dd>'
+        + '<dt>A different <code>key</code></dt><dd>A different component to React: the old instance and its state are thrown away and a fresh one mounts. <code>&lt;EditTask key={task.id} task={task} /&gt;</code> starts a new draft for every task, with no effect.</dd>'
+        + '<dt>A different type in the same place</dt><dd><code>{isAdmin ? &lt;AdminPanel /&gt; : &lt;UserPanel /&gt;}</code> resets the state.</dd>'
+        + '<dt>A different position</dt><dd>Moving a component, inside a new wrapper <code>&lt;div&gt;</code> for example, loses its state.</dd></dl>',
+      '<p>This card is about <strong>resetting</strong> with <code>key</code>; giving list items a stable identity is <a href="#/browser/components/keys">Keys: telling list items apart</a>.</p>',
     ],
-    example: 'The box edits the selected task in a form that keeps a draft. Type something, then pick the other task: without a key the old draft stays. Tick the `key` checkbox and repeat: each task gets a fresh form.',
-    live: { kind: 'react', code: `import { useState } from 'react';
+    live: {
+      kind: 'react',
+      code: `import { useState } from 'react';
 
 const TASKS = [
   { id: 1, title: 'Buy milk' },
@@ -181,18 +236,47 @@ function App() {
       {withKey ? <EditTask key={task.id} task={task} /> : <EditTask task={task} />}
     </main>
   );
-}` },
+}`,
+    },
+    example: 'The box edits the selected task in a form that keeps a draft. Type something, then pick the other task: without a key the old draft stays. Tick the `key` checkbox and repeat: each task gets a fresh form.',
     mistake: 'Resetting the form with an effect: `useEffect(() => setDraft(task.title), [task.id])`. The first render after the switch still shows the old draft, then a second render fixes it, and every new field needs another line. `key={task.id}` resets all of the form\'s state at once, before anything is shown.' },
 
-  /* ---- 2. Prop drilling and composition ----------------------------------------------------- */
+  /* ---- 2. Prop drilling and composition ------------------------------------------------------------ */
   { id: 'prop-drilling', hub: 'drilling', topic: 'drilling',
     title: 'Prop drilling, and when it actually hurts',
-    summary: '**Prop drilling** is passing a prop through components that do not use it, only so it reaches a component further down. A level or two is normal and clear; it hurts when many layers forward many props.',
-    body: [
-      'Suppose the user lives in `App` and two components deep in the tree need it: the `Avatar` in the header and the `TaskList` in the page. With props, `Layout`, `Header` and `TaskPage` must each accept `user` and pass it on, though none of them shows it. That forwarding is drilling. It is not a bug: the data flow is explicit and easy to trace with "find usages", which is why it is the right default for one or two levels.',
-      'It starts to hurt when: the chain is **long** (four, five components); **several** values travel together (`user`, `onLogout`, `theme`, `onToggleTheme`…); the middle components are **generic** (a `Layout` or `Card` you reuse elsewhere and should not know about users); or every change to the data means editing every signature on the way. Each of those is a cost in reading and changing code, not in speed.',
-      'Two fixes exist, and the order matters. First try **composition**: let the component that owns the data create the deep component itself and pass it in as `children` ([next card](#/browser/shared-state/composition-children)), which often removes the middle layers from the path entirely. Only when the same value is needed in many unrelated places, use a **context** ([What context is](#/browser/shared-state/what-is-context)).',
+    summary: '**Prop drilling** is passing a prop through components that do not use it, only so it reaches one further down: a level or two is normal and clear; it hurts when many layers forward many props.',
+    html: [
+      '<p>The user lives in <code>App</code>, and the <code>Avatar</code> in the header needs it. With props, <code>Layout</code> and <code>Header</code> must each accept <code>user</code> and pass it on, though neither shows it: that forwarding is drilling. It is not a bug. The data flow stays explicit and easy to trace with "find usages", which is why props are the right default for one or two levels.</p>',
+      '<h3>When it starts to hurt</h3>',
+      '<ul>'
+        + '<li><strong>A long chain:</strong> four or five components.</li>'
+        + '<li><strong>Several values travelling together:</strong> <code>user</code>, <code>onLogout</code>, <code>theme</code>, <code>onToggleTheme</code>…</li>'
+        + '<li><strong>Generic middle components:</strong> a <code>Layout</code> or <code>Card</code> reused elsewhere, which should not know about users.</li>'
+        + '<li><strong>Every data change edits every signature</strong> on the way. Each of these costs reading and changing time, not speed.</li></ul>',
+      '<table><caption>Drilling: fine or painful?</caption><thead>'
+        + '<tr><th scope="col">Situation</th><th scope="col">Verdict</th></tr></thead><tbody>'
+        + '<tr><th scope="row">A parent passes <code>task</code> and <code>onToggle</code> to its child</th><td>Not drilling: the child uses them</td></tr>'
+        + '<tr><th scope="row">One middle component forwards one prop</th><td>Fine: explicit and easy to follow</td></tr>'
+        + '<tr><th scope="row">A generic <code>Layout</code> forwards <code>user</code> to the header and the page</th><td>A smell: try composition</td></tr>'
+        + '<tr><th scope="row">The theme or the user is read in a dozen places</th><td>A good case for context</td></tr></tbody></table>',
+      '<p>Fix it in this order: first <strong>composition</strong>, letting the owner build the deep component and hand it in (see <a href="#/browser/shared-state/composition-children">Composition: pass components, not data</a>); only when the value is needed in many unrelated places, a <strong>context</strong> (see <a href="#/browser/shared-state/what-is-context">Context: a value for a whole subtree</a>).</p>',
     ],
+    diagram: {
+      kind: 'flow',
+      title: 'Two components carry a value they never use, only to reach the one that does.',
+      desc: 'App owns the user. It passes the user to Layout, which passes it to Header, which passes it to Avatar. Only Avatar uses it; Layout and Header just pass it on.',
+      nodes: [
+        { id: 'app', label: 'App', note: 'owns `user`' },
+        { id: 'layout', label: 'Layout', note: 'only passes it on' },
+        { id: 'header', label: 'Header', note: 'only passes it on' },
+        { id: 'avatar', label: 'Avatar', note: 'uses it', key: true },
+      ],
+      edges: [
+        ['app', 'layout', '`user`'],
+        ['layout', 'header', '`user`'],
+        ['header', 'avatar', '`user`'],
+      ],
+    },
     code: `function App() {
   const [user, setUser] = useState({ name: 'Ana' });
   return <Layout user={user} onLogout={() => setUser(null)} />;
@@ -206,27 +290,24 @@ function Header({ user, onLogout }) {        // uses neither
 function TaskPage({ user }) {                // uses it only to pass it on
   return <TaskList user={user} />;
 }`,
-    table: { caption: 'Drilling: fine or painful?', head: ['Situation', 'Verdict'],
-      rows: [
-        ['a parent passes `task` and `onToggle` to its child', 'not drilling: the child uses them'],
-        ['one middle component forwards one prop', 'fine: explicit and easy to follow'],
-        ['a generic `Layout` forwards `user` to the header and the page', 'a smell: try composition'],
-        ['the theme or the user is read in a dozen places across the app', 'a good case for context'],
-      ] },
-    example: 'In the state-tree tool, choose "The logged-in user", place it on **App** with Props: the tree marks Layout, Header and TaskPage as "only passes on". That is the challenge "Spot the drilling".',
     practice: SHARED_TREE_LINK,
+    example: 'In the state-tree tool, choose "The logged-in user" and place it on **App** with Props: the tree marks Layout, Header and TaskPage as "only passes on". That is the challenge "Spot the drilling".',
     mistake: 'Reaching for context (or a store library) the first time a prop goes through one extra component. Context hides where a value comes from, makes components depend on a provider being present, and can re-render more than you expect. One or two levels of explicit props are easier to read and to test.' },
 
   { id: 'composition-children', hub: 'drilling', topic: 'drilling',
     title: 'Composition: pass components, not data',
-    summary: 'Instead of passing data through a layout so it can build its content, let the owner of the data **build the content itself** and pass the finished elements in as `children` (or other props). The layout no longer needs to know about the data.',
-    body: [
-      'A prop is passed by the component that **writes** the JSX tag, not by the component that ends up displaying it. If `App` writes `<Layout><TaskPage user={user} /></Layout>`, then `App` gives `user` to `TaskPage` directly, and `Layout` just receives a ready-made element in `children` and puts it somewhere. `Layout` is still the parent on the page, but it is no longer on the data\'s path. That is why composition removes drilling without any new API (see [children](#/browser/components/children)).',
-      'For layouts with several areas, use several props that hold elements, often called **slots**: `<Layout header={<Header user={user} />} sidebar={<Nav />}>…</Layout>`. Components like `Layout`, `Card`, `Modal` or `Page` become reusable shells that never change when the data changes.',
-      'A bonus: when the layout re-renders for its own reasons (opening a menu, for example), the elements in `children` were created by the parent and are the same objects as before, so React does not re-render them. In the state-tree tool, the "Composition" option changes exactly this: Header, Sidebar and TaskPage are then **created by App, shown inside Layout**.',
+    summary: 'Instead of passing data through a layout so it can build its content, let the owner of the data **build the content itself** and pass the finished elements in as `children` (or other props): the layout no longer needs to know about the data.',
+    html: [
+      '<p>A prop is passed by the component that <strong>writes the JSX tag</strong>, not by the one that ends up displaying it. If <code>App</code> writes <code>&lt;Layout&gt;&lt;TaskPage user={user} /&gt;&lt;/Layout&gt;</code>, then <code>App</code> gives <code>user</code> to <code>TaskPage</code> directly, and <code>Layout</code> receives a finished element in <code>children</code> and places it. <code>Layout</code> is still the parent on the page, but it is no longer on the data\'s path. How <code>children</code> works: <a href="#/browser/components/children">children: components that wrap other content</a>.</p>',
+      '<dl>'
+        + '<dt><code>children</code></dt><dd>One area: the content between the tags.</dd>'
+        + '<dt>Slots</dt><dd>Several areas, as props that hold elements: <code>&lt;Layout header={&lt;Header user={user} /&gt;} sidebar={&lt;Nav /&gt;}&gt;</code>. <code>Layout</code>, <code>Card</code>, <code>Modal</code> or <code>Page</code> become shells that never change when the data does.</dd></dl>',
+      '<p>A bonus: when the layout re-renders for its own reasons (opening a menu, say), the elements in <code>children</code> were created by the parent and are the same objects as before, so React skips them. In the state-tree tool, the "Composition" option shows exactly this: Header, Sidebar and TaskPage are then <strong>created by App, shown inside Layout</strong>.</p>',
     ],
-    example: 'In the box, `Layout` takes a `header` slot and `children`; it never sees `user`. `App` owns the user and passes it straight to `Avatar` and `TaskPage`. Switch the user: both update, and `Layout`\'s code did not have to change.',
-    live: { kind: 'react', code: `import { useState } from 'react';
+    practice: { href: '#/browser/shared-state/practice/state-tree', label: 'Solve "Composition before context" in the state-tree tool' },
+    live: {
+      kind: 'react',
+      code: `import { useState } from 'react';
 
 function Layout({ header, children }) {        // knows nothing about users
   return (
@@ -260,21 +341,47 @@ function App() {
     </Layout>
   );
 }`,
-      css: '.layout header { padding: 6px 10px; background: #e8eefc; }\n.layout main { padding: 6px 10px; border: 1px solid #ccd; }' },
-    practice: { href: '#/browser/shared-state/practice/state-tree', label: 'Solve "Composition before context" in the state-tree tool' },
+      css: `.layout header { padding: 6px 10px; background: #e8eefc; }
+.layout main { padding: 6px 10px; border: 1px solid #ccd; }`,
+    },
+    example: 'In the box, `Layout` takes a `header` slot and `children`; it never sees `user`. `App` owns the user and passes it straight to `Avatar` and `TaskPage`. Switch the user: both update, and `Layout`\'s code did not have to change.',
     mistake: 'Thinking composition means "the Layout must render TaskPage itself". As soon as `Layout` writes `<TaskPage />` in its own JSX, it is the one that must provide TaskPage\'s props, and drilling is back. Let the owner of the data write the tag and hand the element over.' },
 
-  /* ---- 3. Context ----------------------------------------------------------------------------- */
+  /* ---- 3. Context ---------------------------------------------------------------------------------- */
   { id: 'what-is-context', hub: 'context', topic: 'context',
     title: 'Context: a value for a whole subtree',
-    summary: 'A **context** lets a component provide a value to **every component below it**, at any depth, without passing props. In React: `createContext(default)` makes one, a provider element sets the value for its subtree, and `useContext(SomeContext)` reads it.',
-    body: [
-      'Picture a radio station. The provider broadcasts a value on one frequency; any component below it in the tree can tune in with `useContext`, and the components in between do not have to carry anything. Context does not store or change anything on its own: it is only a **channel** from a provider to the components under it. The value usually comes from the state of the component that renders the provider (next card).',
-      'Three pieces. `const ThemeContext = createContext(\'light\')` creates the channel; its argument is the **default value**, used only by a component with **no provider above it**. `<ThemeContext value="dark">…</ThemeContext>` is the provider (in React 19, the context object is itself the provider; code for React 18 and earlier writes `<ThemeContext.Provider value="dark">`, which React 19 still accepts). `const theme = useContext(ThemeContext)` reads the value of the **nearest** provider above the calling component.',
-      '"Above" means **on the page**, in the render tree: a component passed as `children` into a provider is inside it, wherever its JSX was written. Providers can be nested: an inner provider overrides the outer one for its subtree only. Create each context **once**, at the top level of a module (often its own file, `ThemeContext.js`), and export it, so the provider and the readers use the same object.',
+    summary: 'A **context** lets a component provide a value to **every component below it**, at any depth, without passing props: `createContext(default)` makes one, a provider sets the value for its subtree, and `useContext` reads it.',
+    html: [
+      '<p>A context is a <strong>channel</strong> from a provider to the components under it; the components in between carry nothing. It stores nothing and changes nothing by itself: the value usually comes from the state of the component that renders the provider (see <a href="#/browser/shared-state/provider-component">A provider component that owns the state</a>).</p>',
+      '<dl>'
+        + '<dt><code>createContext(\'light\')</code></dt><dd>Creates the channel. Its argument is the <strong>default</strong>, used only by a component with <strong>no provider above it</strong>. Create each context once, at the top level of a module (often its own file), and export it.</dd>'
+        + '<dt><code>&lt;ThemeContext value="dark"&gt;</code></dt><dd>The provider. In React 19 the context object is itself the provider; React 18 code writes <code>&lt;ThemeContext.Provider value="dark"&gt;</code>, which React 19 still accepts.</dd>'
+        + '<dt><code>useContext(ThemeContext)</code></dt><dd>Reads the value of the <strong>nearest</strong> provider above the calling component.</dd></dl>',
+      '<p>"Above" means on the page, in the render tree: a component passed as <code>children</code> into a provider is inside it, wherever its JSX was written. Providers can be nested; an inner provider overrides the outer one for its subtree only.</p>',
     ],
-    example: 'The box has one context and three panels. The first is outside any provider and gets the default; the second is inside a "dark" provider; the third is inside a nested "light" provider, the nearest one. No component receives a theme prop.',
-    live: { kind: 'react', code: `import { createContext, useContext } from 'react';
+    diagram: {
+      kind: 'tree',
+      title: 'Each reader gets the value of the nearest provider above it, or the default.',
+      desc: 'App renders three panels. The first is outside any provider and gets the default, light. The second is inside a provider with the value dark and reads dark. The third is inside a nested provider with the value light, the nearest one, and reads light.',
+      nodes: [
+        { id: 'app', label: 'App' },
+        { id: 'out', label: 'Panel', note: 'gets the default' },
+        { id: 'dark', label: '`<ThemeContext>`', note: '`value="dark"`' },
+        { id: 'p2', label: 'Panel', note: 'reads "dark"' },
+        { id: 'light', label: '`<ThemeContext>`', note: '`value="light"`', key: true },
+        { id: 'p3', label: 'Panel', note: 'reads "light"' },
+      ],
+      edges: [
+        ['app', 'out'],
+        ['app', 'dark'],
+        ['dark', 'p2'],
+        ['dark', 'light'],
+        ['light', 'p3'],
+      ],
+    },
+    live: {
+      kind: 'react',
+      code: `import { createContext, useContext } from 'react';
 
 const ThemeContext = createContext('light');    // 'light' is the default: no provider above
 
@@ -300,17 +407,35 @@ function App() {
     </>
   );
 }`,
-      css: '.badge { padding: 2px 8px; border-radius: 10px; border: 1px solid #888; }\n.badge.dark { background: #222; color: #eee; }\n.badge.light { background: #fff; color: #111; }' },
+      css: `.badge { padding: 2px 8px; border-radius: 10px; border: 1px solid #888; }
+.badge.dark { background: #222; color: #eee; }
+.badge.light { background: #fff; color: #111; }`,
+    },
+    example: 'The box has one context and three panels. The first is outside any provider and gets the default; the second is inside a "dark" provider; the third is inside a nested "light" provider, the nearest one. No component receives a theme prop.',
     mistake: 'Expecting the default value of `createContext` to be shared state. It is only what a component sees when there is **no provider above it**, usually because the provider was forgotten or placed too low. Many teams use `createContext(null)` and a hook that throws, so a missing provider fails loudly instead of quietly using a default (see [A custom hook for the context](#/browser/shared-state/use-context-hook)).' },
 
   { id: 'provider-component', hub: 'context', topic: 'context',
     title: 'A provider component that owns the state',
     summary: 'The usual pattern: one component, for example `ThemeProvider`, declares the state, renders the context provider with the state **and the functions that change it** as its value, and renders `{children}` inside it.',
-    body: [
-      'A context only carries values; it does not make them change. To share **state**, something must own it, and the cleanest owner is a small component whose only job is that: `ThemeProvider` holds `const [theme, setTheme] = useState(\'light\')` and renders `<ThemeContext value={{ theme, toggleTheme }}>{children}</ThemeContext>`. Any component inside can now read the theme and call `toggleTheme`, and the rule "data down, events up" still holds: the change still goes through the owner.',
-      'Expose **intentions**, not raw setters, when there are rules: `toggleTheme()`, `logIn(email, password)`, `logOut()`. The provider is then the one place that knows how the state changes (and later, how it is saved or sent to a server), and readers cannot put it in an invalid state.',
-      'The provider wraps the app (or the part of it that needs the value) once, near the root: `<ThemeProvider><App /></ThemeProvider>`, typically in `main.jsx`. Because `App` is passed as `children`, it was created outside the provider: when the provider\'s state changes, only the components that read the context re-render, not everything under it (see [What re-renders when a context changes](#/browser/shared-state/context-rerenders)).',
+    html: [
+      '<p>A context only carries values. To share <strong>state</strong>, something must own it, and the cleanest owner is a small component with that single job: <code>ThemeProvider</code> holds the theme in <code>useState</code> and renders the provider around <code>{children}</code>, with the theme and <code>toggleTheme</code> as its value. Any component inside can read the theme and call <code>toggleTheme</code>, and the change still goes through the owner.</p>',
+      '<ul>'
+        + '<li><strong>Expose intentions, not raw setters,</strong> when there are rules: <code>toggleTheme()</code>, <code>logIn(email, password)</code>, <code>logOut()</code>. The provider is then the one place that knows how the state changes, and later how it is saved or sent to a server.</li>'
+        + '<li><strong>Wrap once, near the root:</strong> <code>&lt;ThemeProvider&gt;&lt;App /&gt;&lt;/ThemeProvider&gt;</code>, usually in <code>main.jsx</code>.</li>'
+        + '<li><strong><code>{children}</code> keeps it cheap:</strong> <code>App</code> was created outside the provider, so a state change re-renders only the components that read the context (see <a href="#/browser/shared-state/context-rerenders">What re-renders when a context value changes</a>).</li></ul>',
     ],
+    diagram: {
+      kind: 'layers',
+      title: 'One component owns the state; the context carries it to every reader below.',
+      desc: 'Four layers from top to bottom. ThemeProvider owns the theme in state. It renders the ThemeContext provider, whose value carries the theme and toggleTheme. Inside it is App, passed as children, which passes nothing on. At the bottom, any component that calls useContext(ThemeContext) reads the theme and can change it.',
+      nodes: [
+        { id: 'owner', label: '`ThemeProvider`', note: 'owns `theme` in state', key: true },
+        { id: 'ctx', label: '`<ThemeContext value>`', note: 'carries theme and toggleTheme' },
+        { id: 'app', label: '`App`, as children', note: 'passes nothing on' },
+        { id: 'readers', label: 'Readers', note: '`useContext(ThemeContext)`' },
+      ],
+      edges: [],
+    },
     code: `// ThemeContext.jsx
 import { createContext, useContext, useState } from 'react';
 
@@ -326,8 +451,10 @@ export function ThemeProvider({ children }) {
 createRoot(document.getElementById('root')).render(
   <ThemeProvider><App /></ThemeProvider>
 );`,
-    example: 'In the box, `ThemeToggle` sits inside `Sidebar`, which passes nothing on, yet it reads and changes the theme owned by `ThemeProvider`. `Page` reads the same value to choose its colours.',
-    live: { kind: 'react', code: `import { createContext, useContext, useState } from 'react';
+    practice: { href: '#/browser/shared-state/practice/state-tree', label: 'Solve "Move the theme into a context"' },
+    live: {
+      kind: 'react',
+      code: `import { createContext, useContext, useState } from 'react';
 
 const ThemeContext = createContext(null);
 
@@ -363,17 +490,21 @@ function App() {
     </ThemeProvider>
   );
 }`,
-      css: '.page { padding: 8px 12px; }\n.page.dark { background: #1d1f33; color: #eee; }\n.page.light { background: #fff; color: #111; }' },
-    practice: { href: '#/browser/shared-state/practice/state-tree', label: 'Solve "Move the theme into a context"' },
+      css: `.page { padding: 8px 12px; }
+.page.dark { background: #1d1f33; color: #eee; }
+.page.light { background: #fff; color: #111; }`,
+    },
+    example: 'In the box, `ThemeToggle` sits inside `Sidebar`, which passes nothing on, yet it reads and changes the theme owned by `ThemeProvider`. `Page` reads the same value to choose its colours.',
     mistake: 'Calling `useContext(ThemeContext)` in the same component that renders the provider and expecting the new value. `useContext` looks **above** the calling component, so the provider\'s own component never sees its own provider: it already has the state in a variable; use that.' },
 
   { id: 'use-context-hook', hub: 'context', topic: 'context',
     title: 'A custom hook for the context: useAuth()',
-    summary: 'Wrap `useContext` in a custom hook such as `useAuth()` that **throws a clear error** when there is no provider. Components import the hook, not the context object.',
-    body: [
-      'With `createContext(null)`, a component rendered outside the provider gets `null`, and the error shows up somewhere else: "Cannot destructure property \'user\' of null", three files away. A hook that checks once turns that into a message that says exactly what is wrong: "useAuth must be used inside <AuthProvider>". It is a [custom hook](#/browser/state-effects/custom-hooks), so its name starts with `use` and it follows the rules of hooks.',
-      'The hook is also an **interface**. Export `AuthProvider` and `useAuth` from one file and keep the context object private. Readers then cannot depend on how the value is built, and you can later split the context in two, add memoisation or move to a library without touching a single component.',
-      'One file per context is a common layout: `auth/AuthContext.jsx` with `AuthContext` (not exported), `AuthProvider` and `useAuth`. Some tools (Vite\'s Fast Refresh) prefer a file that exports only components; if the linter complains, move the hook to `auth/useAuth.js`.',
+    summary: 'Wrap `useContext` in a custom hook such as `useAuth()` that **throws a clear error** when there is no provider: components import the hook, not the context object.',
+    html: [
+      '<p>With <code>createContext(null)</code>, a component outside the provider gets <code>null</code>, and the crash shows up somewhere else: "Cannot destructure property \'user\' of null", three files away. A hook that checks once turns it into a message that names the problem: "useAuth must be used inside &lt;AuthProvider&gt;". It is a <a href="#/browser/state-effects/custom-hooks">custom hook</a>, so its name starts with <code>use</code> and it follows the rules of hooks.</p>',
+      '<ul>'
+        + '<li><strong>An interface, not only a check:</strong> export <code>AuthProvider</code> and <code>useAuth</code> and keep the context object private. Readers cannot depend on how the value is built, so you can later split the context, add memoisation or move to a library without touching a single component.</li>'
+        + '<li><strong>One file per context:</strong> <code>auth/AuthContext.jsx</code> with the context (not exported), <code>AuthProvider</code> and <code>useAuth</code>. Vite\'s Fast Refresh prefers files that export only components; if the linter complains, move the hook to <code>auth/useAuth.js</code>.</li></ul>',
     ],
     code: `const AuthContext = createContext(null);
 
@@ -384,8 +515,9 @@ export function useAuth() {
   }
   return ctx;
 }`,
-    example: 'The box works as written. Then move `<Greeting />` out of `<AuthProvider>` (put it after the closing tag, inside a fragment `<>…</>`): the preview shows the hook\'s error message instead of a confusing crash.',
-    live: { kind: 'react', code: `import { createContext, useContext, useState } from 'react';
+    live: {
+      kind: 'react',
+      code: `import { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -415,16 +547,82 @@ function App() {
       <Greeting />
     </AuthProvider>
   );
-}` },
+}`,
+    },
+    example: 'The box works as written. Then move `<Greeting />` out of `<AuthProvider>` (put it after the closing tag, inside a fragment `<>…</>`): the preview shows the hook\'s error message instead of a confusing crash.',
     mistake: 'Exporting the context object and calling `useContext(AuthContext)` in every component. It works until the first component outside the provider (a test, a storybook page, a new route) receives `null`. A hook gives one place for the check and one name to search for.' },
+
+  { id: 'memo-hooks', hub: 'context', topic: 'context',
+    title: 'Memoising: useMemo, useCallback and memo',
+    summary: '**Memoising** keeps a result from the last render while its inputs are unchanged: `useMemo` keeps a computed value, `useCallback` keeps a function, and `memo` lets a component skip a re-render when its props are equal.',
+    html: [
+      '<p>Every render runs the component function again: it recomputes values and creates <strong>new</strong> objects and functions, and a parent\'s re-render re-renders its children. That is usually cheap and fine. Memoising helps in two cases only: a computation that is really slow, and a value whose <strong>identity</strong> someone else compares (a child wrapped in <code>memo</code>, a dependency array, a context value).</p>',
+      '<table><caption>Three tools</caption><thead>'
+        + '<tr><th scope="col">You write</th><th scope="col">It keeps</th><th scope="col">Until</th></tr></thead><tbody>'
+        + '<tr><th scope="row"><code>useMemo(() =&gt; compute(a, b), [a, b])</code></th><td>The value the function returned</td><td><code>a</code> or <code>b</code> changes</td></tr>'
+        + '<tr><th scope="row"><code>useCallback(fn, [a])</code></th><td>The function itself: the same object</td><td><code>a</code> changes</td></tr>'
+        + '<tr><th scope="row"><code>memo(TaskList)</code></th><td>The component\'s last output</td><td>A prop changes (compared one by one with <code>Object.is</code>)</td></tr></tbody></table>',
+      '<ul>'
+        + '<li><strong>They work together:</strong> <code>memo</code> compares props by identity, so a child wrapped in <code>memo</code> still re-renders when the parent passes a new function or object every time. <code>useCallback</code> and <code>useMemo</code> keep those props the same.</li>'
+        + '<li><strong>Never for correctness:</strong> the code must work without them; React may throw a memoised value away.</li>'
+        + '<li><strong>Premature by default:</strong> add them when a render is measurably slow (the React DevTools Profiler shows it) or when identity matters, not around every function.</li></ul>',
+      '<p>The case this section meets most is a context value: see <a href="#/browser/shared-state/context-rerenders">What re-renders when a context value changes</a>.</p>',
+    ],
+    live: {
+      kind: 'react',
+      code: `import { memo, useCallback, useState } from 'react';
+
+let renders = 0;
+const TaskList = memo(function TaskList({ onSelect }) {
+  renders += 1;                              // counts the times React really ran it
+  return (
+    <>
+      <p>TaskList rendered {renders} times</p>
+      <ul>
+        {['Buy milk', 'Call Ana'].map((t) => (
+          <li key={t}><button onClick={() => onSelect(t)}>{t}</button></li>
+        ))}
+      </ul>
+    </>
+  );
+});
+
+function App() {
+  const [text, setText] = useState('');
+  const [selected, setSelected] = useState('none');
+  const [stable, setStable] = useState(false);
+
+  const fresh = (t) => setSelected(t);                     // a new function every render
+  const kept = useCallback((t) => setSelected(t), []);     // the same function every render
+  const onSelect = stable ? kept : fresh;
+
+  return (
+    <main>
+      <label>
+        <input type="checkbox" checked={stable} onChange={(e) => setStable(e.target.checked)} />
+        {' '}Stable callback (useCallback)
+      </label>
+      <p><input value={text} onChange={(e) => setText(e.target.value)} placeholder="Type here" aria-label="Note" /></p>
+      <p>Selected: {selected}</p>
+      <TaskList onSelect={onSelect} />
+    </main>
+  );
+}`,
+    },
+    example: 'In the box, `TaskList` is wrapped in `memo` and shows how many times it rendered. Type in the field: `App` re-renders on every key, `onSelect` is a new function each time, and the count climbs. Tick **Stable callback** and type again: `useCallback` keeps the same function, the props are equal, and `memo` skips the list.',
+    mistake: 'Wrapping every function in `useCallback` and every value in `useMemo` "for performance". Each one costs memory and a dependency array to keep right, and saves nothing unless something compares the identity. A wrong dependency array is worse than none: it keeps a stale value.' },
 
   { id: 'context-rerenders', hub: 'context', topic: 'context',
     title: 'What re-renders when a context value changes',
-    summary: 'When the provider\'s `value` changes (compared with `Object.is`), **every component that reads that context re-renders**, even inside `memo`. A new object literal on every render counts as a change, so memoise the value with `useMemo`.',
-    body: [
-      'React compares the new `value` with the previous one by identity, like dependencies. If it differs, every consumer below re-renders. Components that do not read the context are not affected by it, though they may still re-render for the usual reason: their parent re-rendered. `memo` (which skips a component when its props are unchanged) does **not** stop a context update: reading a context is like an extra, invisible prop.',
-      'The trap is the object literal: `value={{ user, logIn, logOut }}` builds a **new object every time the provider renders**. If the provider re-renders for any reason (its parent re-rendered, another piece of its state changed), every consumer re-renders too, although nothing they read changed. `useMemo(() => ({ user, logIn, logOut }), [user])` keeps the same object until `user` changes; functions inside should then be stable too (`useCallback`, or defined so they do not depend on render values).',
-      'Three habits keep context cheap. Wrap the app as `<Provider>{children}</Provider>`, so a state change re-renders only consumers. **Split** values that change at different speeds (`AuthContext` and `ThemeContext`, not one `AppContext`). And never put fast-changing data (mouse position, a value updated on every keystroke of a big form) in a context read by many components.',
+    summary: 'When the provider\'s `value` changes (compared with `Object.is`), **every component that reads that context re-renders**, even inside `memo`; a new object literal on every render counts as a change, so memoise the value with `useMemo`.',
+    html: [
+      '<p>React compares the provider\'s new <code>value</code> with the previous one by identity. If it differs, every consumer below re-renders, even one wrapped in <code>memo</code>: reading a context works like an extra, invisible prop. Components that do not read the context are not affected by it, although they may still re-render because their parent did.</p>',
+      '<p>The trap: <code>value={{ user, logIn, logOut }}</code> builds a <strong>new object every time the provider renders</strong>, so every consumer re-renders whenever the provider does, although nothing they read changed. <code>useMemo</code> keeps the same object until <code>user</code> changes, and <code>useCallback</code> keeps the functions inside it stable (see <a href="#/browser/shared-state/memo-hooks">Memoising</a>).</p>',
+      '<h3>Three habits keep context cheap</h3>',
+      '<ul>'
+        + '<li><strong>Wrap with <code>{children}</code>:</strong> <code>&lt;AuthProvider&gt;{children}&lt;/AuthProvider&gt;</code>, so a state change re-renders only the consumers.</li>'
+        + '<li><strong>Split by speed of change:</strong> <code>AuthContext</code> and <code>ThemeContext</code>, not one <code>AppContext</code>.</li>'
+        + '<li><strong>Keep fast data out:</strong> never put the mouse position, or every keystroke of a big form, in a context read by many components.</li></ul>',
     ],
     code: `function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -433,8 +631,10 @@ function App() {
   const value = useMemo(() => ({ user, logIn, logOut }), [user, logIn, logOut]);
   return <AuthContext value={value}>{children}</AuthContext>;
 }`,
-    example: 'In the box, `UserBadge` is wrapped in `memo` and reads the context. Press **Unrelated click** and watch the console: `App` re-renders, the value object is new, and the badge re-renders although the user did not change. Tick "Memoise the value" and click again: the badge stays quiet.',
-    live: { kind: 'react', code: `import { createContext, useContext, useMemo, useState, memo } from 'react';
+    practice: { href: '#/browser/shared-state/practice/state-tree', label: 'Predict the re-renders on log-out in the state-tree tool' },
+    live: {
+      kind: 'react',
+      code: `import { createContext, useContext, useMemo, useState, memo } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -463,41 +663,28 @@ function App() {
       <UserBadge />
     </AuthContext>
   );
-}` },
-    practice: { href: '#/browser/shared-state/practice/state-tree', label: 'Predict the re-renders on log-out in the state-tree tool' },
+}`,
+    },
+    example: 'In the box, `UserBadge` is wrapped in `memo` and reads the context. Press **Unrelated click** and watch the console: `App` re-renders, the value object is new, and the badge re-renders although the user did not change. Tick "Memoise the value" and click again: the badge stays quiet.',
     mistake: 'Putting everything into one big `AppContext` "to keep it simple". Every consumer then re-renders whenever any part changes: typing in a search field stored there re-renders the header, the sidebar and every list item. Separate contexts for separate concerns, and local state for anything only one area uses.' },
 
-  { id: 'when-context', hub: 'context', topic: 'context',
-    title: 'Props, composition or context?',
-    summary: 'Use **props** by default, **composition** when a layout is in the way, and **context** for values that many components at different depths need and that change rarely: the logged-in user, the theme, the language.',
-    body: [
-      'Each option trades something. Props are explicit (you can see where every value comes from) but get noisy over long paths. Composition keeps props explicit and shortens the path, but only helps when the middle components are wrappers. Context removes the path entirely, at the price of **implicit dependencies**: a component that calls `useAuth()` only works inside an `AuthProvider`, and you can no longer see from its props what it needs.',
-      'Good context values share three traits: many readers spread across the app, a natural owner near the root, and **low frequency** of change. The authenticated user, the theme, the language, feature flags, a toast/notification service: yes. The text of a search box, a form\'s fields, the hover state of a list: no, keep them local or lift them a little.',
-      'Context is not a state manager: it shares a value but does not cache server data, does not let a component subscribe to only part of the value, and does not log or undo changes. When you need those, see [Server state vs UI state](#/browser/shared-state/server-vs-ui-state) and [Store libraries](#/browser/shared-state/store-libraries).',
-    ],
-    table: { caption: 'Choosing how to share a value', head: ['Question', 'If yes'],
-      rows: [
-        ['Only one component uses it?', 'local state in that component'],
-        ['Siblings or a parent and a child need it?', 'lift it to the closest common parent, pass props'],
-        ['The path goes through wrappers (Layout, Card, Page)?', 'composition: pass elements as `children` or slots'],
-        ['Many components at different depths, changes rarely?', 'context with a provider component'],
-        ['It is a copy of data that lives on a server?', 'a data-fetching cache (or a custom hook), not context'],
-      ] },
-    example: 'The state-tree tool flags the cases where context is overkill. Choose "Search filter text", switch to Context and place the provider on TaskPage: the analysis says plain props would do, because nothing sits between TaskPage and the two components that use the filter.',
-    practice: SHARED_TREE_LINK,
-    mistake: 'Using context to avoid thinking about where state belongs. A context provider at the root holding the search text, the selected task and the open modal makes the root re-render the whole app\'s consumers on every keystroke, and hides which screen owns what. Place state first; reach for context for the few values that really are app-wide.' },
-
-  /* ---- 4. An authentication context ----------------------------------------------------------- */
+  /* ---- 4. An authentication context ---------------------------------------------------------------- */
   { id: 'auth-context', hub: 'auth', topic: 'auth',
     title: 'An authentication context: user, token, log-in, log-out',
-    summary: 'An `AuthProvider` owns who is logged in: the **user** and the **token** in state, an async `logIn(email, password)` that calls the API and stores both, and `logOut()` that forgets them. Components read it all with `useAuth()`.',
-    body: [
-      'Being logged in is app-wide, changes rarely and is needed by components far apart (the header shows the name, pages decide what to show, the API client needs the token): the textbook case for a context. The provider is the single source of truth for the session; nothing else stores a copy of the token.',
-      '`logIn` talks to the server (see [Logging in from the front end](#/browser/data-fetching/login-request)): it posts the credentials, and on success stores `token` and `user` in state. On failure it **throws**, so the form that called it can show "Invalid email or password" next to the fields; the provider does not know about forms. `logOut` clears both (and, later, storage). Derived values such as `isLoggedIn = token !== null` or `isAdmin = user?.role === \'admin\'` are computed, not stored.',
-      'The server is still the one that decides what a user may do. Hiding the "Delete user" button from non-admins is a convenience, not security: anyone can send the request by hand, so the API must check the token and the role on every request (see [Authentication vs authorisation](#/server/auth/authn-vs-authz)).',
+    summary: 'An `AuthProvider` owns who is logged in: the **user** and the **token** in state, an async `logIn(email, password)` that calls the API and stores both, and `logOut()` that forgets them; components read it all with `useAuth()`.',
+    html: [
+      '<p>Being logged in is app-wide, changes rarely and is needed by components far apart (the header shows the name, pages decide what to show, the API client needs the token): the textbook case for a context. The provider is the single source of truth for the session, and nothing else stores a copy of the token.</p>',
+      '<dl>'
+        + '<dt>State</dt><dd>The <code>token</code> and the public <code>user</code> fields. Never the password.</dd>'
+        + '<dt><code>logIn(email, password)</code></dt><dd>Posts the credentials (see <a href="#/browser/data-fetching/login-request">Logging in from the front end</a>) and stores the token and the user. On failure it <strong>throws</strong>, so the form that called it shows the message; the provider knows nothing about forms. Reading the form: <a href="#/browser/components/uncontrolled-inputs">Uncontrolled inputs: defaultValue and FormData</a>.</dd>'
+        + '<dt><code>logOut()</code></dt><dd>Clears both, and later the saved copy in storage.</dd>'
+        + '<dt>Derived values</dt><dd><code>isLoggedIn = token !== null</code>, <code>isAdmin = user?.role === \'admin\'</code>: computed, not stored.</dd></dl>',
+      '<p><strong>The server still decides.</strong> Hiding the "Delete user" button from non-admins is a convenience, not security: anyone can send the request by hand, so the API checks the token and the role on every request (see <a href="#/server/auth/authn-vs-authz">Authentication vs authorisation</a>).</p>',
     ],
-    example: 'The box logs in against the mock API. Use `ana@example.com` (an admin) or `leo@example.com` (a student) with the password `password123`; try a wrong password to see the error come back from `logIn` to the form.',
-    live: { kind: 'react', api: true, code: `import { createContext, useContext, useState } from 'react';
+    live: {
+      kind: 'react',
+      api: true,
+      code: `import { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -547,16 +734,21 @@ function Header() {
 
 function App() {
   return <AuthProvider><Header /></AuthProvider>;
-}` },
+}`,
+    },
+    example: 'The box logs in against the mock API. Use `ana@example.com` (an admin) or `leo@example.com` (a student) with the password `password123`; try a wrong password to see the error come back from `logIn` to the form.',
     mistake: 'Storing the password, or the whole log-in response "just in case", in the context. Once logged in, the front end needs the token and the public user fields only. A password kept in memory can leak through logs, error reports or dev tools; drop it as soon as the request has been sent.' },
 
   { id: 'persist-session', hub: 'auth', topic: 'auth',
     title: 'Staying logged in after a reload',
-    summary: 'State lives in memory, so a reload logs the user out. To keep the session, the provider **saves** the token (and the user) to `localStorage` when they change and **restores** them once, when it is created.',
-    body: [
-      'A page reload starts the JavaScript from scratch: every `useState` goes back to its initial value. Restoring is therefore part of **creating** the state: read storage in a lazy initialiser, `useState(() => readSaved())`, so it runs once, before the first render, and the app never flashes a logged-out screen (see [useLocalStorage](#/browser/state-effects/use-local-storage) for the same idea as a hook). Saving is synchronisation with an external system, so it is an **effect** on the session: write it when it is set, remove it when it is `null`.',
-      'A restored token may be **stale**: it expired while the tab was closed, or the server changed its secret. Two common answers. Let the first API call find out: a `401` with a token triggers log-out in one place (see [Handling 401](#/browser/data-fetching/handle-401) and [Sharing the token with the API client](#/browser/shared-state/token-and-api-client)). Or check at start-up with a "who am I" request (`GET /api/auth/me` on servers that have one) and keep a third status, **checking**, while it runs, so protected screens wait instead of redirecting to the log-in page and back.',
-      'Storage only holds strings, so save JSON and parse it in a `try/catch`: storage can be blocked, full or contain garbage, and the app must still start (logged out). Use one key (`session`) for token and user, so they cannot drift apart.',
+    summary: 'State lives in memory, so a reload logs the user out: to keep the session, the provider **restores** the token (and the user) from `localStorage` once, when it is created, and **saves** them whenever they change.',
+    html: [
+      '<p>A page reload starts the JavaScript from scratch: every <code>useState</code> goes back to its initial value. So restoring is part of <strong>creating</strong> the state, and saving is synchronising with an external system.</p>',
+      '<dl>'
+        + '<dt>Restore: a lazy initialiser</dt><dd><code>useState(() =&gt; readSaved())</code> runs once, before the first render, so the app never flashes a logged-out screen. The same idea as a reusable hook: <a href="#/browser/state-effects/use-local-storage">A custom hook for persistence: useLocalStorage</a>.</dd>'
+        + '<dt>Save: an effect</dt><dd>On every change of the session: write it when it is set, remove it when it is <code>null</code>.</dd>'
+        + '<dt>One key, JSON and <code>try</code>/<code>catch</code></dt><dd>Storage holds only strings and can be blocked, full or hold garbage, and the app must still start (logged out). One key, <code>session</code>, for the token and the user, so they cannot drift apart.</dd></dl>',
+      '<p>A restored token may be <strong>stale</strong>: it expired while the tab was closed, or the server changed its secret. Either let the first API call find out, so a <code>401</code> with a token logs out in one place (see <a href="#/browser/shared-state/token-and-api-client">Sharing the token with the API client</a>), or ask the server at start-up ("who am I", such as <code>GET /api/auth/me</code> on servers that have one) and keep a third status, <strong>checking</strong>, so protected screens wait instead of redirecting to the log-in page and back.</p>',
     ],
     code: `function AuthProvider({ children }) {
   const [session, setSession] = useState(() => {         // restore once
@@ -573,8 +765,9 @@ function App() {
   // logIn: setSession({ token: data.token, user: data.user }) · logOut: setSession(null)
   …
 }`,
-    example: 'The preview frame blocks `localStorage`, so the box falls back to a variable in memory (your app uses the real storage). Log in, then press **Simulate a reload**: the provider is created again (a new `key`), its initialiser finds the saved session and you stay logged in. Log out and reload: the session is gone.',
-    live: { kind: 'react', code: `import { createContext, useContext, useEffect, useState } from 'react';
+    live: {
+      kind: 'react',
+      code: `import { createContext, useContext, useEffect, useState } from 'react';
 
 // The preview blocks localStorage, so this falls back to memory. Your app uses localStorage.
 const memory = {};
@@ -615,34 +808,58 @@ function App() {
       <AuthProvider key={boot}><Status /></AuthProvider>
     </>
   );
-}` },
+}`,
+    },
+    example: 'The preview frame blocks `localStorage`, so the box falls back to a variable in memory (your app uses the real storage). Log in, then press **Simulate a reload**: the provider is created again (a new `key`), its initialiser finds the saved session and you stay logged in. Log out and reload: the session is gone.',
     mistake: 'Restoring in an effect: `useEffect(() => setToken(localStorage.getItem(\'token\')), [])`. The first render runs with `token = null`, so a protected page redirects to the log-in page before the effect restores the token, and the user lands on the log-in screen although they are logged in. Read storage in the lazy initialiser, before the first render.' },
 
   { id: 'token-storage', hub: 'auth', topic: 'auth',
     title: 'Where to keep the token: the security trade-off',
     summary: 'A token in **memory** is lost on reload; in **localStorage** it survives but any script on the page can read it; in an **httpOnly cookie** set by the server JavaScript cannot read it at all, but cookies bring their own rules (CSRF, CORS credentials).',
-    body: [
-      'A bearer token is as good as the password until it expires: whoever holds it is you. The real threat to a token in the browser is **XSS** (cross-site scripting): some script that is not yours runs in your page, through an injection bug or a compromised npm package. Such a script can read `localStorage` and send the token anywhere. It cannot read an **httpOnly** cookie, because the browser never exposes that cookie to JavaScript (see [Cookie flags](#/server/auth/cookie-flags)).',
-      'That does not make cookies free. The browser attaches cookies **automatically**, so another site can make the user\'s browser send a request with them (**CSRF**); `SameSite=Lax` or `Strict` and checking the `Origin` header defend against it. A front end on another origin also needs `credentials: \'include\'` and a server that allows credentials (see [CORS with credentials](#/server/auth/cors-credentials)). And an XSS script can still *use* the cookie by sending requests from the page while it is open; it just cannot steal it for later.',
-      'A reasonable path: start with the token in context plus `localStorage`, keep tokens **short-lived**, never render user input as HTML (React escapes text by default; avoid `dangerouslySetInnerHTML`), and keep dependencies few and updated. When the stakes rise, move to an httpOnly, `Secure`, `SameSite` cookie session. Compare the server side of the same choice in [Sessions vs tokens](#/server/auth/sessions-vs-tokens) and [How the token travels](#/server/auth/token-transport).',
+    html: [
+      '<p>A bearer token is as good as the password until it expires: whoever holds it is you. The real threat to it in the browser is <strong>XSS</strong> (cross-site scripting): a script that is not yours running in your page, through an injection bug or a compromised npm package. That script can read <code>localStorage</code> and send the token anywhere; it cannot read an <strong>httpOnly</strong> cookie, which the browser never exposes to JavaScript (see <a href="#/server/auth/cookie-flags">Cookie flags</a>).</p>',
+      '<table><caption>Three places for the session</caption><thead>'
+        + '<tr><th scope="col">Where</th><th scope="col">Survives a reload</th><th scope="col">Readable by any script on the page</th><th scope="col">Sent automatically</th><th scope="col">Watch out for</th></tr></thead><tbody>'
+        + '<tr><th scope="row">Memory (state, context)</th><td>No</td><td>Only while the page is open</td><td>No</td><td>Users logged out on every reload</td></tr>'
+        + '<tr><th scope="row"><code>localStorage</code></th><td>Yes</td><td>Yes</td><td>No (you add the header)</td><td>XSS steals it</td></tr>'
+        + '<tr><th scope="row">httpOnly cookie</th><td>Yes</td><td>No</td><td>Yes, by the browser</td><td>CSRF, CORS credentials</td></tr></tbody></table>',
+      '<h3>Cookies have their own rules</h3>',
+      '<ul>'
+        + '<li><strong>CSRF:</strong> the browser attaches cookies automatically, so another site can make it send a request with them; <code>SameSite=Lax</code> or <code>Strict</code> and checking the <code>Origin</code> header defend against it.</li>'
+        + '<li><strong>CORS credentials:</strong> a front end on another origin needs <code>credentials: \'include\'</code> and a server that allows credentials (see <a href="#/server/auth/cors-credentials">CORS with credentials</a>).</li>'
+        + '<li><strong>XSS can still use the cookie</strong> by sending requests from the open page; it just cannot steal it for later.</li></ul>',
+      '<p><strong>A reasonable path:</strong> start with the token in context plus <code>localStorage</code>, keep tokens short-lived, never render user input as HTML (React escapes text by default; avoid <code>dangerouslySetInnerHTML</code>), and keep dependencies few and updated. When the stakes rise, move to an httpOnly, <code>Secure</code>, <code>SameSite</code> cookie session. The server side of the same choice: <a href="#/server/auth/sessions-vs-tokens">Sessions vs tokens</a> and <a href="#/server/auth/token-transport">How the token travels</a>.</p>',
     ],
-    table: { caption: 'Three places for the session', head: ['Where', 'Survives a reload', 'Readable by any script on the page', 'Sent automatically', 'Watch out for'],
-      rows: [
-        ['memory (state / context)', 'no', 'only while the page is open', 'no', 'users logged out on every reload'],
-        ['`localStorage`', 'yes', 'yes', 'no (you add the header)', 'XSS steals it'],
-        ['httpOnly cookie', 'yes', 'no', 'yes, by the browser', 'CSRF, CORS credentials'],
-      ] },
-    example: 'With a token in `localStorage`, open the browser\'s dev tools on your own app, Application tab, Local Storage: the token is right there in plain text, and so is it for any script running in the page. With an httpOnly cookie, the Cookies panel shows it, but `document.cookie` in the console does not include it.',
-    mistake: 'Believing that `localStorage` is "encrypted" or private to your code, or that `sessionStorage` is safer against XSS. Both are readable by any script running on the page; `sessionStorage` only differs in lasting until the tab closes. The protection against token theft is not the storage name but preventing XSS, and httpOnly cookies when that is not enough.' },
+    example: 'With a token in `localStorage`, open the browser\'s dev tools on your own app, Application tab, Local Storage: the token is right there in plain text, for you and for any script running in the page. With an httpOnly cookie, the Cookies panel shows it, but `document.cookie` in the console does not include it.',
+    mistake: 'Believing that `localStorage` is "encrypted" or private to your code, or that `sessionStorage` is safer against XSS. Both are readable by any script running on the page; `sessionStorage` only differs in lasting until the tab closes. The protection against token theft is preventing XSS, and httpOnly cookies when that is not enough.' },
 
   { id: 'token-and-api-client', hub: 'auth', topic: 'auth',
     title: 'Sharing the token with the API client',
-    summary: 'The **API client** needs the current token, and a `401` must log the user out. Let the auth provider create the client with the token and its own `logOut` as the `onUnauthorized` handler, and expose it through the context.',
-    body: [
-      'The API client is plain JavaScript; the token is React state. The client must never keep its own copy of the token (two sources of truth: log out and the client keeps sending the old token). Two clean ways to connect them. **Build the client in the provider**: `const api = useMemo(() => createClient({ token, onUnauthorized: logOut }), [token])`, and expose `api` in the context; when the token changes, components get a client with the new one. Or keep a **module-level client** with a `getToken()` callback that the provider registers once, which suits code outside React (for example a router loader).',
-      'Log-out on 401 belongs in the same place: the client detects "I sent a token and the server refused it" and calls `onUnauthorized`; the provider\'s `logOut` clears the session and storage, and the UI falls back to the logged-out state (with the router, a redirect to `/login`; see [Protected routes](#/browser/routing/protected-routes)). The [Handling 401](#/browser/data-fetching/handle-401) card explains why only a 401 **with** a token means "session expired", and why 403 must not log anyone out.',
-      'Components then ask the context for the client (`const { api } = useAuth()`) or use a small hook (`useApi()`), and never build headers themselves. Hooks that load data take the client from there too, so every request in the app carries the same, current token.',
+    summary: 'The **API client** needs the current token, and a refused token must log the user out: let the auth provider build the client with the token and its own `logOut` as the `onUnauthorized` handler, and expose it through the context.',
+    html: [
+      '<p>The API client is plain JavaScript; the token is React state. The client must never keep its own copy: log out, and it would keep sending the old token. So the provider builds the client with the <strong>current</strong> token and gives it the provider\'s own <code>logOut</code> for refused tokens.</p>',
+      '<dl>'
+        + '<dt>Built in the provider</dt><dd><code>useMemo(() =&gt; createClient({ token, onUnauthorized: logOut }), [token])</code>, exposed in the context: when the token changes, components get a client with the new one.</dd>'
+        + '<dt>A module-level client</dt><dd>With a <code>getToken()</code> callback the provider registers once: suits code outside React, such as a router loader.</dd></dl>',
+      '<p>Which responses mean "session expired" (a <code>401</code> <strong>with</strong> a token, never a <code>403</code>) is the rule of <a href="#/browser/data-fetching/handle-401">Handling 401</a>; this card wires it to the provider. With a router, logging out falls back to the log-in page (see <a href="#/browser/routing/protected-routes">Protected routes</a>). Components ask the context for the client (<code>const { api } = useAuth()</code>) and never build headers themselves, so every request carries the same, current token.</p>',
     ],
+    diagram: {
+      kind: 'cycle',
+      title: 'Every request gets the current token, and a refused token logs out in one place.',
+      desc: 'AuthProvider owns the token and creates the API client with it. The client sends each request with the token in the Authorization header. When the API refuses the token with 401, the client calls onUnauthorized, which is the provider\'s logOut. logOut sets the token to null in the provider, which creates a new client without it.',
+      nodes: [
+        { id: 'provider', label: 'AuthProvider', note: 'owns the token', key: true },
+        { id: 'client', label: 'API client', note: 'adds `Authorization`' },
+        { id: 'api', label: 'The API', note: 'refuses the token' },
+        { id: 'logout', label: '`logOut()`', note: 'via `onUnauthorized`' },
+      ],
+      edges: [
+        ['provider', 'client', 'creates'],
+        ['client', 'api', 'with the token'],
+        ['api', 'logout', '401'],
+        ['logout', 'provider', 'token = null'],
+      ],
+    },
     code: `function AuthProvider({ children }) {
   const [session, setSession] = useState(restoreSession);
   const logOut = useCallback(() => setSession(null), []);
@@ -651,8 +868,10 @@ function App() {
   const value = useMemo(() => ({ user: session?.user ?? null, api, logOut /* , logIn */ }), [session, api, logOut]);
   return <AuthContext value={value}>{children}</AuthContext>;
 }`,
-    example: 'The box starts with a token "restored from storage days ago" that the server no longer accepts. Press **Create a user**: the client gets 401 with a token, calls the provider\'s `logOut`, and the token disappears. Log in as Ana (a real call to the mock API) and create again: 201. Log out and try once more: 401 without a token is just an error, not a log-out.',
-    live: { kind: 'react', api: true, code: `import { createContext, useContext, useMemo, useState } from 'react';
+    live: {
+      kind: 'react',
+      api: true,
+      code: `import { createContext, useContext, useMemo, useState } from 'react';
 
 function createClient({ token, onUnauthorized }) {
   return async function api(path, { method = 'GET', body } = {}) {
@@ -698,28 +917,31 @@ function CreateUser() {
 
 function App() {
   return <AuthProvider><CreateUser /></AuthProvider>;
-}` },
+}`,
+    },
+    example: 'The box starts with a token "restored from storage days ago" that the server no longer accepts. Press **Create a user**: the client gets 401 with a token, calls the provider\'s `logOut`, and the token disappears. Log in as Ana (a real call to the mock API) and create again: 201. Log out and try once more: 401 without a token is just an error, not a log-out.',
     mistake: 'Reading the token from `localStorage` inside the client on every request. It looks like a single source, but now there are two: the context says "logged out" while storage still has the token (or the other way round after a failed write), and logging out in one tab behaves differently from another. The provider owns the session; storage is only its backup.' },
 
-  /* ---- 5. Server state and stores ------------------------------------------------------------- */
+  /* ---- 5. Server state and stores ------------------------------------------------------------------ */
   { id: 'server-vs-ui-state', hub: 'stores', topic: 'stores',
     title: 'Server state vs UI state',
-    summary: '**UI state** belongs to the interface (is the menu open, what is typed, which tab is active). **Server state** is a copy of data that lives on a server (the tasks, the users): it can go stale, is shared by many screens and must be refetched after changes.',
-    body: [
-      'The two kinds behave differently. UI state is **owned** by the front end: it is right by definition, and nobody else changes it. Server state is only **borrowed**: the moment you receive the tasks, someone else may change them; two screens that loaded them separately can show different versions; and after you create a task, every copy you hold is out of date until you refetch it.',
-      'Most of the hard parts of a front end are server-state problems: loading and error states, duplicate requests for the same data, deciding when to refetch, updating the list after a write (see [After a write](#/browser/data-fetching/after-write)), cancelling outdated requests. A custom hook such as [useFetch](#/browser/state-effects/use-fetch) solves them for **one** component; it does not share the data: two components calling it make two requests and keep two copies.',
-      'So keep the two apart. UI state: `useState`, lifted or in a context as the previous cards describe. Server state: in one place per resource (a hook used by the closest common parent, which passes it down), and when many screens share the same server data, a **data-fetching cache** ([next card](#/browser/shared-state/query-cache)) that keeps one copy per request.',
+    summary: '**UI state** belongs to the interface (is the menu open, what is typed, which tab is active); **server state** is a copy of data that lives on a server (the tasks, the users): it can go stale, is shared by many screens and must be refetched after changes.',
+    html: [
+      '<p>UI state is <strong>owned</strong> by the front end: it is right by definition. Server state is only <strong>borrowed</strong>: the moment the tasks arrive, someone else may change them; two screens that loaded them separately can disagree; and after you create a task, every copy you hold is out of date until you refetch it.</p>',
+      '<table><caption>Which kind is it?</caption><thead>'
+        + '<tr><th scope="col">Value</th><th scope="col">Kind</th><th scope="col">Where it goes</th></tr></thead><tbody>'
+        + '<tr><th scope="row">Is the side menu open</th><td>UI</td><td>Local state</td></tr>'
+        + '<tr><th scope="row">The search text</th><td>UI</td><td>Lifted state, or the URL (<code>?search=</code>)</td></tr>'
+        + '<tr><th scope="row">The logged-in user and token</th><td>UI (the session)</td><td>The auth context</td></tr>'
+        + '<tr><th scope="row">The tasks from <code>GET /api/tasks</code></th><td>Server</td><td>A fetching hook or a query cache</td></tr>'
+        + '<tr><th scope="row">The task being edited (unsaved)</th><td>UI (a draft)</td><td>Local state in the form</td></tr></tbody></table>',
+      '<p>Most hard parts of a front end are server-state problems: loading and error states, duplicate requests for the same data, when to refetch, updating lists after a write (see <a href="#/browser/data-fetching/after-write">After a write</a>), cancelling outdated requests. A fetching hook solves them for <strong>one</strong> component (see <a href="#/browser/data-fetching/fetch-hook">A reusable data hook</a>), but it does not share the data: two components that call it make two requests and keep two copies.</p>',
+      '<p>So keep the two apart. UI state goes in <code>useState</code>, lifted or in a context. Server state goes in one place per resource (a hook in the closest common parent, which passes it down), or in a <strong>data-fetching cache</strong> when many screens share it (see <a href="#/browser/shared-state/query-cache">Data-fetching caches</a>).</p>',
     ],
-    table: { caption: 'Which kind is it?', head: ['Value', 'Kind', 'Where it goes'],
-      rows: [
-        ['is the side menu open', 'UI', 'local state'],
-        ['the search text', 'UI', 'lifted state, or the URL (`?search=`)'],
-        ['the logged-in user and token', 'UI (the session)', 'auth context'],
-        ['the list of tasks from `GET /api/tasks`', 'server', 'a fetching hook or a query cache'],
-        ['the task being edited (unsaved)', 'UI (a draft)', 'local state in the form'],
-      ] },
-    example: 'In the box, the header and the list both call the same `useTasks()` hook. The console shows **two** identical requests. Add a task from the list: the list refetches its copy, the header keeps its old count. Two copies of server state, two truths.',
-    live: { kind: 'react', api: true, code: `import { useEffect, useState } from 'react';
+    live: {
+      kind: 'react',
+      api: true,
+      code: `import { useEffect, useState } from 'react';
 
 // Each call keeps its OWN copy of the server's tasks.
 function useTasks() {
@@ -757,17 +979,38 @@ function TaskList() {
 
 function App() {
   return <><TaskCount /><TaskList /></>;
-}` },
+}`,
+    },
+    example: 'In the box, the header and the list both call the same `useTasks()` hook. The console shows **two** identical requests. Add a task from the list: the list refetches its copy, the header keeps its old count. Two copies of server state, two truths.',
     mistake: 'Loading the tasks once into a global context "so every screen has them" and never refetching. The context now holds a snapshot that ages: another user\'s changes never appear, and each write needs hand-written code to patch the global list. Server data needs a plan for staleness, not just a place to live.' },
 
   { id: 'query-cache', hub: 'stores', topic: 'stores',
     title: 'Data-fetching caches (TanStack Query)',
-    summary: 'A **data-fetching cache** keeps one copy of each server response under a **key** (`[\'tasks\']`), shares it with every component that asks for the same key, removes duplicate requests and refetches when you **invalidate** the key after a write. TanStack Query (formerly React Query) and SWR are the common libraries.',
-    body: [
-      'The idea fits in one sentence: components do not own server data, they **subscribe** to it by key. The first component that asks for `[\'tasks\']` triggers the request; the others wait for the same promise; everyone re-renders when the data arrives. After a `POST`, you do not patch lists by hand: you say "the tasks are stale" (`invalidateQueries({ queryKey: [\'tasks\'] })`) and the cache refetches once and updates every subscriber.',
-      'On top, the libraries handle what is tedious to write: `isPending` / `isError` / `data` states, retries, refetching when the window regains focus, keeping old data while a new page loads, cancelling, and optimistic updates (see [Optimistic updates](#/browser/data-fetching/optimistic-updates)). The key includes the parameters (`[\'tasks\', { search, page }]`), so each combination is cached separately.',
-      'You do not need one to build a solid app: a custom hook per resource plus lifting covers small and medium projects. Reach for a cache when several screens share the same data, when you write the same refetch-after-write code again and again, or when the app should feel instant when going back to a page. The library is a dependency to install (`npm install @tanstack/react-query`); it is not available in the boxes of this site, so the box below writes a toy version by hand.',
+    summary: 'A **data-fetching cache** keeps one copy of each server response under a **key** (`[\'tasks\']`), shares it with every component that asks for the same key, removes duplicate requests and refetches when you **invalidate** the key after a write.',
+    html: [
+      '<p>Components do not own server data: they <strong>subscribe</strong> to it by key. The first component that asks for <code>[\'tasks\']</code> triggers the request, the others wait for the same promise, and everyone re-renders when the data arrives. After a <code>POST</code> you do not patch lists by hand: you mark the key stale (<code>invalidateQueries({ queryKey: [\'tasks\'] })</code>), and the cache refetches once and updates every subscriber.</p>',
+      '<ul>'
+        + '<li><strong>What the libraries add:</strong> <code>isPending</code> / <code>isError</code> / <code>data</code> states, retries, refetching when the window regains focus, keeping old data while a new page loads, cancelling, and optimistic updates (see <a href="#/browser/data-fetching/optimistic-updates">Optimistic updates</a>).</li>'
+        + '<li><strong>Parameters are part of the key:</strong> <code>[\'tasks\', { search, page }]</code> caches each combination separately.</li>'
+        + '<li><strong>When to reach for one:</strong> several screens share the same data, the same refetch-after-write code keeps coming back, or going back to a page should feel instant. A hook per resource plus lifting covers small and medium apps.</li></ul>',
+      '<p>TanStack Query (formerly React Query) and SWR are the common libraries; TanStack Query installs with <code>npm install @tanstack/react-query</code>. Neither loads in the Try it boxes of this site, so the box writes a toy cache by hand.</p>',
     ],
+    diagram: {
+      kind: 'branch',
+      title: 'One key, one request, one copy shared by every subscriber.',
+      desc: 'GET /api/tasks is sent once. Its answer is stored in the cache entry with the key tasks. TaskCount and TaskList both subscribe to that entry, so they show the same copy and both update when it is refetched.',
+      nodes: [
+        { id: 'req', label: '`GET /api/tasks`', note: 'sent once' },
+        { id: 'entry', label: 'Cache entry', note: 'key `[\'tasks\']`', key: true },
+        { id: 'count', label: 'TaskCount', note: 'subscribes' },
+        { id: 'list', label: 'TaskList', note: 'subscribes' },
+      ],
+      edges: [
+        ['req', 'entry'],
+        ['entry', 'count'],
+        ['entry', 'list'],
+      ],
+    },
     code: `// With TanStack Query (wrap the app once in <QueryClientProvider client={queryClient}>)
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -787,8 +1030,10 @@ function useAddTask() {
 
 // in a component
 const { data: tasks, isPending, isError, error } = useTasks(search);`,
-    example: 'The box is the previous card\'s app with a 20-line toy cache. The console shows **one** request although two components ask for the tasks. Add a task: the cache refetches once and **both** components update.',
-    live: { kind: 'react', api: true, code: `import { useEffect, useState } from 'react';
+    live: {
+      kind: 'react',
+      api: true,
+      code: `import { useEffect, useState } from 'react';
 
 // A toy query cache: one entry per key, shared by every component that asks for it.
 const cache = new Map();                          // key → { data, promise, listeners }
@@ -830,16 +1075,20 @@ function TaskList() {
 
 function App() {
   return <><TaskCount /><TaskList /></>;
-}` },
+}`,
+    },
+    example: 'The box is the app of [Server state vs UI state](#/browser/shared-state/server-vs-ui-state) with a 20-line toy cache. The console shows **one** request although two components ask for the tasks. Add a task: the cache refetches once and **both** components update.',
     mistake: 'Copying the query\'s data into `useState` (`const [tasks, setTasks] = useState(data)` and an effect to sync it). That recreates the second source of truth the cache exists to remove: the copy misses every refetch. Read `data` from the hook directly; for edits, keep a separate draft.' },
 
   { id: 'store-libraries', hub: 'stores', topic: 'stores',
     title: 'Store libraries: Redux Toolkit and Zustand',
-    summary: 'A **store** is an object outside the component tree that holds app-wide state; components **subscribe to the slice they select** and re-render only when that slice changes. Redux Toolkit and Zustand are common libraries; most apps of moderate size do not need one.',
-    body: [
-      'A context re-renders every consumer when its value changes. A store changes the deal: each component passes a **selector**, a function that picks what it needs (`(s) => s.cart.count`), and re-renders only when the selected value changes. Updates go through named functions (Zustand) or **actions** handled by **reducers** (Redux), so every change to shared state happens in one known place and can be logged, replayed or inspected in dev tools.',
-      '**Zustand** is small: `create((set) => ({ count: 0, inc: () => set((s) => ({ count: s.count + 1 })) }))` returns a hook; no provider needed. **Redux Toolkit** is more structured: slices with reducers, a `configureStore`, a `<Provider>` and `useSelector` / `useDispatch`; it suits large teams that want strict conventions, and includes RTK Query, a data-fetching cache. Neither is available in the boxes of this site; the box below hand-writes the core idea with React\'s own `useSyncExternalStore`.',
-      'When does a store pay off? Many components change and read the same complex client state (a drawing editor, a cart with rules, an offline-first app), you need fine-grained re-renders, or you want time-travel debugging. For the usual app (a session, a theme, server data and local forms), lifted state, an auth context and a fetching hook or query cache cover it, with fewer concepts and dependencies.',
+    summary: 'A **store** is an object outside the component tree that holds app-wide state; components **subscribe to the slice they select** and re-render only when that slice changes. Most apps of moderate size do not need one.',
+    html: [
+      '<p>A context re-renders every consumer when its value changes. A store changes the deal: each component passes a <strong>selector</strong>, a function that picks what it needs (<code>(s) =&gt; s.cart.count</code>), and re-renders only when the selected value changes. Updates go through named functions or <strong>actions</strong> handled by <strong>reducers</strong>, so every change to shared state happens in one known place and can be logged, replayed or inspected in dev tools.</p>',
+      '<dl>'
+        + '<dt>Zustand</dt><dd>Small: <code>create((set) =&gt; ({ … }))</code> returns a hook; no provider needed.</dd>'
+        + '<dt>Redux Toolkit</dt><dd>Structured: slices with reducers, <code>configureStore</code>, a <code>&lt;Provider&gt;</code>, <code>useSelector</code> and <code>useDispatch</code>. It suits large teams that want strict conventions, and includes RTK Query, a data-fetching cache.</dd></dl>',
+      '<p><strong>When a store pays off:</strong> many components read and change the same complex client state (a drawing editor, a cart with rules, an offline-first app), you need fine-grained re-renders, or you want time-travel debugging. For the usual app (a session, a theme, server data and local forms), lifted state, an auth context and a fetching hook or cache are enough, with fewer concepts and dependencies. Neither library loads in the Try it boxes; the box writes the core idea with React\'s own <code>useSyncExternalStore</code>.</p>',
     ],
     code: `// Zustand
 import { create } from 'zustand';
@@ -857,8 +1106,9 @@ const cartSlice = createSlice({
 });
 const count = useSelector((s) => s.cart.items.length);
 dispatch(cartSlice.actions.add(item));`,
-    example: 'The box builds a 10-line store with `useSyncExternalStore`. `Count` selects `count`, `Theme` selects `theme`. Press **+1**: only `Count` logs a render. Press **Theme**: only `Theme` does. With one context holding both, both would re-render every time.',
-    live: { kind: 'react', code: `import { useSyncExternalStore } from 'react';
+    live: {
+      kind: 'react',
+      code: `import { useSyncExternalStore } from 'react';
 
 function createStore(initial) {
   let state = initial;
@@ -894,32 +1144,49 @@ function App() {                       // reads nothing, so it never re-renders
       <button onClick={() => store.set((s) => ({ theme: s.theme === 'light' ? 'dark' : 'light' }))}>Theme</button>
     </>
   );
-}` },
+}`,
+    },
+    example: 'The box builds a 10-line store with `useSyncExternalStore`. `Count` selects `count`, `Theme` selects `theme`. Press **+1**: only `Count` logs a render. Press **Theme**: only `Theme` does. With one context holding both, both would re-render every time.',
     mistake: 'Moving every piece of state into the store, including form fields and whether a dropdown is open. The store then becomes a global variable with extra steps: components depend on it for things only they use, tests need it set up, and you lose the "state lives where it is used" rule. Keep local state local even when a store exists.' },
 
   { id: 'choosing-state-home', hub: 'stores', topic: 'stores',
     title: 'Putting it together: a home for every piece of state',
-    summary: 'For each value ask, in order: is it derived (compute it), used by one component (local), by a few nearby (lift it), part of the URL (put it there), app-wide and slow-changing (context), or server data (a fetching hook or cache)? A store is for what is left.',
-    body: [
-      'The questions go from the cheapest answer to the most powerful one, and you stop at the first yes. Most values stop early: in a typical screen, the majority of state is local form input and derived values, a few values are lifted to the page, and the app has one or two contexts.',
-      'The **URL** is a place for state too: the current screen, the id of the item shown, and often the search text, filters and page number (`/tasks?search=api&page=2`). State in the URL survives a reload, can be bookmarked and shared, and works with the back button, which lifted state does not. Routers give you hooks to read and write it (see [Query strings: useSearchParams](#/browser/routing/search-params)).',
-      'Revisit placements as the app grows: state moves **up** when a new component needs it and **down** when the last distant reader is removed. The state-tree tool is a quick way to check a placement: who reads it, who only passes it on, and who re-renders.',
+    summary: 'For each value, ask in order: is it derived, used by one component, by a few nearby, part of the URL, app-wide and slow-changing, or server data? Stop at the first yes; a store is for what is left.',
+    html: [
+      '<ol>'
+        + '<li><strong>Can it be computed</strong> from other state or props? Derive it during render and store it nowhere.</li>'
+        + '<li><strong>Does only one component use it?</strong> Local state.</li>'
+        + '<li><strong>Do siblings, or a parent and a child, use it?</strong> Lift it to the closest common parent and pass props (see <a href="#/browser/shared-state/where-state-lives">Where a piece of state lives</a>).</li>'
+        + '<li><strong>Does the path go through wrappers</strong> (Layout, Card, Page)? Composition: pass elements as <code>children</code> or slots.</li>'
+        + '<li><strong>Should it survive a reload or be shareable</strong> (the screen, the selected id, the search, the page)? The URL (see <a href="#/browser/routing/search-params">Query strings: useSearchParams</a>).</li>'
+        + '<li><strong>Do many components at different depths need it, and does it change rarely</strong> (the user, the theme, the language)? A context with a provider component.</li>'
+        + '<li><strong>Is it a copy of server data?</strong> A fetching hook per resource, or a data-fetching cache.</li>'
+        + '<li><strong>Is it complex client state that many components change?</strong> A store library.</li></ol>',
+      '<h3>Props, composition or context: the trade-off</h3>',
+      '<dl>'
+        + '<dt>Props</dt><dd>Explicit: you can see where every value comes from. Noisy over long paths.</dd>'
+        + '<dt>Composition</dt><dd>Still explicit, and shortens the path, but only when the middle components are wrappers.</dd>'
+        + '<dt>Context</dt><dd>Removes the path, at the price of <strong>implicit dependencies</strong>: a component that calls <code>useAuth()</code> works only inside an <code>AuthProvider</code>, and its props no longer show what it needs. Good context values have many readers, a natural owner near the root and a <strong>low rate of change</strong>.</dd></dl>',
+      '<p>Context is not a state manager: it shares a value, but it does not cache server data, does not let a component subscribe to part of the value, and does not log changes. That is what <a href="#/browser/shared-state/query-cache">caches</a> and <a href="#/browser/shared-state/store-libraries">stores</a> add.</p>',
+      '<table><caption>A home for every value in a task app</caption><thead>'
+        + '<tr><th scope="col">Value</th><th scope="col">Home</th></tr></thead><tbody>'
+        + '<tr><th scope="row">The number of done tasks</th><td>Derived during render</td></tr>'
+        + '<tr><th scope="row">The new-task title being typed</th><td>Local state in the form</td></tr>'
+        + '<tr><th scope="row">The selected task in a list + detail split</th><td>Lifted to the page (or <code>/tasks/:id</code> in the URL)</td></tr>'
+        + '<tr><th scope="row">The search text and the page number</th><td>The URL query string, or lifted state</td></tr>'
+        + '<tr><th scope="row">The logged-in user and token</th><td>An auth context, saved to storage</td></tr>'
+        + '<tr><th scope="row">The theme</th><td>A theme context, saved to storage</td></tr>'
+        + '<tr><th scope="row">The tasks from the server</th><td>A fetching hook per resource, or a query cache</td></tr>'
+        + '<tr><th scope="row">A complex client-side editor document</th><td>A store library</td></tr></tbody></table>',
+      '<p>Revisit placements as the app grows: state moves up when a new component needs it, and down when its last distant reader goes.</p>',
     ],
-    table: { caption: 'A home for every value in a task app', head: ['Value', 'Home'],
-      rows: [
-        ['number of done tasks', 'derived during render'],
-        ['the new-task title being typed', 'local state in the form'],
-        ['the selected task in a list + detail split', 'lifted to the page (or `/tasks/:id` in the URL)'],
-        ['search text and page number', 'the URL query string, or lifted state'],
-        ['the logged-in user and token', 'an auth context, saved to storage'],
-        ['the theme', 'a theme context, saved to storage'],
-        ['the tasks from the server', 'a fetching hook per resource or a query cache'],
-        ['a complex client-side editor document', 'a store library'],
-      ] },
-    example: 'Try the challenges of the state-tree tool in order: keep local state local, lift the filter, remove a duplicate, spot the drilling, fix it with composition, move the theme into a context, then predict the re-renders with and without `memo` and on log-out.',
     practice: SHARED_TREE_LINK,
-    mistake: 'Deciding the "state management architecture" before writing the screens. The right home for a value comes from who uses it, which you only know once the components exist. Start with local state, lift when needed, and introduce a context, cache or store when a concrete pain (drilling, duplicate requests, too many re-renders) shows up.' },
+    example: 'Try the state-tree challenges in order: keep local state local, lift the filter, remove a duplicate, spot the drilling, fix it with composition, move the theme into a context, then predict the re-renders. One check of context overkill: choose "Search filter text", switch to Context and place the provider on TaskPage. The analysis says plain props would do, because nothing sits between TaskPage and the two components that use the filter.',
+    mistake: 'Deciding the "state management architecture" before writing the screens, or putting the search text, the selected task and the open modal in one root context "so everything can reach it". The right home comes from who uses a value, which you only know once the components exist, and a root context of fast-changing values re-renders every consumer on each keystroke. Start local, lift when needed, and add a context, cache or store when a concrete pain shows up.' },
 ];
+
+/* Cards merged into another: their old addresses redirect (js/concept-section.js). */
+DATA.en.SHARED_MOVED = { 'when-context': '#/browser/shared-state/choosing-state-home' };
 
 DATA.en.SHARED_QUIZ = [
   /* Where state lives */
@@ -1038,6 +1305,19 @@ DATA.en.SHARED_QUIZ = [
     answer: false,
     why: '`useContext` looks above the calling component. The component that renders the provider already has the value in a variable.' },
 
+  { type: 'mc', topic: 'context',
+    q: 'A child is wrapped in `memo`, and its parent passes `onSelect={(t) => setSelected(t)}`. The parent re-renders for an unrelated reason. Does the child re-render?',
+    choices: ['No: `memo` always skips it', 'Yes: the arrow function is a new object on every render, so the props are not equal', 'Only if the child reads a context', 'Only in production'],
+    answer: 1,
+    why: '`memo` compares props by identity. `useCallback` keeps the same function between renders, so `memo` can skip the child.' },
+  { type: 'fib', topic: 'context',
+    q: 'The hook that keeps the same function object between renders until one of its dependencies changes is ___.',
+    accept: ['useCallback', 'useCallback()'],
+    why: '`useCallback(fn, deps)` returns the same function while `deps` are unchanged; `useMemo` does the same for a computed value.' },
+  { type: 'tf', topic: 'context',
+    q: 'Wrapping every function in `useCallback` is a good default that makes any app faster.',
+    answer: false,
+    why: 'It only helps when something compares the function\'s identity (a `memo` child, a dependency array, a context value). Otherwise it adds cost and a dependency array to keep right.' },
   /* An authentication context */
   { type: 'mc', topic: 'auth',
     q: 'What should an authentication provider keep in state?',

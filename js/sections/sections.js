@@ -53,7 +53,7 @@ const SECTIONS = (() => {
       blurb: 'Documents and collections: embedding, find filters, projection, aggregation and indexes.',
       tools: ['mongo-playground'] },
     { id: 'auth', prefix: 'AUTH', base: '#/server/auth', title: 'Authentication and security', badge: 'SEC', icon: 'lock', area: 'server',
-      blurb: 'Who is calling and what they may do: password hashing, sessions and JWT, CORS, validation and pagination.',
+      blurb: 'Who is calling and what they may do: password hashing, sessions and JWT, protecting routes, CORS, validation and limits.',
       tools: ['jwt-inspector', 'hash-cost', 'cors-sim'] },
     { id: 'components', prefix: 'COMPONENTS', base: '#/browser/components', title: 'Components', badge: 'CMP', icon: 'component', area: 'browser',
       blurb: 'Building an interface from components: JSX, props, lists and keys, conditional rendering, events and forms.',

@@ -496,6 +496,8 @@ table{ border-collapse: collapse; }
 .dg-key .dg-box{ fill: var(--h3s); stroke: var(--accent); stroke-width: 2.5; }
 .dg-label{ fill: var(--text); font: 600 14px var(--sans); }
 .dg-note, .dg-elabel{ fill: var(--muted); font: 12.5px var(--sans); }
+/* Behind a sequence message label: hides another lane's lifeline (js/diagram.js). */
+.dg-lbg{ fill: var(--tint); }
 .dg-num{ fill: var(--ink); font: 700 11px var(--sans); }
 .dg-code{ font-family: var(--mono); font-weight: 500; }
 .dg-edge{ fill: none; stroke: var(--ink); stroke-width: 1.5; }

@@ -390,7 +390,14 @@ const Diagram = (() => {
       const x2 = xs[b];
       const lines = wrap(text, FS_NOTE, Math.abs(x2 - x1) - 16);
       const ly = y + lines.length * 15;
-      parts.push(lines.map((l, k) => `<text class="dg-elabel" x="${(x1 + x2) / 2}" y="${y + 11 + k * 15}" text-anchor="middle">${tspans(l)}</text>`).join('')
+      // A panel-coloured backing under each label hides another lane's lifeline behind it
+      // (lifelines are drawn first). A rectangle, not a text halo: halos bloat printed PDFs.
+      const cx = (x1 + x2) / 2;
+      parts.push(lines.map((l, k) => {
+        const w = textW(l, FS_NOTE) + 8;
+        return `<rect class="dg-lbg" x="${cx - w / 2}" y="${y + k * 15}" width="${w}" height="15"/>`
+          + `<text class="dg-elabel" x="${cx}" y="${y + 11 + k * 15}" text-anchor="middle">${tspans(l)}</text>`;
+      }).join('')
         + arrowSvg([[x1, ly + 4], [x2 + (x2 > x1 ? -1 : 1), ly + 4]]));
       y = ly + 20;
     });
