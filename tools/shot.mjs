@@ -8,7 +8,8 @@
 // --print emulates print media at an A4-like width (860 px, light): what the section PDF
 // prints. --modes picks some of the three modes.
 // Routes are written without the leading "#/" (Git Bash rewrites "#/…" as a path).
-// A route whose last part is "summary" is captured whole (the printable sheet).
+// A concept route captures its open concept (on its group page), with Try it boxes open.
+// A route without an open concept (the section overview, the summary) is captured whole.
 // Files: <out-dir>/<last part of the route>-<mode>.png
 // Browser: $CHROME_PATH, else an installed Chrome / Edge, else Playwright's Chromium.
 import { chromium } from '@playwright/test';
@@ -53,7 +54,11 @@ const RUN = print
 
 for (const mode of RUN) {
   const context = await browser.newContext({ viewport: { width: mode.width, height: mode.height }, colorScheme: mode.theme, deviceScaleFactor: 1 });
-  await context.addInitScript((th) => { try { localStorage.clear(); localStorage.setItem('theme', th); } catch (e) { /* none */ } }, mode.theme);
+  // Try it boxes start closed for a new reader; review them open, as a reader who opened one
+  // sees them (the remembered choice in rail-ui-v1, js/concept-section.js).
+  await context.addInitScript((th) => {
+    try { localStorage.clear(); localStorage.setItem('theme', th); localStorage.setItem('rail-ui-v1', JSON.stringify({ tryOpen: true })); } catch (e) { /* none */ }
+  }, mode.theme);
   const page = await context.newPage();
   if (print) await page.emulateMedia({ media: 'print' });
   page.on('pageerror', (e) => console.log(`[${mode.name}] pageerror: ${e.message}`));
@@ -62,10 +67,15 @@ for (const mode of RUN) {
   for (const route of routes) {
     await page.evaluate((h) => { location.hash = h; }, route);
     await page.waitForFunction(() => document.querySelector('#view') && document.querySelector('#view').children.length);
-    await page.waitForTimeout(250);
+    // The open concept of a group page. Live previews render after a 350 ms debounce (React
+    // boxes first load React): wait past it.
+    const card = await page.$('#view .concept.is-open') || await page.$('#view article.concept:not(.cc)');
+    await page.waitForTimeout(card && await card.$('details.try') ? 1200 : 600);
     const name = route.split('/').filter(Boolean).pop();
     const file = join(out, `${name}-${mode.name}.png`);
-    const card = name === 'summary' ? null : await page.$('#view .concept');
+    // The section overview and the summary have no open concept: capture the whole page.
+    // Known limit: sandboxed Try it previews come out blank in these captures although they
+    // render (check a preview's text with the page's frames, or look in a real browser).
     if (card) await card.screenshot({ path: file });
     else await page.screenshot({ path: file, fullPage: true });
     console.log(file);
