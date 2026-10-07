@@ -479,7 +479,7 @@ button { background: #FF5700; color: white; border: 0; border-radius: 4px; paddi
     mistake: 'Believing `justify-content` is always horizontal. It works along the **main** axis: after `flex-direction: column` it moves items vertically and `align-items` moves them horizontally. And vertical centring in a column only shows if the container is taller than its content (give it a `height` or `min-height`).',
     live: { kind: 'html',
       html: `<header>
-  <h1>DevNews</h1>
+  <h1>Newsroom</h1>
   <nav><ul><li><a href="#">Home</a></li><li><a href="#">Articles</a></li><li><a href="#">About</a></li></ul></nav>
 </header>`,
       css: `header {
@@ -580,12 +580,12 @@ nav a  { color: white; }` } },
     points: [
       '`repeat(3, 1fr)` is short for `1fr 1fr 1fr`.',
       '`minmax(200px, 1fr)`: a track never narrower than 200px, growing up to `1fr`.',
-      '`grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));` fits as many 220px-or-wider columns as the container allows, so a card gallery goes from 4 columns to 1 **without any media query** (beyond the slides, but very handy).',
+      '`grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));` fits as many 220px-or-wider columns as the container allows, so a card gallery goes from 4 columns to 1 **without any media query**.',
       '`gap` (or `row-gap` / `column-gap`) sets the space between tracks, never at the outer edges.',
     ],
     widget: 'grid',
     practice: { href: '#/browser/css/practice/grid', label: 'Open the Grid playground' },
-    example: 'The DevNews `<main>` with `display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;` on a 930px container: 930 − 32 = 898px free, so the article column is 598.7px and the sidebar 299.3px, and both keep that 2:1 ratio at any width.',
+    example: 'The Newsroom `<main>` with `display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;` on a 930px container: 930 − 32 = 898px free, so the article column is 598.7px and the sidebar 299.3px, and both keep that 2:1 ratio at any width.',
     mistake: 'Putting `grid-template-columns: 2fr 1fr` on a `<main>` that has **three** children and expecting "articles left, sidebar right". Auto-placement fills the cells in order: the first child takes the left cell, the second the right cell, and the third wraps to the left cell of row 2. Make the extra child span both columns or place the items explicitly (next card).',
     live: { kind: 'html',
       html: `<main>

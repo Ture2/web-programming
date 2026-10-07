@@ -22,10 +22,14 @@ const RULES = [
   { name: 'class', re: /\bin class\b|\bclassroom\b|\bin the course\b|\bthe course (?:labs?|practice|project|quiz)/i },
   { name: 'grading', re: /\bgrad(?:ed|ing|er)\b|\brubric\b/i },
   { name: 'solutions folder', re: /\bsolutions\// },
+  { name: 'teaching context', re: /\byour (?:instructor|teacher|lecturer)\b|\bthis course\b|\bthe slides\b|\b(?:at this|intro) level\b|\bstudent-sized\b/i },
+  { name: 'lab project name', re: /\bDevNews\b/ },
 ];
 
 /* Genuine, non-course uses: [file (relative to site/), rule name, regular expression on the line]. */
 const ALLOW = [
+  ['data/en/mongo.js', 'teaching context', /Prepare the slides/],          // a sample task title
+  ['js/tools/mongo-engine.js', 'teaching context', /Prepare the slides/],
 ];
 
 function files(dir) {

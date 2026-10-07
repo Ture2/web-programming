@@ -40,7 +40,7 @@ DATA.en.GIT_CONCEPTS = [
   { id: 'git-vs-github', hub: 'why', topic: 'why', title: 'Git vs GitHub',
     summary: 'Git is the version-control program that runs on your computer; GitHub is a website that stores copies of Git repositories online and adds team features such as pull requests, reviews and issues.',
     body: [
-      'Mental model: **Git does all the version control on your machine**; GitHub is simply **one more copy of your project**, kept on a server that you, your partner and your instructor can all reach, with a web interface around it. You can use Git for years without GitHub; GitHub is useless without Git.',
+      'Mental model: **Git does all the version control on your machine**; GitHub is simply **one more copy of your project**, kept on a server that you and your teammates can all reach, with a web interface around it. You can use Git for years without GitHub; GitHub is useless without Git.',
       'Work moves between the two copies only when you say so: `git push` sends your new checkpoints to GitHub, and `git pull` brings down checkpoints that someone else (or you, from another computer) sent there. Alternatives to GitHub, such as GitLab or Bitbucket, work the same way because they host the same Git repositories.',
     ],
     table: {
@@ -128,7 +128,7 @@ Changes not staged for commit:
     summary: 'A commit is a saved snapshot of the whole project at one moment, identified by a unique **hash** and stored with an author, a date, a message and a link to its parent commit(s).',
     body: [
       'Mental model: a commit is a **complete photo of every tracked file**, not a list of edits (Git reuses unchanged files internally, so photos are cheap). Each commit points back to the commit before it, its **parent**, so the commits form a chain: that chain **is** the history. Comparing a commit with its parent is how Git shows what changed.',
-      'The **hash** is a 40-character hexadecimal identifier (for example `3f9c2a1e…`) computed from the commit\'s content, metadata and parent. Change anything, even one letter of a message, and the hash changes, so history cannot be altered silently. In practice you use the first 7 characters (`3f9c2a1`), which are unique within a project. On GitHub every commit has its own page at `https://github.com/<user>/<repo>/commit/<hash>`; that is the link to paste when a brief asks you to "link the fix commit".',
+      'The **hash** is a 40-character hexadecimal identifier (for example `3f9c2a1e…`) computed from the commit\'s content, metadata and parent. Change anything, even one letter of a message, and the hash changes, so history cannot be altered silently. In practice you use the first 7 characters (`3f9c2a1`), which are unique within a project. On GitHub every commit has its own page at `https://github.com/<user>/<repo>/commit/<hash>`; that is the link to paste when someone asks you to "link the fix commit".',
       'The **message** is written for the person who reads the history later, often you. Convention: a short summary line (about 50 characters) in the imperative mood, as if completing "If applied, this commit will…": "Add search filter to /books", "Fix 404 on missing id". If the reason is not obvious, leave a blank line and explain **why** in a body. One commit = one logical change.',
     ],
     table: {
@@ -326,7 +326,7 @@ coverage/
 .DS_Store
 Thumbs.db`,
     dialect: 'gitignore',
-    example: 'An API reads `DATABASE_URL` and `JWT_SECRET` from `.env`, ships a `.env.example`, and must run "from a clean clone": a reviewer or a new teammate clones it, runs `npm install` (which rebuilds `node_modules/`) and copies `.env.example` to `.env`. A committed `.env` with a real secret is a leak: anyone who can read the repository (or its history) has the key. The `.gitignore` above covers all of that.',
+    example: 'An API reads `DATABASE_URL` and `JWT_SECRET` from `.env`, ships a `.env.example`, and must work from a fresh clone: a reviewer or a new teammate clones it, runs `npm install` (which rebuilds `node_modules/`) and copies `.env.example` to `.env`. A committed `.env` with a real secret is a leak: anyone who can read the repository (or its history) has the key. The `.gitignore` above covers all of that.',
     mistake: 'Adding `.env` to `.gitignore` **after** it was committed and pushed. Git keeps tracking it, and the secret stays readable in the history on GitHub. Fix: `git rm --cached .env`, commit, push, and **change the secret** (new password or key), because the old value is public for ever in the history.' },
 
   /* ---- 5. Remotes --------------------------------------------------------------------- */
@@ -359,7 +359,7 @@ $ git push`,
     summary: '`git fetch` downloads new commits from the remote into `origin/<branch>` without touching your files or your branch; `git pull` is `git fetch` followed by integrating those commits into your current branch (by default with a merge).',
     body: [
       'Mental model: `git fetch` **collects the post and leaves it unopened on the table**: you can look at it (`git log origin/main`) and nothing on your desk changes. `git pull` collects the post **and files it into your binder**: your branch and your files are updated.',
-      'If you made no new commits, `pull` simply moves your branch forward (a fast-forward). If both you and the remote have new commits, the histories have **diverged** and pull must combine them, usually with a merge commit, which may produce a conflict. Recent Git versions stop the first time this happens with "Need to specify how to reconcile divergent branches"; tell Git once to merge, which is what this course uses: `git config --global pull.rebase false`.',
+      'If you made no new commits, `pull` simply moves your branch forward (a fast-forward). If both you and the remote have new commits, the histories have **diverged** and pull must combine them, usually with a merge commit, which may produce a conflict. Recent Git versions stop the first time this happens with "Need to specify how to reconcile divergent branches"; tell Git once to merge, the simpler choice: `git config --global pull.rebase false`.',
       'Habit for pair work: **pull before you start** working and **pull before you push**.',
     ],
     table: {
@@ -542,13 +542,13 @@ $ git restore styles.css        # DISCARD the unstaged edits to styles.css`,
       'The rule: **pushed → revert. Not pushed yet → amend or reset are fine.** `HEAD~1` means "the parent of the current commit", one step back.',
     ],
     table: {
-      caption: 'Undoing commits (intro level)',
+      caption: 'Undoing commits',
       head: ['Command', 'What it does', 'Rewrites history?', 'OK after push?'],
       rows: [
         ['`git revert <hash>`', 'New commit with the opposite changes', 'No', 'Yes'],
         ['`git commit --amend`', 'Replaces the last commit (fix message, add a forgotten file)', 'Yes', 'No'],
         ['`git reset --soft HEAD~1`', 'Removes the last commit; its changes stay staged', 'Yes', 'No'],
-        ['`git reset --hard <hash>`', 'Moves the branch back **and** discards all uncommitted work', 'Yes', 'No; avoid at this level'],
+        ['`git reset --hard <hash>`', 'Moves the branch back **and** discards all uncommitted work', 'Yes', 'No; avoid it unless you are sure'],
       ],
     },
     code: `# a pushed commit broke the page: cancel it with a new commit

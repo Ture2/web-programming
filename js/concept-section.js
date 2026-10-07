@@ -15,7 +15,8 @@
    head, rows }, tables [table, …], code, dialect, example, mistake, practice { href, label? },
    live (a "Try it" box, js/live-runner.js), widget (a tool id, js/tools/registry.js).
    cfg: { base, title(), course(), badge, groups: [{ key, label, icon }] (a hub takes the cards
-          whose `hub` is its key), concepts, quiz?, topics?, quizKey?, perfectText(),
+          whose `hub` is its key), concepts, moved? ({ oldCardId: route }: merged cards
+          redirect), quiz?, topics?, quizKey?, perfectText(),
           nextLink?: { href, label() }, pdf: id of the summary PDF (tools/build-pdfs.mjs),
           practice?: { label, match(rest), links(rest | null) → [{ href, label, current }],
                        render(rest) → title (draws into #practice-slot) } }
@@ -535,6 +536,11 @@ function ConceptSection(cfg) {
       return `${t('Test yourself')}${route.topic !== 'all' ? `: ${TOPICS[route.topic]}` : ''} · ${cfg.title()}`;
     }
     const i = CONCEPTS.findIndex((c) => c.id === r);
+    // A card merged into another (cfg.moved): send old links and bookmarks to its new home.
+    if (i < 0 && cfg.moved && cfg.moved[r]) {
+      location.replace(cfg.moved[r]);
+      return cfg.title();
+    }
     route = { page: 'concept', concept: i < 0 ? 0 : i, topic: 'all', rest: r };
     lastPage = `concept-${route.concept}`;
     renderConcept();

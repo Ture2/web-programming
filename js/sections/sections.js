@@ -90,6 +90,7 @@ const SECTIONS = (() => {
       pdf: s.id,
       groups: s.data.groups,
       concepts: s.data.concepts,
+      moved: s.data.moved,
       quiz: s.data.quiz,
       topics: s.data.topics,
       quizKey: `${s.id}-quiz-v1`,

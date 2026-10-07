@@ -176,7 +176,7 @@ console.log(i);          // 3: the var counter survived the loop` } },
     title: 'Data types and typeof',
     summary: 'Every value has a type: JavaScript has seven primitive types plus objects, and the `typeof` operator tells you which one a value is, with two famous quirks.',
     body: [
-      'In JavaScript the type belongs to the **value**, not to the variable: `let x = 5; x = \'five\';` is legal. **Primitives** are simple, immutable values: `number`, `string`, `boolean`, `undefined`, `null`, plus `bigint` (huge integers, written `10n`) and `symbol` (unique ids), which you will rarely need in this course. **Everything else is an object**: arrays, plain `{ }` objects, functions, dates.',
+      'In JavaScript the type belongs to the **value**, not to the variable: `let x = 5; x = \'five\';` is legal. **Primitives** are simple, immutable values: `number`, `string`, `boolean`, `undefined`, `null`, plus `bigint` (huge integers, written `10n`) and `symbol` (unique ids), which you will rarely need. **Everything else is an object**: arrays, plain `{ }` objects, functions, dates.',
       '`undefined` and `null` both mean "no value", with different authors. **`undefined`** is the engine\'s default: a declared variable with no value, a missing property, a missing argument, the result of a function without `return`. **`null`** is written by a programmer to say "intentionally empty".',
     ],
     table: {

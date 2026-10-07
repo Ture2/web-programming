@@ -718,7 +718,7 @@ setTimeout(() => console.log('timeout'), 0);
 Promise.resolve().then(() => console.log('promise'));
 console.log('script end');
 // Predict the four lines, then press Run.` },
-    example: 'In the code above, both plain `console.log` lines run while the script is on the stack. `setTimeout` hands its callback to the timer, which queues it as a task after 0 ms. `.then` on a fulfilled promise queues a microtask. When the script ends, the loop empties the microtask queue (`promise`), then takes the task (`timeout`). Step through it below with the "Promise.then versus setTimeout" program.',
+    example: 'In the Try it box, both plain `console.log` lines run while the script is on the stack. `setTimeout` hands its callback to the timer, which queues it as a task after 0 ms. `.then` on a fulfilled promise queues a microtask. When the script ends, the loop empties the microtask queue (`promise`), then takes the task (`timeout`). Step through it below with the "Promise.then versus setTimeout" program.',
     mistake: 'Reading `setTimeout(fn, 1000)` as "run `fn` in exactly one second". It means "queue `fn` **no sooner than** one second from now"; if the stack is busy or other tasks are ahead, it runs later. A timer delay is a minimum, not an appointment.',
     widget: 'event-loop' },
 
@@ -753,7 +753,7 @@ Promise.resolve().then(() => {
 });
 console.log('6');
 // Predict the order, then press Run. Then swap two lines and predict again.` },
-    example: 'The code above: `1` and `6` are synchronous. The `.then` callback is a microtask, so `4` comes next, and it schedules a second timer. The first timer\'s task prints `2` and queues a microtask, which runs before the next task: `3`. Last, the second timer: `5`. Result: 1, 6, 4, 2, 3, 5.',
+    example: 'In the Try it box: `1` and `6` are synchronous. The `.then` callback is a microtask, so `4` comes next, and it schedules a second timer. The first timer\'s task prints `2` and queues a microtask, which runs before the next task: `3`. Last, the second timer: `5`. Result: 1, 6, 4, 2, 3, 5.',
     mistake: 'Ordering callbacks by the line they are written on. `setTimeout` on line 2 and `.then` on line 6 say nothing about which runs first: the queue a callback joins, and when it joins, decide.',
     practice: { href: '#/server/runtime/practice/event-loop', label: 'Predict the output: the event-loop challenges' } },
 

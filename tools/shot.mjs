@@ -1,9 +1,12 @@
 // Screenshots of concept cards for design review: the card (not the whole page) at 1280 px
 // (light), 375 px (light) and 1280 px (dark). Also prints console warnings and errors.
 //
-//   node site/tools/shot.mjs <out-dir> <route> [<route> …]
+//   node site/tools/shot.mjs <out-dir> [--print] [--modes 1280,375,dark] <route> [<route> …]
 //   node site/tools/shot.mjs ./shots server/runtime/what-is-node server/runtime/summary
+//   node site/tools/shot.mjs ./shots --print server/runtime/summary
 //
+// --print emulates print media at an A4-like width (860 px, light): what the section PDF
+// prints. --modes picks some of the three modes.
 // Routes are written without the leading "#/" (Git Bash rewrites "#/…" as a path).
 // A route whose last part is "summary" is captured whole (the printable sheet).
 // Files: <out-dir>/<last part of the route>-<mode>.png
@@ -13,7 +16,10 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { serve } from './serve.mjs';
 
-const [out, ...args] = process.argv.slice(2);
+const [out, ...rest] = process.argv.slice(2);
+const print = rest.includes('--print');
+const modesArg = rest.includes('--modes') ? rest[rest.indexOf('--modes') + 1] : '';
+const args = rest.filter((a, i) => !a.startsWith('--') && rest[i - 1] !== '--modes');
 const routes = args.map((r) => `#/${r.replace(/^#?\/?/, '')}`);
 if (!out || !routes.length) {
   console.error('Usage: node site/tools/shot.mjs <out-dir> <route> [<route> …]');
@@ -41,10 +47,15 @@ const base = `http://127.0.0.1:${server.address().port}/`;
 const executablePath = browserPath();
 const browser = await chromium.launch(executablePath ? { executablePath } : {});
 
-for (const mode of MODES) {
+const RUN = print
+  ? [{ name: 'print', width: 860, height: 1200, theme: 'light' }]
+  : MODES.filter((m) => !modesArg || modesArg.split(',').includes(m.name));
+
+for (const mode of RUN) {
   const context = await browser.newContext({ viewport: { width: mode.width, height: mode.height }, colorScheme: mode.theme, deviceScaleFactor: 1 });
   await context.addInitScript((th) => { try { localStorage.clear(); localStorage.setItem('theme', th); } catch (e) { /* none */ } }, mode.theme);
   const page = await context.newPage();
+  if (print) await page.emulateMedia({ media: 'print' });
   page.on('pageerror', (e) => console.log(`[${mode.name}] pageerror: ${e.message}`));
   page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') console.log(`[${mode.name}] console.${m.type()}: ${m.text()}`); });
   await page.goto(base);

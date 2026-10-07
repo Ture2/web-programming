@@ -500,6 +500,8 @@ table{ border-collapse: collapse; }
 .dg-code{ font-family: var(--mono); font-weight: 500; }
 .dg-edge{ fill: none; stroke: var(--ink); stroke-width: 1.5; }
 .dg-head{ fill: var(--ink); }
+.dg-life{ fill: none; stroke: var(--rule-strong); stroke-width: 1; stroke-dasharray: 4 4; }
+.dg-act{ fill: var(--surface); stroke: var(--muted); stroke-width: 1; }
 
 /* ---- Concept sections: navigation rail + one card per page --------------
    A full-height rail on the left edge with hubs. The active hub lists its

@@ -31,6 +31,21 @@ function valid(href) {
 
 test('sections were found', () => assert.ok(sections.length >= 12));
 
+// Merged cards (PREFIX_MOVED): the old id is no longer a card, and its new home exists.
+// Content links must point at the new home directly, so valid() does not accept old ids.
+test('moved cards redirect to cards that exist', () => {
+  const bad = [];
+  sections.forEach((s) => {
+    const moved = ctx.DATA.en[`${s.prefix}_MOVED`] || {};
+    const ids = new Set((ctx.DATA.en[`${s.prefix}_CONCEPTS`] || []).map((c) => c.id));
+    Object.entries(moved).forEach(([from, to]) => {
+      if (ids.has(from)) bad.push(`${s.id}: ${from} is moved but still a card`);
+      if (!valid(to) || to === s.base) bad.push(`${s.id}: ${from} → ${to} does not resolve to a card`);
+    });
+  });
+  assert.deepEqual(bad, []);
+});
+
 for (const f of files) {
   test(`links in data/en/${f} resolve`, () => {
     const text = readFileSync(new URL(f, DATA), 'utf8');

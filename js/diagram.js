@@ -2,11 +2,18 @@
 
 /* ==========================================================================
    Concept-card diagrams (no DOM): a card's `diagram` spec drawn as inline SVG.
-     { kind: 'flow' | 'branch' | 'layers', title, desc,
+     { kind: 'flow' | 'branch' | 'layers' | 'cycle' | 'sequence' | 'tree', title, desc,
        nodes: [{ id, label, note?, key?, row? }], edges: [[from, to, label?]], numbered? }
-   flow and branch: boxes in columns joined by arrows (a chain; one box feeding 2–4).
+   flow and branch: boxes in columns joined by arrows (a chain; one box feeding 2–4;
+   several boxes may feed one when those arrows carry no label).
    layers: a stack of bands, each one using the band below (nodes on the same `row`
-   share a band). `key: true` marks the one box the card is about. `title` is the
+   share a band).
+   cycle: 3–5 boxes in a loop; edges go round in node order, the last back to the first.
+   sequence: nodes are 2–3 lanes (client, server…); edges are up to 8 ordered messages
+   [from, to, label], read top to bottom; [lane, lane, label] is an action on one lane.
+   tree: one root and up to 8 more nodes, at most 3 levels below it; edges are
+   [parent, child], unlabelled.
+   `key: true` marks the one box the card is about. `title` is the
    caption (the takeaway), `desc` says in words everything the picture shows.
    Labels and notes are plain text; `code` in backticks is set in the code face.
    Diagram.html(spec, id) returns a <figure> with a wide and a narrow drawing; CSS
@@ -16,8 +23,13 @@
    ========================================================================== */
 
 const Diagram = (() => {
-  const KINDS = ['flow', 'branch', 'layers'];
+  const KINDS = ['flow', 'branch', 'layers', 'cycle', 'sequence', 'tree'];
   const MAX_NODES = 6;
+  const LIMITS = {                // [fewest nodes, most nodes] per kind
+    flow: [2, 6], branch: [2, 6], layers: [2, 6], cycle: [3, 5], sequence: [2, 3], tree: [2, 9],
+  };
+  const MAX_MESSAGES = 8;        // sequence
+  const MAX_DEPTH = 3;           // tree: levels below the root
   const FS = 14;                 // label size (px at scale 1)
   const FS_NOTE = 12.5;          // note and edge-label size
   const PAD_X = 14;
@@ -74,8 +86,10 @@ const Diagram = (() => {
     if (!d.title || !String(d.title).trim()) errs.push('missing title (the caption: the takeaway)');
     if (!d.desc || !String(d.desc).trim()) errs.push('missing desc (everything the picture shows, in words)');
     const nodes = Array.isArray(d.nodes) ? d.nodes : [];
-    if (nodes.length < 2) errs.push('fewer than 2 nodes');
-    if (nodes.length > MAX_NODES) errs.push(`${nodes.length} nodes (at most ${MAX_NODES})`);
+    const [least, most] = LIMITS[d.kind] || [2, MAX_NODES];
+    const what = d.kind === 'sequence' ? 'lanes' : 'nodes';
+    if (nodes.length < least) errs.push(`${nodes.length} ${what} (at least ${least})`);
+    if (nodes.length > most) errs.push(`${nodes.length} ${what} (at most ${most})`);
     const ids = new Set();
     nodes.forEach((n, i) => {
       if (!n || !n.id) errs.push(`node ${i} has no id`);
@@ -89,17 +103,37 @@ const Diagram = (() => {
     const edges = Array.isArray(d.edges) ? d.edges : [];
     if (d.kind !== 'layers' && !edges.length) errs.push('no edges');
     if (d.kind === 'layers' && edges.length) errs.push('layers take no edges (the stack is the relationship)');
+    const isSeq = d.kind === 'sequence';
+    const maxLabel = isSeq ? 6 : 3;
     const into = {};
     edges.forEach((e, i) => {
       if (!Array.isArray(e) || e.length < 2) { errs.push(`edge ${i} is not [from, to, label?]`); return; }
       const [a, b, label] = e;
       if (!ids.has(a)) errs.push(`edge ${i} starts at unknown node "${a}"`);
       if (!ids.has(b)) errs.push(`edge ${i} ends at unknown node "${b}"`);
-      if (a === b) errs.push(`edge ${i} is a loop`);
-      if (label && words(plainText(label)).length > 3) errs.push(`edge label "${label}" is longer than 3 words`);
-      if (label) { into[b] = (into[b] || 0) + 1; if (into[b] > 1) errs.push(`node "${b}" has more than one labelled arrow into it`); }
+      if (a === b && !isSeq) errs.push(`edge ${i} is a loop`);
+      if (isSeq && !label) errs.push(`message ${i} has no label`);
+      if (label && words(plainText(label)).length > maxLabel) errs.push(`edge label "${label}" is longer than ${maxLabel} words`);
+      if (label && d.kind === 'tree') errs.push('tree edges take no label');
+      if (label && !isSeq && d.kind !== 'cycle') { into[b] = (into[b] || 0) + 1; if (into[b] > 1) errs.push(`node "${b}" has more than one labelled arrow into it`); }
     });
-    if (d.kind !== 'layers' && !errs.length) {
+    if (isSeq && edges.length > MAX_MESSAGES) errs.push(`${edges.length} messages (at most ${MAX_MESSAGES})`);
+    if (d.kind === 'cycle' && !errs.length) {
+      const ring = nodes.every((n, i) => edges.some(([a, b]) => a === n.id && b === nodes[(i + 1) % nodes.length].id));
+      if (!ring || edges.length !== nodes.length) errs.push('a cycle needs exactly one edge from each node to the next, the last back to the first');
+    }
+    if (d.kind === 'tree' && !errs.length) {
+      const parent = {};
+      edges.forEach(([a, b]) => { if (parent[b]) errs.push(`node "${b}" has two parents`); parent[b] = a; });
+      const roots = nodes.filter((n) => !parent[n.id]);
+      if (roots.length !== 1) errs.push(`a tree needs exactly one root (found ${roots.length})`);
+      else {
+        const depth = (id, seen = 0) => (parent[id] && seen <= nodes.length ? 1 + depth(parent[id], seen + 1) : 0);
+        if (nodes.some((n) => depth(n.id) > nodes.length)) errs.push('the tree edges form a loop');
+        else if (nodes.some((n) => depth(n.id) > MAX_DEPTH)) errs.push(`more than ${MAX_DEPTH} levels below the root`);
+      }
+    }
+    if ((d.kind === 'flow' || d.kind === 'branch') && !errs.length) {
       const lv = levelsOf(nodes, edges);
       if (!lv) errs.push('the arrows form a cycle');
       else {
@@ -266,6 +300,185 @@ const Diagram = (() => {
     return Math.min(WIDE_MAX, Math.max(440, ...Object.values(rows)));
   }
 
+  /* ---- cycle: a row (wide) or column (narrow) of boxes, the last arrow returning ---- */
+
+  function cycleWide(d) {
+    const boxes = {};
+    d.nodes.forEach((n) => {
+      const lines = boxLines(n, '', 200);
+      boxes[n.id] = { w: Math.max(84, Math.min(220, Math.max(textW(n.label, FS), n.note ? textW(n.note, FS_NOTE) : 0) + 2 * PAD_X)), lines, h: boxH(lines) };
+    });
+    const rowH = Math.max(...Object.values(boxes).map((b) => b.h));
+    const label = (i) => (d.edges.find(([a]) => a === d.nodes[i].id) || [])[2] || '';
+    let x = 2;
+    d.nodes.forEach((n, i) => {
+      if (i) x += Math.max(44, textW(label(i - 1), FS_NOTE) + 34);
+      Object.assign(boxes[n.id], { x, y: 2, h: rowH });
+      x += boxes[n.id].w;
+    });
+    const first = boxes[d.nodes[0].id];
+    const last = boxes[d.nodes[d.nodes.length - 1].id];
+    const back = label(d.nodes.length - 1);
+    const yb = 2 + rowH + 22;
+    let body = d.nodes.slice(0, -1).map((n, i) => {
+      const s = boxes[n.id];
+      const t = boxes[d.nodes[i + 1].id];
+      const pts = [[s.x + s.w, 2 + rowH / 2], [t.x, 2 + rowH / 2]];
+      const lab = label(i) ? `<text class="dg-elabel" x="${(s.x + s.w + t.x) / 2}" y="${2 + rowH / 2 - 7}" text-anchor="middle">${tspans(label(i))}</text>` : '';
+      return arrowSvg(pts) + lab;
+    }).join('');
+    const lx = last.x + last.w / 2;
+    const fx = first.x + first.w / 2;
+    body += arrowSvg([[lx, 2 + rowH], [lx, yb], [fx, yb], [fx, 2 + rowH]]);
+    if (back) body += `<text class="dg-elabel" x="${(lx + fx) / 2}" y="${yb + 16}" text-anchor="middle">${tspans(back)}</text>`;
+    body += d.nodes.map((n) => boxSvg(n, boxes[n.id], stepNum(d, n))).join('');
+    return { W: x + 2, H: yb + (back ? 22 : 4), body };
+  }
+
+  function cycleNarrow(d) {
+    const GAP_Y = 30;
+    const w = NARROW_W - 44;
+    const boxes = {};
+    let y = 2;
+    d.nodes.forEach((n) => {
+      const lines = boxLines(n, edgeLabelInto(d, n.id), w - 16);
+      boxes[n.id] = { x: 2, y, w, h: boxH(lines), lines };
+      y += boxH(lines) + GAP_Y;
+    });
+    const first = boxes[d.nodes[0].id];
+    const last = boxes[d.nodes[d.nodes.length - 1].id];
+    const cx = 2 + w / 2;
+    let body = d.nodes.slice(0, -1).map((n, i) => arrowSvg([[cx, boxes[n.id].y + boxes[n.id].h], [cx, boxes[d.nodes[i + 1].id].y]])).join('');
+    const rx = 2 + w + 22;
+    body += arrowSvg([[2 + w, last.y + last.h / 2], [rx, last.y + last.h / 2], [rx, first.y + first.h / 2], [2 + w, first.y + first.h / 2]]);
+    body += d.nodes.map((n) => boxSvg(n, boxes[n.id], stepNum(d, n))).join('');
+    return { W: NARROW_W, H: y - GAP_Y + 2, body };
+  }
+
+  /* ---- sequence: lanes with lifelines; messages top to bottom ---- */
+
+  function sequence(d, colW) {
+    const lanes = d.nodes;
+    const xs = {};
+    lanes.forEach((n, i) => { xs[n.id] = colW / 2 + i * colW; });
+    const heads = {};
+    lanes.forEach((n) => {
+      const lines = boxLines(n, '', colW - 32);
+      const w = Math.min(colW - 16, Math.max(84, Math.max(textW(n.label, FS), n.note ? textW(n.note, FS_NOTE) : 0) + 2 * PAD_X));
+      heads[n.id] = { x: xs[n.id] - w / 2, y: 2, w, h: boxH(lines), lines };
+    });
+    const headH = Math.max(...Object.values(heads).map((b) => b.h));
+    Object.values(heads).forEach((b) => { b.h = headH; });
+    let y = 2 + headH + 12;
+    const parts = [];
+    d.edges.forEach(([a, b, label], i) => {
+      const text = d.numbered ? `${i + 1}. ${label}` : label;
+      if (a === b) {
+        // An action on one lane: a small box on its lifeline.
+        const lines = wrap(text, FS_NOTE, colW - 40);
+        const w = Math.min(colW - 20, Math.max(...lines.map((l) => textW(l, FS_NOTE))) + 20);
+        const h = lines.length * 15 + 10;
+        parts.push(`<rect class="dg-act" x="${xs[a] - w / 2}" y="${y}" width="${w}" height="${h}" rx="2"/>`
+          + lines.map((l, k) => `<text class="dg-elabel" x="${xs[a]}" y="${y + 17 + k * 15}" text-anchor="middle">${tspans(l)}</text>`).join(''));
+        y += h + 12;
+        return;
+      }
+      const x1 = xs[a];
+      const x2 = xs[b];
+      const lines = wrap(text, FS_NOTE, Math.abs(x2 - x1) - 16);
+      const ly = y + lines.length * 15;
+      parts.push(lines.map((l, k) => `<text class="dg-elabel" x="${(x1 + x2) / 2}" y="${y + 11 + k * 15}" text-anchor="middle">${tspans(l)}</text>`).join('')
+        + arrowSvg([[x1, ly + 4], [x2 + (x2 > x1 ? -1 : 1), ly + 4]]));
+      y = ly + 20;
+    });
+    const H = y + 2;
+    const lifelines = lanes.map((n) => `<path class="dg-life" d="M${xs[n.id]} ${2 + headH}V${H - 2}"/>`).join('');
+    const headSvg = lanes.map((n) => boxSvg(n, heads[n.id], 0)).join('');
+    return { W: colW * lanes.length, H, body: lifelines + parts.join('') + headSvg };
+  }
+
+  function sequenceWideCol(d) {
+    const pairs = d.edges.filter(([a, b]) => a !== b).map(([a, b, l]) => {
+      const gap = Math.abs(d.nodes.findIndex((n) => n.id === a) - d.nodes.findIndex((n) => n.id === b)) || 1;
+      return (textW(d.numbered ? `8. ${l}` : l, FS_NOTE) + 40) / gap;
+    });
+    const heads = d.nodes.map((n) => Math.max(textW(n.label, FS), n.note ? textW(n.note, FS_NOTE) : 0) + 2 * PAD_X + 24);
+    return Math.max(170, Math.min(300, Math.max(...pairs, ...heads)));
+  }
+
+  /* ---- tree: top-down (wide); indented rows like a file explorer (narrow) ---- */
+
+  function treeShape(d) {
+    const kids = {};
+    const parent = {};
+    d.edges.forEach(([a, b]) => { (kids[a] = kids[a] || []).push(b); parent[b] = a; });
+    const root = d.nodes.find((n) => !parent[n.id]).id;
+    const byId = Object.fromEntries(d.nodes.map((n) => [n.id, n]));
+    return { kids, root, byId };
+  }
+
+  function treeWide(d) {
+    const { kids, root, byId } = treeShape(d);
+    const GAP_X = 14;
+    const GAP_Y = 34;
+    const boxes = {};
+    d.nodes.forEach((n) => {
+      const lines = boxLines(n, '', 190);
+      boxes[n.id] = { w: Math.max(84, Math.min(210, Math.max(textW(n.label, FS), n.note ? textW(n.note, FS_NOTE) : 0) + 2 * PAD_X)), lines, h: boxH(lines) };
+    });
+    const rowH = Math.max(...Object.values(boxes).map((b) => b.h));
+    const span = (id) => {
+      const c = kids[id] || [];
+      const inner = c.reduce((s, k) => s + span(k), 0) + Math.max(0, c.length - 1) * GAP_X;
+      return Math.max(boxes[id].w, inner);
+    };
+    let maxDepth = 0;
+    const place = (id, x0, depth) => {
+      maxDepth = Math.max(maxDepth, depth);
+      const s = span(id);
+      Object.assign(boxes[id], { x: x0 + (s - boxes[id].w) / 2, y: 2 + depth * (rowH + GAP_Y), h: rowH });
+      const c = kids[id] || [];
+      const inner = c.reduce((t, k) => t + span(k), 0) + Math.max(0, c.length - 1) * GAP_X;
+      let x = x0 + (s - inner) / 2;
+      c.forEach((k) => { place(k, x, depth + 1); x += span(k) + GAP_X; });
+    };
+    place(root, 2, 0);
+    const lines = d.edges.map(([a, b]) => {
+      const p = boxes[a];
+      const c = boxes[b];
+      const px = p.x + p.w / 2;
+      const cx = c.x + c.w / 2;
+      const my = p.y + p.h + GAP_Y / 2;
+      return `<path class="dg-edge" d="M${px} ${p.y + p.h}V${my}H${cx}V${c.y}"/>`;
+    }).join('');
+    return { W: span(root) + 4, H: 2 + (maxDepth + 1) * rowH + maxDepth * GAP_Y + 2, body: lines + d.nodes.map((n) => boxSvg(byId[n.id], boxes[n.id], 0)).join('') };
+  }
+
+  function treeNarrow(d) {
+    const { kids, root, byId } = treeShape(d);
+    const INDENT = 22;
+    const GAP_Y = 8;
+    const boxes = {};
+    const order = [];
+    const walk = (id, depth) => { order.push([id, depth]); (kids[id] || []).forEach((k) => walk(k, depth + 1)); };
+    walk(root, 0);
+    let y = 2;
+    order.forEach(([id, depth]) => {
+      const x = 2 + depth * INDENT;
+      const w = NARROW_W - 2 - x;
+      const lines = boxLines(byId[id], '', w - 16);
+      boxes[id] = { x, y, w, h: boxH(lines), lines };
+      y += boxH(lines) + GAP_Y;
+    });
+    const lines = d.edges.map(([a, b]) => {
+      const p = boxes[a];
+      const c = boxes[b];
+      const lx = p.x + 10;
+      return `<path class="dg-edge" d="M${lx} ${p.y + p.h}V${c.y + c.h / 2}H${c.x}"/>`;
+    }).join('');
+    return { W: NARROW_W, H: y - GAP_Y + 2, body: lines + order.map(([id]) => boxSvg(byId[id], boxes[id], 0)).join('') };
+  }
+
   /* ---- Output ---- */
 
   function svg(d, layout, id, cls) {
@@ -283,9 +496,14 @@ const Diagram = (() => {
       if (typeof console !== 'undefined') console.warn(`[data] diagram ${id}: ${errs.join('; ')}`);
       return '';
     }
-    const isLayers = d.kind === 'layers';
-    const w = isLayers ? layers(d, layersWideWidth(d)) : wide(d);
-    const n = isLayers ? layers(d, NARROW_W) : narrow(d);
+    const DRAW = {
+      layers: [() => layers(d, layersWideWidth(d)), () => layers(d, NARROW_W)],
+      cycle: [() => cycleWide(d), () => cycleNarrow(d)],
+      sequence: [() => sequence(d, sequenceWideCol(d)), () => sequence(d, NARROW_W / d.nodes.length)],
+      tree: [() => treeWide(d), () => treeNarrow(d)],
+    }[d.kind] || [() => wide(d), () => narrow(d)];
+    const w = DRAW[0]();
+    const n = DRAW[1]();
     // The wide drawing shows only where the figure is at least as wide as it (styles.css
     // switches on .dg-w<step>), so it is never scaled down; a drawing too wide for any card
     // is dropped and the narrow one serves every width.

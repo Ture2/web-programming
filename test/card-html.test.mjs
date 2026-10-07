@@ -119,3 +119,36 @@ test('Diagram draws each kind without errors', () => {
     assert.doesNotMatch(Diagram.html(s, 'x'), /NaN|undefined/);
   });
 });
+
+/* The three kinds added for the whole-site redesign. */
+const CYCLE = { kind: 'cycle', title: 'c', desc: 'd', nodes: [{ id: 's', label: 'State', key: true }, { id: 'r', label: 'Render' }, { id: 'e', label: 'Event' }, { id: 'u', label: '`setState`' }], edges: [['s', 'r'], ['r', 'e', 'user clicks'], ['e', 'u'], ['u', 's', 'new state']] };
+const SEQ = { kind: 'sequence', numbered: true, title: 's', desc: 'd', nodes: [{ id: 'b', label: 'Browser' }, { id: 'a', label: 'API', key: true }], edges: [['b', 'a', '`OPTIONS /tasks` (preflight)'], ['a', 'b', '204 + `Allow-Origin`'], ['b', 'b', 'checks the headers'], ['b', 'a', '`POST /tasks`'], ['a', 'b', '201 Created']] };
+const TREE = { kind: 'tree', title: 't', desc: 'd', nodes: [{ id: 'app', label: 'App', key: true }, { id: 'h', label: 'Header' }, { id: 'l', label: 'TaskList' }, { id: 'i1', label: 'TaskItem' }, { id: 'i2', label: 'TaskItem' }, { id: 'f', label: 'NewTaskForm' }], edges: [['app', 'h'], ['app', 'l'], ['l', 'i1'], ['l', 'i2'], ['app', 'f']] };
+
+test('cycle, sequence and tree validate and draw', () => {
+  [CYCLE, SEQ, TREE].forEach((s) => {
+    assert.deepEqual(Diagram.validate(s), [], s.kind);
+    const out = Diagram.html(s, `x-${s.kind}`);
+    assert.match(out, /^<figure class="dg /);
+    assert.doesNotMatch(out, /="[^"]*(NaN|undefined|Infinity)/);
+    (out.match(/<svg[\s\S]*?<\/svg>/g) || []).forEach((svg) => {
+      assert.equal((svg.match(/<(g|text|tspan)\b/g) || []).length, (svg.match(/<\/(g|text|tspan)>/g) || []).length);
+    });
+  });
+  assert.match(Diagram.html(SEQ, 'x'), /class="dg-life"/);
+  assert.match(Diagram.html(SEQ, 'x'), /1\. <tspan/);
+});
+
+test('the new kinds reject bad shapes', () => {
+  const has = (spec, re) => assert.ok(Diagram.validate(spec).some((e) => re.test(e)), `${spec.kind}: expected ${re}`);
+  has({ ...CYCLE, edges: CYCLE.edges.slice(0, 3) }, /exactly one edge from each node/);
+  has({ ...CYCLE, nodes: CYCLE.nodes.slice(0, 2), edges: [['s', 'r'], ['r', 's']] }, /at least 3/);
+  has({ ...SEQ, edges: [...SEQ.edges, ...SEQ.edges] }, /at most 8/);
+  has({ ...SEQ, edges: [['b', 'a']] }, /no label/);
+  has({ ...SEQ, nodes: [...SEQ.nodes, { id: 'c', label: 'C' }, { id: 'd2', label: 'D' }] }, /at most 3/);
+  has({ ...TREE, edges: [...TREE.edges, ['h', 'i1']] }, /two parents/);
+  has({ ...TREE, edges: TREE.edges.slice(1) }, /exactly one root/);
+  has({ ...TREE, edges: [['app', 'h', 'x'], ...TREE.edges.slice(1)] }, /no label/);
+  const deep = { kind: 'tree', title: 't', desc: 'd', nodes: ['a', 'b', 'c', 'd', 'e'].map((id) => ({ id, label: id.toUpperCase() })), edges: [['a', 'b'], ['b', 'c'], ['c', 'd'], ['d', 'e']] };
+  has(deep, /more than 3 levels/);
+});
