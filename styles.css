@@ -553,6 +553,9 @@ main.is-wide{ max-width: none; padding: 0; }
 .rail-label{ min-width: 0; }
 
 /* Pages of a hub: inline under the active hub, a flyout for the others. */
+/* A group page is one reading column: as wide as the widest diagram (dg-w880) plus the card's
+   padding, centred in the space beside the rail, so a card without a diagram is not half empty. */
+.cs-main.is-group > *{ max-width: 960px; margin-left: auto; margin-right: auto; }
 .rail-pages ol{ padding: 2px 0 8px; }
 .rail-pages a{
   display: flex; align-items: baseline; gap: 10px; min-height: 36px; padding: 8px 14px 8px 56px;
@@ -646,7 +649,9 @@ main.is-wide{ max-width: none; padding: 0; }
 .cc:not(.is-open) > .summary{ margin: 0 0 0 42px; font-weight: 400; color: var(--text); }
 .cc:not(.is-open) .cc-toggle{ font-size: var(--fs-xl); }   /* the open concept keeps the large title */
 .cc-next{ display: flex; justify-content: flex-end; margin: 18px 0 0; }
-.group-tools{ display: flex; justify-content: flex-end; margin: 0 0 10px; }
+/* "Show all concepts" sits on the meta line, at the right edge of the column. */
+.group-head-row{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.group-tools{ display: flex; flex: none; margin: 0 0 0 auto; }
 .group-tools .btn[aria-pressed="true"]{ background: var(--ink); color: var(--on-ink); }
 @media (prefers-reduced-motion: reduce) { .cc-chev{ transition: none; } }
 @media print { .concept-panel[hidden]{ display: block !important; } }
@@ -916,3 +921,4 @@ details.try > .live-box, details.try > .tool{ margin: 0; border: 0; }
 details.try .lr-head .tool-badge, details.try .lr-head .lr-title,
 details.try .tool-head .tool-badge, details.try .tool-head .tool-title{ display: none; }
 details.try .lr-head, details.try .tool-head{ justify-content: flex-end; }
+  .group-tools{ margin-left: 0; }

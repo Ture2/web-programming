@@ -199,7 +199,7 @@ function ConceptSection(cfg) {
     return `<a class="${cls}" href="${summaryPdf(cfg.pdf)}" download title="${esc(title)}" aria-label="${esc(title)}">${railIcon('pdf')}<span class="rail-label">${esc(label)}</span></a>`;
   }
 
-  const layout = (main) => `<div class="cs-layout${ui.sideCollapsed ? ' is-collapsed' : ''}"><aside class="cs-aside">${sideHtml()}</aside><div class="cs-main">${main}</div></div>`;
+  const layout = (main, cls = '') => `<div class="cs-layout${ui.sideCollapsed ? ' is-collapsed' : ''}"><aside class="cs-aside">${sideHtml()}</aside><div class="cs-main${cls ? ` ${cls}` : ''}">${main}</div></div>`;
 
   const toggleLabel = () => (ui.sideCollapsed ? t('Expand') : t('Collapse'));
   const toggleInner = () => `${railIcon(ui.sideCollapsed ? 'expand' : 'collapse')}<span class="rail-label">${esc(toggleLabel())}</span>`;
@@ -407,9 +407,11 @@ function ConceptSection(cfg) {
       <header class="group-head">
         <p class="concept-count"><a href="${BASE}">${esc(cfg.title())}</a> · ${esc(t('Group {n} of {total}', { n: g + 1, total: HUBS.length }))}</p>
         <h1 id="group-h" tabindex="-1">${esc(t(h.label))}</h1>
-        <p class="group-meta">${esc(groupMeta(h))}</p>
+        <div class="group-head-row">
+          <p class="group-meta">${esc(groupMeta(h))}</p>
+          ${h.items.length > 1 ? `<p class="group-tools"><button type="button" class="btn ghost" data-action="concepts-all" data-fid="concepts-all" aria-pressed="${!!ui.allOpen}">${esc(t('Show all concepts'))}</button></p>` : ''}
+        </div>
       </header>
-      ${h.items.length > 1 ? `<p class="group-tools"><button type="button" class="btn ghost" data-action="concepts-all" data-fid="concepts-all" aria-pressed="${!!ui.allOpen}">${esc(t('Show all concepts'))}</button></p>` : ''}
       <div class="group-body">${h.items.map((k, j) => cardHtml(CONCEPTS[k], {
         n: j + 1,
         open: !!ui.allOpen || h.items.length === 1 || k === route.concept,
@@ -419,7 +421,7 @@ function ConceptSection(cfg) {
       <nav class="pager" aria-label="${esc(t('Groups'))}">
         ${prev ? `<a class="prev" href="${prev.href}"><span>← ${esc(prev.kind)}</span>${esc(prev.label)}</a>` : ''}
         ${next ? `<a class="next" href="${next.href}"><span>${esc(next.kind)} →</span>${esc(next.label)}</a>` : ''}
-      </nav>`);
+      </nav>`, 'is-group');
     watchGroup();
   }
 
