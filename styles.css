@@ -414,10 +414,14 @@ table{ border-collapse: collapse; }
 .concept .plain{ margin-bottom: 10px; }
 .example, .mistake{ padding: 8px 12px; background: var(--tint); border-left: 3px solid var(--rule-strong); }
 .mistake{ border-left-color: var(--h3); }
-/* "Test yourself" call-out at the end of each card. */
+/* The definition and the Example / Common mistake boxes keep the paragraphs' reading measure
+   (.cx > p, 66ch); the boxes add their padding. */
+.concept > .summary, .concept-text > .summary{ max-width: 66ch; }
+.concept-text > .example, .concept-text > .mistake{ max-width: calc(66ch + 24px); }
+/* "Practise it" and "Test yourself" call-outs. Orange marks only "Common mistake". */
 .concept-quiz{
   display: flex; align-items: center; gap: 14px; margin-top: 18px; padding: 14px 16px;
-  background: var(--tint); border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: var(--r-control);
+  background: var(--tint); border: 1px solid var(--rule); border-left: 4px solid var(--ink); border-radius: var(--r-control);
 }
 .cq-icon{ flex: none; width: 32px; height: 32px; fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .cq-text{ flex: 1; min-width: 0; }
@@ -427,6 +431,8 @@ table{ border-collapse: collapse; }
 .concept-table{ margin: 4px 0 14px; }
 .concept-table caption{ caption-side: top; text-align: left; padding: 0 0 6px; color: var(--muted); font-size: var(--fs-sm); }
 .concept-code{ margin: 4px 0 14px; padding: 10px 12px; overflow-x: auto; background: var(--tint); border: 1px solid var(--rule); font: var(--fs-sm)/1.5 var(--mono); }
+/* On a phone a long line wraps rather than hiding its end off-screen. */
+@media (max-width: 640px) { .concept-code{ white-space: pre-wrap; overflow-wrap: anywhere; } }
 .concept-code code{ font: inherit; }
 /* Boxed blocks (example, mistake, code, lists) are their own formatting context. */
 .concept-text{ display: flow-root; min-width: 0; }
@@ -499,7 +505,7 @@ table{ border-collapse: collapse; }
 /* Behind a sequence message label: hides another lane's lifeline (js/diagram.js). */
 .dg-lbg{ fill: var(--tint); }
 .dg-num{ fill: var(--ink); font: 700 11px var(--sans); }
-.dg-code{ font-family: var(--mono); font-weight: 500; }
+.dg-code{ font-family: var(--mono); font-weight: inherit; }   /* same weight as the label or note it sits in */
 .dg-edge{ fill: none; stroke: var(--ink); stroke-width: 1.5; }
 .dg-head{ fill: var(--ink); }
 .dg-life{ fill: none; stroke: var(--rule-strong); stroke-width: 1; stroke-dasharray: 4 4; }
@@ -787,7 +793,10 @@ details.try > .live-box, details.try > .tool{ margin: 0; border: 0; }
 
 /* ---- Code blocks with a download bar ---------------------------------------- */
 
-.dialect{ color: var(--muted); font: 600 var(--fs-xs) var(--sans); }
+/* One style for every code label: a code sample's dialect and a Try it box's panes ("App.jsx",
+   "CSS", "Preview"). Plain case, so file names read as they are written. */
+.dialect{ color: var(--muted); font: 700 var(--fs-xs) var(--sans); }
+.live-box .lr-label{ letter-spacing: 0; text-transform: none; }
 
 /* ---- Summary PDF: rail link, and the summary sheet it is printed from ------- */
 
