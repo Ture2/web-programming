@@ -1,34 +1,38 @@
 'use strict';
 
 /* ==========================================================================
-   Full-text search engine (no DOM): an inverted index built in the browser.
+   Search engine (no DOM): an inverted index built in the browser.
      term -> { document -> weighted frequency }, terms kept sorted so a typed
-   prefix is a binary search. Accents and case are ignored. Fields weigh
-   differently (title 6, summary 3, body 1) and are scored TF x IDF; every word
-   of the query must appear in a document (if none does, documents with some of
-   the words are shown). A word with no match is retried with one typo allowed.
+   prefix is a binary search. Accents and case are ignored. Only the title and
+   the keywords are searched (title 6, keywords 3), scored TF x IDF; the summary
+   is shown under a result but never matched, so a common word does not pull in
+   every document that mentions it. Every word of the query must appear in a
+   document (if none does, documents with some of the words are shown). A word
+   with no match is retried with one typo allowed.
    Used by js/search.js; unit-tested in test/search-engine.test.mjs.
    ========================================================================== */
 
 const SearchEngine = (() => {
-  const WEIGHT = { title: 6, summary: 3, body: 1 };
+  const WEIGHT = { title: 6, keywords: 3 };
 
   const fold = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const plain = (s) => String(s).replace(/\*\*|`/g, '').replace(/\s+/g, ' ').trim();
-  /* Text of an authored HTML block: tags dropped, the few entities it may use decoded. */
-  const ENTITY = { '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&nbsp;': ' ', '&amp;': '&' };
-  const stripTags = (s) => plain(String(s).replace(/<[^>]*>/g, ' ').replace(/&(?:lt|gt|quot|#39|nbsp|amp);/g, (m) => ENTITY[m]));
   const tokenize = (s) => fold(s).split(/[^a-z0-9]+/).filter((w) => w.length > 1 || /\d/.test(w));
 
-  /* Every string inside a value (arrays and nested objects included), minus the technical keys. */
-  function strings(v, skip, out = []) {
-    if (typeof v === 'string') out.push(plain(v));
-    else if (Array.isArray(v)) v.forEach((x) => strings(x, skip, out));
-    else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => { if (!skip.has(k)) strings(x, skip, out); });
-    return out;
+  /* The **bold** and `code` spans of a Markdown string: the terms its author marked as key. */
+  function keyTerms(s) {
+    const out = [...String(s || '').matchAll(/\*\*(.+?)\*\*|`([^`]+)`/g)].map((m) => plain(m[1] || m[2]));
+    return [...new Set(out.filter(Boolean))];
   }
 
-  /* An index over documents { title, summary, body, ...anything else the caller wants back }. */
+  /* A list of recent searches with q first: the same search typed differently (case, accents) kept once. */
+  function remember(list, q, max = 8) {
+    const query = plain(q);
+    if (!query) return list.slice(0, max);
+    return [query, ...list.filter((x) => fold(x) !== fold(query))].slice(0, max);
+  }
+
+  /* An index over documents { title, keywords, summary, ...anything else the caller wants back }. */
   function create(input) {
     const docs = input.map((d) => ({ ...d }));
     const postings = new Map();         // term -> Map(doc index -> weighted frequency)
@@ -43,9 +47,9 @@ const SearchEngine = (() => {
           m.set(i, (m.get(i) || 0) + w);
         });
       });
-      doc.text = [doc.summary, doc.body].filter(Boolean).join(' · ');
+      doc.text = doc.summary || doc.keywords || '';             // shown under the title, not searched
       doc.foldedTitle = fold(doc.title);
-      doc.foldedText = fold(doc.text);
+      doc.foldedKeywords = fold(doc.keywords || '');
     });
     const avgLen = docs.reduce((s, d) => s + d.len, 0) / Math.max(docs.length, 1);
     const terms = [...postings.keys()].sort();
@@ -97,8 +101,9 @@ const SearchEngine = (() => {
       return { before: `${from ? '… ' : ''}${text.slice(from, at)}`, hit: text.slice(at, at + len), after: `${text.slice(at + len, to)}${to < text.length ? ' …' : ''}` };
     }
 
-    /* -> { hits: [{ doc, score, snippet }], words: [searched words found in the index] } */
-    function search(query, limit = 12) {
+    /* -> { hits: [{ doc, score, snippet }], words: [searched words found in the index] }
+       where(doc), when given, keeps only the documents it returns true for (a topic filter). */
+    function search(query, { limit = 12, where } = {}) {
       const typed = tokenize(query);
       if (!typed.length) return { hits: [], words: [] };
       const N = docs.length;
@@ -108,7 +113,7 @@ const SearchEngine = (() => {
         words.forEach((w) => {
           const post = postings.get(w);
           const idf = Math.log(1 + N / post.size);
-          post.forEach((tf, d) => scores.set(d, (scores.get(d) || 0) + tf * idf * (w === word ? 1 : fuzzy ? 0.4 : 0.7)));
+          post.forEach((tf, d) => { if (!where || where(docs[d])) scores.set(d, (scores.get(d) || 0) + tf * idf * (w === word ? 1 : fuzzy ? 0.4 : 0.7)); });
         });
         return { word, words, scores };
       });
@@ -124,7 +129,7 @@ const SearchEngine = (() => {
         const titleWords = new Set(tokenize(doc.title));
         score *= 1 + known.filter((p) => p.words.some((w) => titleWords.has(w))).length / known.length;   // words in the title
         if (typed.length > 1 && doc.foldedTitle.includes(phrase)) score *= 3;       // the exact phrase in the title…
-        else if (typed.length > 1 && doc.foldedText.includes(phrase)) score *= 1.5;  // …or in the text
+        else if (typed.length > 1 && doc.foldedKeywords.includes(phrase)) score *= 1.5;  // …or in the keywords
         return { doc, score };
       }).sort((a, b) => b.score - a.score || a.doc.title.localeCompare(b.doc.title)).slice(0, limit);
       const words = [...new Set(known.flatMap((p) => (p.words.length > 12 ? [p.word] : p.words.length ? [p.word, ...p.words.filter((w) => !w.startsWith(p.word))] : [p.word])))];
@@ -135,7 +140,7 @@ const SearchEngine = (() => {
     return { search, size: () => ({ docs: docs.length, terms: terms.length }) };
   }
 
-  return { create, fold, plain, stripTags, tokenize, strings };
+  return { create, fold, plain, tokenize, keyTerms, remember };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = SearchEngine;

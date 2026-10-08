@@ -30,9 +30,13 @@
         <span class="map-btn-label" id="map-btn-label">Topic map</span>
       </button>
       <form class="searchbar" id="site-search" role="search" autocomplete="off">
-        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
-        <input type="search" role="combobox" aria-expanded="false" aria-controls="search-list" aria-autocomplete="list" spellcheck="false" placeholder="Search this site…" aria-label="Search this site">
-        <kbd class="search-kbd" aria-hidden="true">/</kbd>
+        <span class="search-field">
+          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+          <input type="search" role="combobox" aria-expanded="false" aria-controls="search-list" aria-autocomplete="list" spellcheck="false" placeholder="Search this site…" aria-label="Search this site">
+          <kbd class="search-kbd" aria-hidden="true">/</kbd>
+        </span>
+        <label class="sr-only" for="search-topic">Topic</label>
+        <select class="search-topic" id="search-topic"><option value="">All topics</option></select>
         <ul class="search-list" id="search-list" role="listbox" hidden></ul>
       </form>
       <a class="progress-btn" id="progress-btn" href="#/progress">

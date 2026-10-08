@@ -247,13 +247,20 @@ code{ font: 500 .9em var(--mono); }
 .map-btn:hover{ border-color: var(--ink); background: var(--hover); }
 
 /* Site search: the box in the app bar (it takes the free space), its result list and the highlighted words in the page. */
-.searchbar{ position: relative; flex: 0 1 260px; min-width: 0; margin-left: auto; }
+.searchbar{ position: relative; display: flex; flex: 0 1 420px; min-width: 0; margin-left: auto; }
+.search-field{ position: relative; flex: 1 1 auto; min-width: 0; }
 .searchbar input{
-  width: 100%; min-height: 44px; padding: 0 34px 0 38px; border: 1.5px solid var(--rule-strong); border-radius: 22px;
+  width: 100%; min-height: 44px; padding: 0 34px 0 38px; border: 1.5px solid var(--rule-strong); border-right: 0; border-radius: 22px 0 0 22px;
   background: var(--surface); color: var(--text); font: inherit; font-size: var(--fs-md);
 }
-.searchbar input:hover{ border-color: var(--ink); }
-.searchbar input:focus{ outline: 3px solid var(--focus); outline-offset: 1px; border-color: var(--ink); }
+.search-topic{
+  flex: 0 1 auto; width: 10.5em; max-width: 40%; min-height: 44px; padding: 0 8px 0 10px; border: 1.5px solid var(--rule-strong); border-radius: 0 22px 22px 0;
+  background: var(--surface); color: var(--ink); font: 700 var(--fs-sm) var(--sans); text-overflow: ellipsis; cursor: pointer;
+}
+.searchbar input:hover, .search-topic:hover{ border-color: var(--ink); }
+.searchbar input:focus, .search-topic:focus{ outline: 3px solid var(--focus); outline-offset: 1px; border-color: var(--ink); }
+.search-field:focus-within, .search-topic:focus{ z-index: 1; }       /* the focus ring over the neighbour */
+.search-topic:focus{ position: relative; }
 .search-icon{ position: absolute; left: 13px; top: 12px; width: 20px; height: 20px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; pointer-events: none; }
 .search-kbd{ position: absolute; right: 12px; top: 11px; padding: 1px 7px; border: 1px solid var(--rule-strong); border-radius: var(--r-control); color: var(--muted); font: 600 var(--fs-sm) var(--mono); pointer-events: none; }
 .searchbar input:focus ~ .search-kbd, .searchbar input:not(:placeholder-shown) ~ .search-kbd{ display: none; }
@@ -269,7 +276,11 @@ code{ font: 500 .9em var(--mono); }
 .search-snip{ color: var(--text); font-size: var(--fs-sm); line-height: 1.4; overflow-wrap: anywhere; }
 .search-snip mark, mark.search-hit{ padding: 0 2px; border-radius: var(--r-control); background: #FFE08A; color: #000; }
 mark.search-hit{ box-shadow: 0 0 0 1px #E0A800; }
-.search-none{ padding: 12px; color: var(--muted); }
+.search-none, .search-hint{ padding: 12px; color: var(--muted); }
+.search-recent-h{ padding: 9px 12px 4px; color: var(--muted); font-size: var(--fs-2xs); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.search-item.search-recent{ display: flex; align-items: center; gap: 10px; color: var(--ink); }
+.search-recent-icon{ flex: none; width: 18px; height: 18px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; }
+.search-item.search-clear{ display: block; color: var(--muted); font-size: var(--fs-sm); font-weight: 700; }
 
 /* Ask Claude: copies the page as a tutoring prompt and opens claude.ai (js/ask-claude.js).
    A round icon button like Settings; the label shows only where the bar has room. The "copied"
@@ -887,7 +898,8 @@ details.try > .live-box, details.try > .tool{ margin: 0; border: 0; }
   .appbar{ position: static; }
   .appbar-row{ flex-wrap: wrap; row-gap: 8px; padding-bottom: 8px; }
   .searchbar{ order: 2; flex: 1 1 100%; margin-left: 0; }
-  .searchbar input{ font-size: 16px; }
+  .searchbar input, .search-topic{ font-size: 16px; }
+  .search-topic{ width: 8.5em; }
   .search-list{ left: 0; right: 0; width: auto; }
   .brand img{ height: 28px; }
   .brand-name{ display: none; }

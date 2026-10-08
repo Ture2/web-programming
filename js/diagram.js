@@ -522,10 +522,7 @@ const Diagram = (() => {
     return `<figure class="dg ${step ? `dg-w${step}` : 'dg-one'}">${step ? svg(d, w, `${id}-w`, 'dg-wide') : ''}${svg(d, n, `${id}-n`, 'dg-narrow')}<figcaption>${cap}</figcaption></figure>`;
   }
 
-  /* The words of a diagram, for site search. */
-  const text = (d) => (d ? [d.title, d.desc, ...(d.nodes || []).flatMap((n) => [n.label, n.note]), ...(d.edges || []).map((e) => e[2])].filter(Boolean).map(plainText).join(' · ') : '');
-
-  return { html, validate, text, KINDS, MAX_NODES, _wrap: wrap, _textW: textW };
+  return { html, validate, KINDS, MAX_NODES, _wrap: wrap, _textW: textW };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = Diagram;
