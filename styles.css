@@ -748,6 +748,10 @@ details.try > .live-box, details.try > .tool{ margin: 0; border: 0; }
 #practice-slot .levels + .quiz{ margin-top: 20px; }
 
 /* ---- Several tables in one card ----------------------------------------- */
+/* A quiz is one centred column: the scoreboard, the question, its answers, the feedback and the
+   review share both edges instead of four different widths pinned to the left. */
+.cs-main:has(> .quiz){ padding-left: max(40px, calc((100% - 720px) / 2)); padding-right: max(40px, calc((100% - 720px) / 2)); }
+.cs-main:has(> .quiz) :is(.q-head, .q-text, .options, .q-actions, .fib, .feedback){ max-width: none; }
 
 .concept-table + .concept-table{ margin-top: 8px; }
 
@@ -922,3 +926,4 @@ details.try .lr-head .tool-badge, details.try .lr-head .lr-title,
 details.try .tool-head .tool-badge, details.try .tool-head .tool-title{ display: none; }
 details.try .lr-head, details.try .tool-head{ justify-content: flex-end; }
   .group-tools{ margin-left: 0; }
+  .cs-main:has(> .quiz){ padding-left: 0; padding-right: 0; }   /* the full width, under the "Go to" menu */
