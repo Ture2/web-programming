@@ -115,7 +115,8 @@ nothing to commit, working tree clean`,
       '<ul><li><strong>Right after a commit</strong> the draft equals that commit, so <code>git status</code> says "nothing to commit".</li>'
         + '<li><strong>Never sent to GitHub:</strong> only commits travel.</li></ul>',
     ],
-    code: `$ git add styles.css        # snapshot of styles.css goes into the draft
+    code: `# snapshot of styles.css goes into the draft
+$ git add styles.css
 $ # ...you edit styles.css again and save...
 $ git status
 On branch main
@@ -361,7 +362,8 @@ $ git branch
 * add-footer
   main
 $ # ...edit index.html and save...
-$ git commit -am "Add footer"     # -a stages already-tracked modified files
+# -a stages already-tracked modified files
+$ git commit -am "Add footer"
 $ git log --oneline --graph --all
 * 8e4d7b2 (HEAD -> add-footer) Add footer
 * 3f9c2a1 (main) Add contact form to index.html`,
@@ -392,13 +394,15 @@ $ git log --oneline --graph --all
       edges: [['m', 'a', 'parent 1'], ['m', 'b', 'parent 2'], ['a', 'base'], ['b', 'base']],
     },
     code: `$ git switch main
-$ git merge add-footer          # main had not moved: fast-forward
+# main had not moved: fast-forward
+$ git merge add-footer
 Updating 3f9c2a1..8e4d7b2
 Fast-forward
  index.html | 6 ++++++
  1 file changed, 6 insertions(+)
 
-$ git merge add-search          # main had moved too: merge commit
+# main had moved too: merge commit
+$ git merge add-search
 Merge made by the 'ort' strategy.
  app.js | 14 ++++++++++++++
  1 file changed, 14 insertions(+)
@@ -442,7 +446,8 @@ Automatic merge failed; fix conflicts and then commit the result.
 
 # edit it to the final line, e.g.  <h1>Ana Ruiz - Web Developer Portfolio</h1>
 $ git add index.html
-$ git commit                      # accept the pre-filled "Merge branch 'add-title'"`,
+# accept the pre-filled "Merge branch 'add-title'"
+$ git commit`,
     dialect: 'shell',
     example: 'Both partners add a row to the endpoint table in `README.md`, each on their own branch. Luis\'s branch is merged first; merging Ana\'s then stops with a conflict in `README.md`. She keeps both new rows, deletes the markers, runs `git add README.md` and `git commit`. Total: two minutes.',
     mistake: 'Committing with the markers still in the file: the page then shows `<<<<<<< HEAD`, or JavaScript fails with a syntax error. Before `git add`, search the file for `<<<<<<<`. The other panic reaction, deleting the folder and cloning again, throws away your un-pushed commits.' },
@@ -461,11 +466,13 @@ $ git commit                      # accept the pre-filled "Merge branch 'add-tit
     ],
     code: `$ git push
 Username for 'https://github.com': ana-ruiz
-Password for 'https://ana-ruiz@github.com':      # account password typed here
+# account password typed here
+Password for 'https://ana-ruiz@github.com':
 remote: Support for password authentication was removed on August 13, 2021.
 fatal: Authentication failed for 'https://github.com/ana-ruiz/portfolio.git/'
 
-$ gh auth login      # fix: sign in once through the browser, then push again
+# fix: sign in once through the browser, then push again
+$ gh auth login
 $ git push`,
     dialect: 'shell',
     example: 'On a Windows laptop with Git for Windows, Ana\'s first `git push` opens the browser, she clicks "Authorize", and the push completes. On a shared Linux machine the same push asks for a username and password, so she runs `gh auth login` once instead.',
@@ -485,15 +492,18 @@ $ git push`,
 origin  https://github.com/ana-ruiz/books-api.git (fetch)
 origin  https://github.com/ana-ruiz/books-api.git (push)
 
-$ git push -u origin main       # first push of main
-$ git push                      # later pushes
+# first push of main
+$ git push -u origin main
+# later pushes
+$ git push
 
 # when your partner pushed first:
 $ git push
 To https://github.com/ana-ruiz/books-api.git
  ! [rejected]        main -> main (fetch first)
 error: failed to push some refs to 'https://github.com/ana-ruiz/books-api.git'
-$ git pull                      # integrate their commits, then
+# integrate their commits, then
+$ git pull
 $ git push`,
     dialect: 'shell',
     example: 'Reviewers, teammates and deployment tools read the default branch **on GitHub**, not your laptop. After the final `git push`, open the repository page on github.com and check that the latest commit message and time are yours.',
@@ -526,9 +536,12 @@ $ git push`,
     code: `# once per computer: make pull merge when histories diverge
 git config --global pull.rebase false
 
-git fetch                   # see what arrived without changing anything
-git log --oneline main..origin/main   # commits on GitHub you do not have yet
-git pull                    # bring them into your branch`,
+# see what arrived without changing anything
+git fetch
+# commits on GitHub you do not have yet
+git log --oneline main..origin/main
+# bring them into your branch
+git pull`,
     dialect: 'shell',
     example: 'Monday morning: your partner pushed the validation module during the weekend. `git pull` brings their three commits into your `main` (a fast-forward, because you had not committed anything since). Only then do you start your own work.',
     mistake: 'Pulling with uncommitted edits to files the incoming commits change. Git refuses with "Your local changes to the following files would be overwritten by merge". Commit your work, set it aside with `git stash` (see [Tags and stash](#/vcs/repositories/tags-stash)), or discard it, then pull again.' },
@@ -554,9 +567,11 @@ git tag -a v1.0 -m "First finished version"
 git push origin v1.0
 
 # a pull refused because of local edits
-git stash          # edits set aside, working directory clean
+# edits set aside, working directory clean
+git stash
 git pull
-git stash pop      # edits back, on top of the new commits`,
+# edits back, on top of the new commits
+git stash pop`,
     dialect: 'shell',
     example: '`git pull` refuses: "Your local changes to the following files would be overwritten by merge", and your edits are not ready to commit. `git stash`, `git pull`, `git stash pop`: your partner\'s commits arrive and your edits land back on top. If both touched the same lines, `pop` stops with a conflict, which you resolve like a [merge conflict](#/vcs/repositories/merge-conflicts).',
     mistake: 'Forgetting a stash. Stashed work is in no commit and on no branch, so weeks later it is easy to lose: check `git stash list` before you delete a clone, and keep anything you need for longer than a few minutes as a commit on a branch. Also, a plain `git stash` leaves new files behind; add `-u` to include them.' },
@@ -621,10 +636,12 @@ Changes to be committed:
         new file:   .env
         modified:   index.html
 
-$ git restore --staged .env     # .env back to untracked; the file is untouched
+# .env back to untracked; the file is untouched
+$ git restore --staged .env
 $ git commit -m "Show book count in header"
 
-$ git restore styles.css        # DISCARD the unstaged edits to styles.css`,
+# DISCARD the unstaged edits to styles.css
+$ git restore styles.css`,
     dialect: 'shell',
     example: 'You ran `git add .` and `git status` shows `new file: .env`. Before committing, `git restore --staged .env` takes it out; then add `.env` to `.gitignore` so it never happens again. Nothing has left your laptop, so nothing leaked.',
     mistake: 'Typing `git restore styles.css` when you meant `git restore --staged styles.css`. The first one erases a morning of uncommitted work with no way back. When unsure, commit first (on a branch if it is experimental): committed work can always be recovered.' },

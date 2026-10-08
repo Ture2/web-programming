@@ -101,9 +101,12 @@ console.log('tasks:', all.length);
 const done = document.querySelectorAll('.tasks li.done');
 done.forEach((li) => { li.textContent += ' (done)'; });
 
-console.log(document.querySelector('#nope'));         // null
-console.log(document.getElementById('#tasks'));       // null: no # here
-console.log(Array.isArray(all), typeof all.map);       // not an array
+console.log(document.querySelector('#nope'));
+// → null
+console.log(document.getElementById('#tasks'));
+// → null: no # here
+// not an array
+console.log(Array.isArray(all), typeof all.map);
 console.log(Array.from(all).map((li) => li.textContent));`,
     },
     widget: 'dom-tree',
@@ -258,7 +261,8 @@ document.querySelector('#list').addEventListener('click', (e) => {
     code: `<form id="todo-form">
   <label for="todo-input">New task</label>
   <input id="todo-input" required>
-  <button>Add</button>          <!-- type="submit" by default -->
+  <!-- type="submit" by default -->
+  <button>Add</button>
 </form>
 
 <script>
@@ -266,11 +270,13 @@ document.querySelector('#list').addEventListener('click', (e) => {
   const input = document.querySelector('#todo-input');
 
   form.addEventListener('submit', (e) => {
-    e.preventDefault();          // no reload: we handle it
+    // no reload: we handle it
+    e.preventDefault();
     const text = input.value.trim();
     if (!text) return;
     console.log('add', text);
-    form.reset();                // empty the field
+    // empty the field
+    form.reset();
     input.focus();
   });
 </script>`,
@@ -324,10 +330,13 @@ document.querySelector('#locked').addEventListener('click', (e) => {
 const list = document.querySelector('#people');
 
 for (const name of names) {
-  const li = document.createElement('li');   // create
-  li.textContent = name;                      // fill (safe: plain text)
+  // create
+  const li = document.createElement('li');
+  // fill (safe: plain text)
+  li.textContent = name;
   li.classList.add('person');
-  list.append(li);                            // attach: now visible
+  // attach: now visible
+  list.append(li);
 }`,
     example: 'Rendering an array: for each name, create an `<li>`, set its `textContent`, append it to the `<ul>`. Three names produce three list items; an empty array produces an empty list, with no special case needed.',
     mistake: 'Creating and filling an element but never attaching it. There is no error at all; the element simply never appears. `el.isConnected` tells you whether it is in the page.',
@@ -343,7 +352,8 @@ let n = 1;
 
 const loose = document.createElement('li');
 loose.textContent = 'never attached';
-console.log('in the page?', loose.isConnected);    // false
+console.log('in the page?', loose.isConnected);
+// → false
 
 document.querySelector('#add').addEventListener('click', () => {
   n++;
@@ -416,7 +426,8 @@ console.log('elements created by innerHTML:', document.querySelector('#unsafe').
 <button id="btn" data-task-id="7">Task button</button>`,
       js: `const input = document.querySelector('#name');
 input.value = 'Bea';
-console.log(input.value, input.getAttribute('value'));   // Bea Ana
+// Bea Ana
+console.log(input.value, input.getAttribute('value'));
 
 const btn = document.querySelector('#btn');
 console.log(btn.dataset.taskId, typeof btn.dataset.taskId);
@@ -498,7 +509,8 @@ document.querySelector('#add').addEventListener('click', () => {
       css: `.task { cursor: pointer; padding: 4px 0; }
 .done { text-decoration: line-through; color: #777; }`,
       js: `const items = document.querySelectorAll('#list li');
-console.log(items[1].classList.contains('done'));   // true
+console.log(items[1].classList.contains('done'));
+// → true
 
 items.forEach((li) => {
   li.addEventListener('click', () => {
@@ -629,10 +641,12 @@ document.querySelector('#del').addEventListener('click', (e) => {
   const deleteBtn = e.target.closest('.delete');
   if (deleteBtn) {
     deleteBtn.closest('li').remove();
-    return;                        // do not also toggle
+    // do not also toggle
+    return;
   }
   const item = e.target.closest('li');
-  if (!item) return;               // click on the list padding
+  // click on the list padding
+  if (!item) return;
   item.classList.toggle('done');
 });`,
     example: 'In the Try it box, add three new items with the button, then click and delete them: they work immediately, although no listener was ever attached to them. The only listener is the one on the `<ul>`.',
@@ -704,18 +718,21 @@ document.querySelector('#add').addEventListener('click', () => {
       ],
       edges: [['state', 'render'], ['render', 'page'], ['page', 'handler', 'user clicks'], ['handler', 'state']],
     },
-    code: `const todos = [];        // state
+    code: `// state
+const todos = [];
 let nextId = 1;
 
 function render() {
-  list.replaceChildren();                       // start from empty
+  // start from empty
+  list.replaceChildren();
   for (const todo of todos) {
     const li = document.createElement('li');
     li.dataset.id = todo.id;
     li.classList.toggle('done', todo.done);
     const text = document.createElement('button');
     text.className = 'toggle';
-    text.textContent = todo.text;               // never innerHTML
+    // never innerHTML
+    text.textContent = todo.text;
     const del = document.createElement('button');
     del.className = 'delete';
     del.textContent = 'x';

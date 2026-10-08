@@ -75,7 +75,8 @@ DATA.en.REST_CONCEPTS = [
     code: `// ✗ Stateful: the server keeps "who is logged in" in its own memory
 let currentUser = null;
 app.post('/api/login', (req, res) => {
-  currentUser = req.body.email;            // shared by EVERY client of this process
+  // shared by EVERY client of this process
+  currentUser = req.body.email;
   res.sendStatus(204);
 });
 app.get('/api/my-books', (req, res) => {
@@ -84,7 +85,8 @@ app.get('/api/my-books', (req, res) => {
 
 // ✓ Stateless: every request says who it comes from
 app.get('/api/my-books', requireToken, (req, res) => {
-  res.json(books.filter((b) => b.owner === req.user.email));   // req.user set from the token
+  // req.user set from the token
+  res.json(books.filter((b) => b.owner === req.user.email));
 });`,
     example: 'With the stateful code, Ana logs in, then Leo logs in: `currentUser` is now Leo, and Ana\'s next `GET /api/my-books` returns **Leo\'s** books. With two copies it gets worse: Ana logged in on copy A, her next request lands on copy B, where `currentUser` is `null`. In the stateless version each request carries `Authorization: Bearer <token>`, so who logged in last, or which copy answers, no longer matters.',
     mistake: 'Thinking "stateless" forbids a database, or forbids remembering a logged-in user. The data lives in storage (resource state), and the **client** remembers being logged in by sending its token every time. Only per-client memory **inside the server process** is ruled out.' },
@@ -149,14 +151,18 @@ app.get('/api/my-books', requireToken, (req, res) => {
 const params = new URLSearchParams('done=false&page=2&limit=500&tag=a&tag=b');
 
 console.log(params.get('done'), typeof params.get('done'));
-console.log(Boolean(params.get('done')));      // the string "false" is truthy!
-console.log(params.get('done') === 'true');     // the right test
+// the string "false" is truthy!
+console.log(Boolean(params.get('done')));
+// the right test
+console.log(params.get('done') === 'true');
 
 const page = Math.max(1, Number(params.get('page')) || 1);
-const limit = Math.min(100, Number(params.get('limit')) || 20);   // clamped
+// clamped
+const limit = Math.min(100, Number(params.get('limit')) || 20);
 console.log({ page, limit, offset: (page - 1) * limit });
 
-console.log(params.get('tag'), params.getAll('tag'));   // repeated keys` },
+// repeated keys
+console.log(params.get('tag'), params.getAll('tag'));` },
     example: 'Five tasks, of which 2, 3 and 4 are unfinished. `GET /api/tasks?done=false&sort=createdAt&order=desc&limit=2` returns `200` with tasks 4 and 3 and `X-Total-Count: 3`, so the client knows a second page exists. `GET /api/tasks?done=false&page=5&limit=2` returns `200` with `[]`: the page is past the end, not "not found".',
     mistake: 'Paging without a stable order. Sorted only by `createdAt`, two tasks created in the same millisecond can swap places between requests: one appears on page 1 **and** page 2, the other on neither. Add a tie-breaker that is unique, such as the `id`.',
     practice: { href: '#/http/api-design/practice/api-builder', label: 'Filter, sort and paginate in the request builder' } },
@@ -195,12 +201,18 @@ console.log(params.get('tag'), params.getAll('tag'));   // repeated keys` },
       '<p>A method an endpoint does not support (<code>DELETE /api/tasks</code>, deleting the whole collection) gets <strong>405 Method Not Allowed</strong> (see <a href="#/http/api-design/status-client-errors">Client errors</a>).</p>',
     ],
     code: `// routes/books.js, mounted in app.js with app.use('/api/books', router)
-router.get('/', listBooks);          // GET    /api/books       200 [ … ]
-router.post('/', createBook);        // POST   /api/books       201 + Location
-router.get('/:id', getBook);         // GET    /api/books/:id   200 | 404
-router.put('/:id', replaceBook);     // PUT    /api/books/:id   200 | 400 | 404
-router.patch('/:id', patchBook);     // PATCH  /api/books/:id   200 | 400 | 404
-router.delete('/:id', deleteBook);   // DELETE /api/books/:id   204 | 404`,
+// GET    /api/books       200 [ … ]
+router.get('/', listBooks);
+// POST   /api/books       201 + Location
+router.post('/', createBook);
+// GET    /api/books/:id   200 | 404
+router.get('/:id', getBook);
+// PUT    /api/books/:id   200 | 400 | 404
+router.put('/:id', replaceBook);
+// PATCH  /api/books/:id   200 | 400 | 404
+router.patch('/:id', patchBook);
+// DELETE /api/books/:id   204 | 404
+router.delete('/:id', deleteBook);`,
     example: 'One lifecycle in the request builder: `GET /api/tasks` lists five tasks (200); `POST /api/tasks` with `{"title":"Study REST"}` answers 201 and `Location: /api/tasks/6`; `GET /api/tasks/6` reads it (200); `PATCH /api/tasks/6` with `{"done":true}` changes one field (200); `DELETE /api/tasks/6` removes it (204); a last `GET /api/tasks/6` answers 404. One URL pattern, and the status codes tell the whole story.',
     mistake: 'Sending updates to the collection, such as `PUT /api/tasks` with `{"id":6,"done":true}` in the body. The URL must name the resource being changed, so the id belongs in the path: `PATCH /api/tasks/6`. On a well-designed API the collection version answers 405.',
     widget: 'api-builder' },
@@ -263,12 +275,14 @@ router.delete('/:id', deleteBook);   // DELETE /api/books/:id   204 | 404`,
       ],
     },
     live: { kind: 'js', code: `const task = { id: 2, title: 'Add full CRUD', done: false, userId: 1 };
-const body = { done: true };                // what the client sent
+// what the client sent
+const body = { done: true };
 
 // PUT: build the whole new version from the body (+ defaults)
 const afterPut = {
   id: task.id,
-  title: body.title,                         // undefined → a PUT without title must be a 400
+  title: body.title,
+  // → undefined → a PUT without title must be a 400
   done: body.done ?? false,
   userId: body.userId ?? null,
 };
@@ -300,10 +314,14 @@ console.log('PATCH', afterPatch);` },
       '<dl><dt>201 Created</dt><dd>Goes with <code>Location</code>, the URL of the new resource (relative is fine). The body echoes it, including the fields the server set (<code>id</code>, <code>createdAt</code>), so the client needs no extra GET.</dd>'
         + '<dt>204 No Content</dt><dd>Has <strong>no body at all</strong>: Express drops one if you pass it, and <code>await res.json()</code> on a 204 throws "Unexpected end of JSON input".</dd></dl>',
     ],
-    code: `res.json(books);                                            // 200 is the default status
-res.status(201).location(\`/api/books/\${book.id}\`).json(book);  // created
-res.json(updatedBook);                                      // 200 after PUT / PATCH
-res.status(204).end();                                      // deleted, no body`,
+    code: `res.json(books);
+// → 200 is the default status
+// created
+res.status(201).location(\`/api/books/\${book.id}\`).json(book);
+res.json(updatedBook);
+// → 200 after PUT / PATCH
+// deleted, no body
+res.status(204).end();`,
     example: 'With curl (see [curl in five flags](#/server/routes/curl-basics)), `curl -i -X POST http://localhost:3000/api/tasks -H "Content-Type: application/json" -d \'{"title":"Study"}\'` prints `HTTP/1.1 201 Created` and `Location: /api/tasks/6` before the body: the client already knows everything; the JSON adds the `id` and `createdAt` the server chose.',
     mistake: 'Writing `res.status(204).json({ message: "Deleted" })` and expecting the client to show the message. A 204 never has a body: Express silently drops it. Either answer 204 with nothing, or 200 with a body.',
     practice: { href: '#/http/api-design/practice/status-chooser', label: 'Practise choosing status codes' } },
@@ -388,10 +406,12 @@ router.route('/')
     code: `// app.js: the LAST middleware. Every error leaves in the same shape.
 app.use((err, req, res, next) => {
   const status = err.status || 500;
-  if (status >= 500) console.error(err);           // details stay in the server log
+  // details stay in the server log
+  if (status >= 500) console.error(err);
   res.status(status).json({
     error: status >= 500 ? 'Internal server error' : err.message,
-    ...(err.errors ? { errors: err.errors } : {}),   // field errors, when there are any
+    // field errors, when there are any
+    ...(err.errors ? { errors: err.errors } : {}),
   });
 });`,
     example: 'Because the shape never changes, the client needs one function: `const res = await fetch(url, options); if (!res.ok) { const { error, errors = [] } = await res.json(); errors.forEach((e) => showFieldError(e.field, e.message)); showBanner(error); }`. It works for a 400 with field errors, a 404 and a 500 alike.',
@@ -414,14 +434,18 @@ app.use((err, req, res, next) => {
     ],
     live: { kind: 'js', code: `const book = { title: 'Dune', read: false, due: new Date(Date.UTC(2026, 9, 20)), notes: undefined };
 
-console.log(JSON.stringify(book));        // the Date becomes an ISO string; undefined disappears
-console.log(String({ title: 'Dune' }));   // what fetch sends if you forget JSON.stringify
+// the Date becomes an ISO string; undefined disappears
+console.log(JSON.stringify(book));
+// what fetch sends if you forget JSON.stringify
+console.log(String({ title: 'Dune' }));
 
 const back = JSON.parse('{"title":"Dune","due":"2026-10-20T00:00:00.000Z"}');
-console.log(typeof back.due);              // a string: JSON has no date type
+// a string: JSON has no date type
+console.log(typeof back.due);
 
 try {
-  JSON.parse("{'title':'Dune'}");          // single quotes are not JSON
+  // single quotes are not JSON
+  JSON.parse("{'title':'Dune'}");
 } catch (e) {
   console.log('400 material:', e.name);
 }` },
@@ -457,7 +481,8 @@ const row = { id: 2, email: 'leo@example.com', password_hash: '$2b$10$Qm1x…',
 
 // ✗ Block-list: remove what you remembered to remove
 const { password_hash, ...leaky } = row;
-console.log(leaky);         // is_deleted and created_at leak, and so will any new column
+// is_deleted and created_at leak, and so will any new column
+console.log(leaky);
 
 // ✓ Allow-list: copy only the contract
 const toUserDto = (r) => ({ id: r.id, email: r.email, role: r.role, createdAt: r.created_at });
@@ -482,7 +507,8 @@ console.log(toUserDto(row));` },
 let nextId = 2;
 
 function getBook(req, res) {
-  const id = Number(req.params.id);                 // "1" → 1
+  const id = Number(req.params.id);
+  // → "1" → 1
   const book = books.find((b) => b.id === id);
   if (!book) return res.status(404).json({ error: \`Book \${id} not found\` });
   res.json(book);
@@ -495,13 +521,18 @@ function deleteBook(req, res) {
   res.status(204).end();
 }`,
     live: { kind: 'js', code: `const books = [{ id: 1, title: 'Dune' }];
-console.log(books.find((b) => b.id === '1'));           // undefined: "1" is not 1
-console.log(books.find((b) => b.id === Number('1')));   // found
+console.log(books.find((b) => b.id === '1'));
+// → undefined: "1" is not 1
+// found
+console.log(books.find((b) => b.id === Number('1')));
 
 let nextId = 2;
-const body = { id: 1, title: 'Hacked', isAdmin: true };  // what a client could send
-console.log({ id: nextId++, ...body });                  // ✗ the body overwrote the id
-console.log({ id: nextId++, title: body.title });        // ✓ only the allowed fields` },
+// what a client could send
+const body = { id: 1, title: 'Hacked', isAdmin: true };
+// ✗ the body overwrote the id
+console.log({ id: nextId++, ...body });
+// ✓ only the allowed fields
+console.log({ id: nextId++, title: body.title });` },
     example: '`DELETE /api/books/7` when book 7 does not exist: `findIndex` returns `-1`, the handler answers 404 and returns. Without that check, `books.splice(-1, 1)` would silently remove the **last** book and answer 204: the wrong item deleted, and a success reported.',
     mistake: 'Forgetting `return` before an early answer: `if (!book) res.status(404).json(...)` followed by `res.json(book)`. The second call crashes with `ERR_HTTP_HEADERS_SENT`. Every early answer starts with `return`.' },
 
@@ -546,8 +577,10 @@ console.log({ id: nextId++, title: body.title });        // ✓ only the allowed
 }
 
 console.log(validateBook({ title: 'Dune', rating: 5 }));
-console.log(validateBook({ title: '   ', rating: '5' }));          // two errors, both reported
-console.log(validateBook({ rating: 4 }, { partial: true }));       // PATCH: title not needed` },
+// two errors, both reported
+console.log(validateBook({ title: '   ', rating: '5' }));
+// PATCH: title not needed
+console.log(validateBook({ rating: 4 }, { partial: true }));` },
     example: '`POST /api/books` with `{"title":"   ","rating":"5"}` answers `400` with `{ "error": "Validation failed", "errors": [ { "field": "title", "message": "title is required" }, { "field": "rating", "message": "rating must be a whole number from 1 to 5" } ] }`, and the collection has the same length as before. The client shows each message under its input.',
     mistake: 'Checking only `if (!req.body.title)`. It accepts `"title": 123` and `"title": "   "`, says nothing about the other fields, and reports one problem at a time, so the user fixes, resubmits and gets the next error, again and again.' },
 
@@ -606,7 +639,8 @@ curl -i -H "Authorization: Bearer $TOKEN" http://localhost:3000/api/me`,
     },
     code: `// tests/books.test.js (Jest + supertest)
 const request = require('supertest');
-const app = require('../src/app');          // the app, NOT server.js
+// the app, NOT server.js
+const app = require('../src/app');
 
 test('POST /api/books → 201 with Location and a server id', async () => {
   const res = await request(app).post('/api/books').send({ title: 'Dune' });

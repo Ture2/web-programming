@@ -91,7 +91,8 @@ DATA.en.SHARED_CONCEPTS = [
       ],
     },
     code: `function TaskPage() {
-  const [filter, setFilter] = useState('');                 // lifted here
+  // lifted here
+  const [filter, setFilter] = useState('');
   return (
     <>
       <Toolbar filter={filter} onFilterChange={setFilter} />  {/* value + callback */}
@@ -129,7 +130,8 @@ function TaskList({ tasks }) {
 }
 
 function TaskPage() {
-  const [filter, setFilter] = useState('');     // lifted: both children need it
+  // lifted: both children need it
+  const [filter, setFilter] = useState('');
   const visible = TASKS.filter((t) => t.title.toLowerCase().includes(filter.toLowerCase()));
   return (
     <section>
@@ -164,7 +166,8 @@ function App() {
       code: `import { useState } from 'react';
 
 function Counter({ initial }) {
-  const [count] = useState(initial);    // a second copy of "how many tasks"
+  // a second copy of "how many tasks"
+  const [count] = useState(initial);
   return <p>Header says: {count} tasks</p>;
 }
 
@@ -210,7 +213,8 @@ const TASKS = [
 ];
 
 function EditTask({ task }) {
-  const [draft, setDraft] = useState(task.title);   // a deliberate copy: the edit in progress
+  // a deliberate copy: the edit in progress
+  const [draft, setDraft] = useState(task.title);
   return (
     <p>
       Editing #{task.id}:{' '}
@@ -281,13 +285,16 @@ function App() {
   const [user, setUser] = useState({ name: 'Ana' });
   return <Layout user={user} onLogout={() => setUser(null)} />;
 }
-function Layout({ user, onLogout }) {        // uses neither
+// uses neither
+function Layout({ user, onLogout }) {
   return <><Header user={user} onLogout={onLogout} /><TaskPage user={user} /></>;
 }
-function Header({ user, onLogout }) {        // uses neither
+// uses neither
+function Header({ user, onLogout }) {
   return <header><Avatar user={user} /><LogoutButton onLogout={onLogout} /></header>;
 }
-function TaskPage({ user }) {                // uses it only to pass it on
+// uses it only to pass it on
+function TaskPage({ user }) {
   return <TaskList user={user} />;
 }`,
     practice: SHARED_TREE_LINK,
@@ -309,7 +316,8 @@ function TaskPage({ user }) {                // uses it only to pass it on
       kind: 'react',
       code: `import { useState } from 'react';
 
-function Layout({ header, children }) {        // knows nothing about users
+// knows nothing about users
+function Layout({ header, children }) {
   return (
     <div className="layout">
       <header>{header}</header>
@@ -383,14 +391,17 @@ function App() {
       kind: 'react',
       code: `import { createContext, useContext } from 'react';
 
-const ThemeContext = createContext('light');    // 'light' is the default: no provider above
+const ThemeContext = createContext('light');
+// → 'light' is the default: no provider above
 
 function Badge() {
-  const theme = useContext(ThemeContext);       // the nearest provider above wins
+  // the nearest provider above wins
+  const theme = useContext(ThemeContext);
   return <span className={'badge ' + theme}>{theme}</span>;
 }
 
-function Panel({ title }) {                     // no theme prop anywhere
+// no theme prop anywhere
+function Panel({ title }) {
   return <p>{title}: <Badge /></p>;
 }
 
@@ -469,7 +480,8 @@ function ThemeToggle() {
   return <button onClick={toggleTheme}>Switch to {theme === 'light' ? 'dark' : 'light'}</button>;
 }
 
-function Sidebar() {                     // passes nothing on
+// passes nothing on
+function Sidebar() {
   return <aside><ThemeToggle /></aside>;
 }
 
@@ -574,7 +586,8 @@ function App() {
 
 let renders = 0;
 const TaskList = memo(function TaskList({ onSelect }) {
-  renders += 1;                              // counts the times React really ran it
+  // counts the times React really ran it
+  renders += 1;
   return (
     <>
       <p>TaskList rendered {renders} times</p>
@@ -592,8 +605,10 @@ function App() {
   const [selected, setSelected] = useState('none');
   const [stable, setStable] = useState(false);
 
-  const fresh = (t) => setSelected(t);                     // a new function every render
-  const kept = useCallback((t) => setSelected(t), []);     // the same function every render
+  // a new function every render
+  const fresh = (t) => setSelected(t);
+  // the same function every render
+  const kept = useCallback((t) => setSelected(t), []);
   const onSelect = stable ? kept : fresh;
 
   return (
@@ -649,8 +664,10 @@ function App() {
   const [user, setUser] = useState({ name: 'Ana' });
   const [stable, setStable] = useState(false);
 
-  const fresh = { user, setUser };                               // a new object every render
-  const memoised = useMemo(() => ({ user, setUser }), [user]);   // same object until user changes
+  // a new object every render
+  const fresh = { user, setUser };
+  // same object until user changes
+  const memoised = useMemo(() => ({ user, setUser }), [user]);
   const value = stable ? memoised : fresh;
 
   return (
@@ -699,7 +716,8 @@ function AuthProvider({ children }) {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error);   // the form shows it
+    // the form shows it
+    if (!res.ok) throw new Error(data.error);
     setToken(data.token);
     setUser(data.user);
   }
@@ -751,12 +769,14 @@ function App() {
       '<p>A restored token may be <strong>stale</strong>: it expired while the tab was closed, or the server changed its secret. Either let the first API call find out, so a <code>401</code> with a token logs out in one place (see <a href="#/browser/shared-state/token-and-api-client">Sharing the token with the API client</a>), or ask the server at start-up ("who am I", such as <code>GET /api/auth/me</code> on servers that have one) and keep a third status, <strong>checking</strong>, so protected screens wait instead of redirecting to the log-in page and back.</p>',
     ],
     code: `function AuthProvider({ children }) {
-  const [session, setSession] = useState(() => {         // restore once
+  // restore once
+  const [session, setSession] = useState(() => {
     try { return JSON.parse(localStorage.getItem('session')) ?? null; }
     catch { return null; }
   });
 
-  useEffect(() => {                                       // save on every change
+  // save on every change
+  useEffect(() => {
     try {
       if (session) localStorage.setItem('session', JSON.stringify(session));
       else localStorage.removeItem('session');
@@ -780,7 +800,8 @@ const storage = {
 const AuthContext = createContext(null);
 
 function AuthProvider({ children }) {
-  const [session, setSession] = useState(() => {          // restore once, on load
+  // restore once, on load
+  const [session, setSession] = useState(() => {
     const saved = storage.get('session');
     console.log(saved ? 'restored the saved session' : 'no saved session');
     return saved ? JSON.parse(saved) : null;
@@ -801,7 +822,8 @@ function Status() {
 }
 
 function App() {
-  const [boot, setBoot] = useState(0);    // a new key = a fresh provider, like a page reload
+  // a new key = a fresh provider, like a page reload
+  const [boot, setBoot] = useState(0);
   return (
     <>
       <button onClick={() => setBoot((b) => b + 1)}>Simulate a reload</button>
@@ -888,7 +910,8 @@ function createClient({ token, onUnauthorized }) {
 const AuthContext = createContext(null);
 
 function AuthProvider({ children }) {
-  const [token, setToken] = useState('expired-token');   // as if restored days later
+  // as if restored days later
+  const [token, setToken] = useState('expired-token');
   const logOut = () => setToken(null);
   const api = useMemo(() => createClient({ token, onUnauthorized: logOut }), [token]);
   async function logIn() {
@@ -955,19 +978,22 @@ function useTasks() {
 }
 
 function TaskCount() {
-  const { tasks } = useTasks();                  // request 1
+  // request 1
+  const { tasks } = useTasks();
   return <p>Header: {tasks.length} tasks</p>;
 }
 
 function TaskList() {
-  const { tasks, reload } = useTasks();          // request 2, same URL
+  // request 2, same URL
+  const { tasks, reload } = useTasks();
   async function add() {
     await fetch('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: 'New task ' + tasks.length }),
     });
-    reload();                                    // refreshes THIS copy only
+    // refreshes THIS copy only
+    reload();
   }
   return (
     <>
@@ -1024,7 +1050,8 @@ function useAddTask() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (title) => api('/tasks', { method: 'POST', body: { title } }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),   // every tasks list refetches
+    // every tasks list refetches
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 }
 
@@ -1036,7 +1063,8 @@ const { data: tasks, isPending, isError, error } = useTasks(search);`,
       code: `import { useEffect, useState } from 'react';
 
 // A toy query cache: one entry per key, shared by every component that asks for it.
-const cache = new Map();                          // key → { data, promise, listeners }
+// key → { data, promise, listeners }
+const cache = new Map();
 function entry(key) {
   if (!cache.has(key)) cache.set(key, { data: undefined, promise: null, listeners: new Set() });
   return cache.get(key);
@@ -1051,7 +1079,8 @@ function useQuery(key, fn) {
   const [data, setData] = useState(e.data);
   useEffect(() => {
     e.listeners.add(setData);
-    if (e.data === undefined) fetchKey(key, fn);  // first asker fetches, the others share the promise
+    // first asker fetches, the others share the promise
+    if (e.data === undefined) fetchKey(key, fn);
     return () => e.listeners.delete(setData);
   }, [key]);
   return data;
@@ -1068,7 +1097,8 @@ function TaskList() {
   const tasks = useQuery('tasks', getTasks);
   async function add() {
     await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: 'New task' }) });
-    fetchKey('tasks', getTasks);                  // "invalidate": refetch once, notify everyone
+    fetchKey('tasks', getTasks);
+    // → "invalidate": refetch once, notify everyone
   }
   return <><p>List: {tasks ? tasks.length : '…'} tasks</p><button onClick={add}>Add a task</button></>;
 }
@@ -1096,13 +1126,15 @@ export const useCart = create((set) => ({
   items: [],
   add: (item) => set((s) => ({ items: [...s.items, item] })),
 }));
-const count = useCart((s) => s.items.length);      // re-renders only when the count changes
+// re-renders only when the count changes
+const count = useCart((s) => s.items.length);
 
 // Redux Toolkit
 const cartSlice = createSlice({
   name: 'cart',
   initialState: { items: [] },
-  reducers: { add: (state, action) => { state.items.push(action.payload); } },  // Immer makes this immutable
+  // Immer makes this immutable
+  reducers: { add: (state, action) => { state.items.push(action.payload); } },
 });
 const count = useSelector((s) => s.cart.items.length);
 dispatch(cartSlice.actions.add(item));`,
@@ -1135,7 +1167,8 @@ function Theme() {
   return <p>theme: {theme}</p>;
 }
 
-function App() {                       // reads nothing, so it never re-renders
+// reads nothing, so it never re-renders
+function App() {
   return (
     <>
       <Count />

@@ -83,15 +83,18 @@ function render() {
 document.addEventListener('click', (e) => {
   const a = e.target.closest('a[data-link]');
   if (!a) return;
-  e.preventDefault();                       // stop the browser loading a page
+  // stop the browser loading a page
+  e.preventDefault();
   history.pushState(null, '', a.getAttribute('href'));
-  render();                                 // pushState does not fire popstate
+  // pushState does not fire popstate
+  render();
 });
 
 // 2. Back and Forward: the browser fires popstate, we draw the URL it restored
 window.addEventListener('popstate', render);
 
-render();                                   // 3. the first load`,
+render();
+// → 3. the first load`,
     practice: ROUTER_SIM,
     example: 'With this hand-made router, on `/` the user clicks `<a href="/tasks" data-link>`: the listener cancels the navigation, `pushState` makes the history `[/, /tasks]`, and `render()` draws "All tasks". Back moves the pointer to `/`, fires `popstate`, and `render()` draws "Home". No request reached the server.',
     mistake: 'Expecting `pushState` to show the new page, or to fire `popstate`. It only changes the address bar and the history; without a render afterwards, the URL says `/tasks` while the screen still shows the home page.' },
@@ -123,15 +126,18 @@ render();                                   // 3. the first load`,
 const path = require('path');
 const dist = path.join(__dirname, '..', 'client', 'dist');
 
-app.use('/api', apiRouter);                 // 1. the API first
-app.use(express.static(dist));              // 2. real files: /assets/index-3f2a.js …
+app.use('/api', apiRouter);
+// → 1. the API first
+app.use(express.static(dist));
+// → 2. real files: /assets/index-3f2a.js …
 
 // 3. the SPA fallback: any other GET that is not /api/… gets index.html
 app.get(/^\\/(?!api\\/).*/, (req, res) => {
   res.sendFile(path.join(dist, 'index.html'));
 });
 
-app.use((req, res) => res.status(404).json({ error: 'Not found' }));   // 4. unknown /api/… routes`,
+app.use((req, res) => res.status(404).json({ error: 'Not found' }));
+// → 4. unknown /api/… routes`,
     practice: ROUTER_SIM,
     example: 'In the router simulator, switch off "The server answers every path with index.html", click a link to `/tasks` (it works: no request is made), then press **Refresh**: the page becomes the server\'s `404 Not Found · Cannot GET /tasks`. Switch the fallback on and refresh again: the app starts and draws `/tasks`.',
     mistake: 'Making the fallback catch everything, API included: `GET /api/tsks` (a typo) then answers `200` with an HTML page, and the front end fails with "Unexpected token \'<\' in JSON". Exclude `/api/` from the fallback, so unknown API paths keep their JSON 404 (see [The 404 catch-all](#/server/routes/not-found)).' },
@@ -152,10 +158,12 @@ app.use((req, res) => res.status(404).json({ error: 'Not found' }));   // 4. unk
     ],
     code: `// A hash router in plain JavaScript: no server configuration needed
 function render() {
-  const path = location.hash.slice(1) || '/';     // '#/tasks/7' → '/tasks/7'
+  const path = location.hash.slice(1) || '/';
+  // → '#/tasks/7' → '/tasks/7'
   document.querySelector('#app').textContent = 'Screen for ' + path;
 }
-window.addEventListener('hashchange', render);   // links: <a href="#/tasks/7">
+// links: <a href="#/tasks/7">
+window.addEventListener('hashchange', render);
 render();`,
     example: 'Deploy the same app twice to a static host without rewrites. With `BrowserRouter`, `https://me.github.io/app/tasks/7` gives a 404 on refresh. With `HashRouter`, `https://me.github.io/app/#/tasks/7` always works: the server only ever sees `/app/`.',
     mistake: 'Switching to `HashRouter` while keeping `href="/tasks"` in plain `<a>` tags. Those still point at a path, so they load a page the host does not have. Use the router\'s `<Link to="/tasks">`, which writes the right URL for the router you chose (see [Link instead of a href](#/browser/routing/link-vs-a)).' },
@@ -186,7 +194,8 @@ render();`,
     },
     code: `// main.jsx: one router, at the top
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router';    // version 6: 'react-router-dom'
+// version 6: 'react-router-dom'
+import { BrowserRouter } from 'react-router';
 import App from './App.jsx';
 
 createRoot(document.getElementById('root')).render(
@@ -307,7 +316,8 @@ function NavBar() {
 // Simulated: a full page load is a new start of the app,
 // imitated here by giving the app a new key (React remounts it from zero).
 function TheApp({ path, go, fullLoad }) {
-  const [clicks, setClicks] = useState(0);         // state kept in memory
+  // state kept in memory
+  const [clicks, setClicks] = useState(0);
   return (
     <>
       <p>State in memory: <strong>{clicks}</strong>{' '}
@@ -327,7 +337,8 @@ function App() {
   const [loads, setLoads] = useState(1);
   function fullLoad(to) {
     setPath(to);
-    setLoads(loads + 1);                           // the browser starts the app again
+    // the browser starts the app again
+    setLoads(loads + 1);
   }
   return (
     <>
@@ -376,7 +387,8 @@ function App() {
 import { useParams } from 'react-router';
 
 export default function TaskDetail() {
-  const { id } = useParams();               // '7' for /tasks/7: a string
+  const { id } = useParams();
+  // → '7' for /tasks/7: a string
   const taskId = Number(id);
   if (!Number.isInteger(taskId) || taskId < 1) return <p>There is no task "{id}".</p>;
   return <h1>Task {taskId}</h1>;
@@ -391,7 +403,8 @@ function matchPath(pattern, path) {
   const params = {};
   for (let i = 0; i < want.length; i++) {
     if (want[i].startsWith(':')) {
-      if (!got[i]) return null;               // a param needs a non-empty segment
+      // a param needs a non-empty segment
+      if (!got[i]) return null;
       try { params[want[i].slice(1)] = decodeURIComponent(got[i]); } catch { return null; }
     } else if (want[i] !== got[i]) return null;
   }
@@ -442,10 +455,12 @@ function App() {
   const [url, setUrl] = useState('/tasks?done=false');
   const [pathname, query = ''] = url.split('?');
   const searchParams = new URLSearchParams(query);
-  const done = searchParams.get('done');          // 'true', 'false' or null
+  const done = searchParams.get('done');
+  // → 'true', 'false' or null
   const q = searchParams.get('q') ?? '';
 
-  function update(key, value) {                   // what setSearchParams does
+  // what setSearchParams does
+  function update(key, value) {
     const next = new URLSearchParams(searchParams);
     if (value) next.set(key, value); else next.delete(key);
     const s = next.toString();
@@ -646,7 +661,8 @@ function App() {
     const task = { id: tasks.length + 1, title };
     setTasks([...tasks, task]);
     setTitle('');
-    navigate('/tasks/' + task.id);                 // try { replace: true }
+    // try { replace: true }
+    navigate('/tasks/' + task.id);
   }
 
   let page = <ul>{tasks.map((t) => <li key={t.id}>{t.title}</li>)}</ul>;
@@ -718,11 +734,13 @@ import { useAuth } from './AuthContext.jsx';
 export default function RequireAuth({ children }) {
   const { user, checking } = useAuth();
   const location = useLocation();
-  if (checking) return <p>Loading…</p>;                  // still reading the saved token
+  // still reading the saved token
+  if (checking) return <p>Loading…</p>;
   if (!user) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
-  return children ?? <Outlet />;     // wraps one page, or a group of child routes
+  // wraps one page, or a group of child routes
+  return children ?? <Outlet />;
 }
 
 // App.jsx
@@ -823,9 +841,11 @@ export default function Login() {
     const form = new FormData(e.currentTarget);
     try {
       await login(form.get('email'), form.get('password'));
-      navigate(target, { replace: true });            // back where they wanted to go
+      // back where they wanted to go
+      navigate(target, { replace: true });
     } catch (err) {
-      setError(err.message);                          // stay here and explain
+      // stay here and explain
+      setError(err.message);
     }
   }
   return (
@@ -851,7 +871,8 @@ export default function Login() {
     ],
     live: { kind: 'react', api: true, code: `import { useEffect, useState } from 'react';
 
-function TaskDetail({ id }) {        // in React Router: const { id } = useParams();
+// in React Router: const { id } = useParams();
+function TaskDetail({ id }) {
   const [task, setTask] = useState(null);
   const [error, setError] = useState(null);
   useEffect(() => {
@@ -866,8 +887,10 @@ function TaskDetail({ id }) {        // in React Router: const { id } = useParam
       })
       .then((t) => { if (!ignore) setTask(t); })
       .catch((e) => { if (!ignore) setError(e.message); });
-    return () => { ignore = true; };   // a newer id arrived: ignore this answer
-  }, [id]);                             // a new id in the URL → fetch again
+    // a newer id arrived: ignore this answer
+    return () => { ignore = true; };
+  // a new id in the URL → fetch again
+  }, [id]);
   if (error) return <p role="alert">Task {id}: {error}</p>;
   if (!task) return <p>Loading task {id}…</p>;
   return <h2>#{task.id} {task.title} {task.done ? '(done)' : ''}</h2>;

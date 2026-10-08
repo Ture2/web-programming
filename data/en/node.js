@@ -99,7 +99,8 @@ console.log(\`Hello, \${name}!\`);
     html: [
       '<p>Many programs on one computer use the network. The <strong>port</strong>, a number from 0 to 65535, says which program a request is for: <code>localhost:3000</code> means "this computer, the program listening on port 3000". <code>server.listen(3000)</code> claims the port, and from then on <strong>one function</strong> receives every request and builds its response.</p>',
       '<pre><code>// server.js\n'
-        + 'const http = require(\'node:http\');   // Node\'s built-in http module\n\n'
+        + '// Node\'s built-in http module\n'
+        + 'const http = require(\'node:http\');\n\n'
         + 'const server = http.createServer((req, res) =&gt; {\n'
         + '  if (req.method === \'GET\' &amp;&amp; req.url === \'/health\') {\n'
         + '    res.writeHead(200, { \'Content-Type\': \'application/json\' });\n'
@@ -156,33 +157,40 @@ console.log(\`Hello, \${name}!\`);
       edges: [['money', 'exp'], ['exp', 'report', '`require`']],
     },
     code: `// src/utils/money.js
-const VAT = 0.21;                         // private: not exported
+// private: not exported
+const VAT = 0.21;
 function withVat(price) {
   return Math.round(price * (1 + VAT) * 100) / 100;
 }
-module.exports = withVat;                 // export ONE function
+// export ONE function
+module.exports = withVat;
 
 // src/report.js
 const withVat = require('./utils/money'); // ./ = relative to THIS file
-console.log(withVat(100));                // 121
-console.log(typeof VAT);                  // 'undefined': VAT stayed private`,
+console.log(withVat(100));
+// → 121
+console.log(typeof VAT);
+// → 'undefined': VAT stayed private`,
     live: { kind: 'js', code: `// How Node runs each file (simplified): your code is wrapped in a
 // function that receives "module" and "exports".
 function runModule(code) {
   const module = { exports: {} };
   code(module, module.exports);
-  return module.exports;          // what require() gives back
+  // what require() gives back
+  return module.exports;
 }
 
 const good = runModule((module) => {
   module.exports = { greet: (name) => 'Hi ' + name };
 });
-console.log(good.greet('Ana'));   // Hi Ana
+console.log(good.greet('Ana'));
+// → Hi Ana
 
 const bad = runModule((module, exports) => {
   exports = { greet: (name) => 'Hi ' + name }; // re-points the shortcut only
 });
-console.log(bad);                 // {}: nothing was exported` },
+console.log(bad);
+// → {}: nothing was exported` },
     example: '`store.js` holds `const tasks = []; module.exports = tasks;`. `add.js` requires it and pushes a task; `list.js` requires `./store` and sees that task. The module ran once, so there is **one** array shared by every file, not one copy per `require`.',
     mistake: 'Forgetting the export. If `money.js` defines `withVat` but never assigns `module.exports`, `require(\'./utils/money\')` returns an empty object `{}`, and `withVat(100)` throws `TypeError: withVat is not a function`. When a required value is `{}` or `undefined`, look at the last lines of the file you required.' },
 
@@ -210,12 +218,15 @@ const tasks = {
 
 // Destructuring takes properties out by name
 const { listTasks, createTask } = tasks;
-console.log(listTasks());    // listing tasks
-console.log(createTask());   // creating a task
+// listing tasks
+console.log(listTasks());
+// creating a task
+console.log(createTask());
 
 // A name that is not a property gives undefined
 const { deleteTask } = tasks;
-console.log(deleteTask);     // undefined` },
+console.log(deleteTask);
+// → undefined` },
     example: 'You add `deleteTask` to `const { listTasks, deleteTask } = require(\'./tasks\');` but forget it in the `module.exports = { … }` of `tasks.js`. The variable is `undefined`, and the first call fails with `TypeError: deleteTask is not a function`. Check the export list of the file you required.',
     mistake: 'Writing `require(\'app\')` for your own `app.js`. Without `./`, Node reads `app` as a **package** name, searches `node_modules/`, and fails with `Cannot find module \'app\'`, even though `app.js` sits next to the file. Paths to your own files always start with `./` or `../`.' },
 
@@ -262,10 +273,12 @@ console.log(deleteTask);     // undefined` },
 const fs = require('node:fs');
 const path = require('node:path');
 
-const file = path.join(__dirname, 'tasks.json');   // next to this file, wherever Node starts
+// next to this file, wherever Node starts
+const file = path.join(__dirname, 'tasks.json');
 const tasks = JSON.parse(fs.readFileSync(file, 'utf8'));
 tasks.push({ id: tasks.length + 1, title: 'Write the report', done: false });
-fs.writeFileSync(file, JSON.stringify(tasks, null, 2));   // null, 2: indent by two spaces
+fs.writeFileSync(file, JSON.stringify(tasks, null, 2));
+// → null, 2: indent by two spaces
 console.log(tasks.length, 'tasks saved');`,
     example: 'Running `node src/load.js` from the project folder and `node load.js` from inside `src/` both find `src/tasks.json`, because the path is built from `__dirname`. With the plain `\'tasks.json\'`, the first command fails with `Error: ENOENT: no such file or directory`, and the full path in the message shows where Node looked: in the project folder, not in `src/`.',
     mistake: 'Leaving out `\'utf8\'`. Without an encoding, `readFileSync` returns a **Buffer** (the raw bytes), and `console.log` prints `<Buffer 5b 0a 20 20 7b …>` instead of the text. Pass `\'utf8\'` whenever you want the file as a string.' },
@@ -369,14 +382,17 @@ console.log(tasks.length, 'tasks saved');`,
 function caretAccepts(range, version) {
   const r = range.replace('^', '').split('.').map(Number);
   const v = version.split('.').map(Number);
-  if (v[0] !== r[0]) return false;      // another MAJOR may break your code
+  // another MAJOR may break your code
+  if (v[0] !== r[0]) return false;
   if (v[1] !== r[1]) return v[1] > r[1]; // a newer MINOR is fine
-  return v[2] >= r[2];                  // same MINOR: PATCH must not be older
+  // same MINOR: PATCH must not be older
+  return v[2] >= r[2];
 }
 
 console.log(caretAccepts('^4.19.0', '4.22.3')); // true
 console.log(caretAccepts('^4.19.0', '4.18.9')); // false: older
-console.log(caretAccepts('^4.19.0', '5.0.0'));  // false: new major` },
+console.log(caretAccepts('^4.19.0', '5.0.0'));
+// → false: new major` },
     example: 'With `"express": "^4.19.2"`, a developer who installed last year and a teammate who installs today can get different 4.x versions, both allowed by the caret: compatible, but not identical. The **lockfile** records the exact version, so everyone gets the same one (see [package-lock.json](#/server/runtime/lockfile)).',
     mistake: 'Reading `^4.19.0` as "version 4.19.0": it means "4.19.0 **or any newer 4.x**". The opposite slip is changing the major by hand (`"^5.0.0"`) "to update": a new major may change behaviour your code relies on, so read the package\'s migration guide first.' },
 
@@ -490,12 +506,14 @@ function divide(a, b, callback) {
     callback(new Error('Cannot divide by zero')); // failure: the error first
     return;
   }
-  callback(null, a / b);                         // success: null, then the result
+  // success: null, then the result
+  callback(null, a / b);
 }
 
 divide(10, 2, (err, result) => {
   if (err) return console.log('Error:', err.message);
-  console.log('Result:', result);                // Result: 5
+  // Result: 5
+  console.log('Result:', result);
 });
 
 divide(1, 0, (err, result) => {
@@ -534,7 +552,8 @@ divide(1, 0, (err, result) => {
 
 // The three dependent steps of the callback card, flat
 fs.readFile('config.json', 'utf8')
-  .then((text) => JSON.parse(text))                       // a value: passed on
+  // a value: passed on
+  .then((text) => JSON.parse(text))
   .then((config) => fs.readFile(config.dataFile, 'utf8')) // a promise: waited for
   .then((data) => fs.writeFile('copy.txt', data))
   .then(() => console.log('done'))
@@ -578,7 +597,8 @@ async function copyData() {
   const config = JSON.parse(text);
   const data = await fs.readFile(config.dataFile, 'utf8');
   await fs.writeFile('copy.txt', data);
-  return data.length;                                    // fulfils the returned promise
+  // fulfils the returned promise
+  return data.length;
 }
 
 copyData().then((n) => console.log(\`copied \${n} characters\`));
@@ -588,13 +608,15 @@ console.log('this prints first: copyData() returned a pending promise');`,
     live: { kind: 'js', code: `// The same shape as copyData, with a fake slow read instead of the file system
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function readSlowly(name) {
-  await sleep(200);                       // pretend this is a disk read
+  // pretend this is a disk read
+  await sleep(200);
   return \`contents of \${name}\`;
 }
 
 async function copyData() {
   console.log('copyData starts');
-  const text = await readSlowly('config.json');   // pauses only copyData
+  // pauses only copyData
+  const text = await readSlowly('config.json');
   console.log('got:', text);
   return text.length;
 }
@@ -627,11 +649,13 @@ console.log('this prints second: copyData() returned a pending promise');` },
 
 const server = http.createServer(async (req, res) => {
   try {
-    const tasks = await db.tasks.findAll();   // rejects if the database is down
+    // rejects if the database is down
+    const tasks = await db.tasks.findAll();
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(tasks));
   } catch (err) {
-    console.error(err);                       // the details stay in the server log
+    // the details stay in the server log
+    console.error(err);
     res.writeHead(500, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Something went wrong' }));
   }
@@ -778,7 +802,8 @@ console.log('6');
 http.createServer((req, res) => {
   if (req.url === '/slow') {
     const end = Date.now() + 5000;
-    while (Date.now() < end) {}     // 5 s of busy waiting on the call stack
+    while (Date.now() < end) {}
+    // → 5 s of busy waiting on the call stack
   }
   res.end(\`done: \${req.url}\`);
 }).listen(3000);
@@ -805,15 +830,18 @@ http.createServer((req, res) => {
 const env = { PORT: '4000', DEBUG: 'false' };
 
 const port = env.PORT || 3000;
-console.log(port, typeof port);             // 4000 string
+console.log(port, typeof port);
+// → 4000 string
 
 const portNumber = Number(env.PORT) || 3000;
 console.log(portNumber, typeof portNumber); // 4000 number
 
 if (env.DEBUG) console.log('debug is on?!'); // runs: 'false' is a non-empty string
-console.log(env.DEBUG === 'true');           // false: compare the text
+console.log(env.DEBUG === 'true');
+// → false: compare the text
 
-console.log(env.DATABASE_URL);              // undefined: never set` },
+console.log(env.DATABASE_URL);
+// → undefined: never set` },
     example: 'Port 3000 is taken on a teammate\'s laptop. Instead of editing `server.js` (and fighting over it in every merge), they run `PORT=4000 npm start`. `process.env.PORT` is `\'4000\'`, the server listens on 4000, and the code in Git never changed.',
     mistake: 'Testing a flag with `if (process.env.DEBUG)` when it is set to `false`. The value is the **string** `\'false\'`, which is truthy (every non-empty string is), so debug mode switches on. The same trap with numbers: `process.env.PORT + 1` is `\'40001\'`, not `4001`.' },
 
@@ -842,11 +870,15 @@ console.log(env.DATABASE_URL);              // undefined: never set` },
       ],
       edges: [['file', 'env', 'loaded'], ['env', 'config'], ['config', 'app']],
     },
-    code: `// .env (git-ignored)          // .env.example (committed)
-// PORT=3000                    // PORT=3000
+    code: `// .env.example (committed)
+// .env (git-ignored)
+// PORT=3000
+// PORT=3000
 // DATABASE_URL=postgres://ana:s3cret@localhost:5432/tasks
-//                              // DATABASE_URL=postgres://user:password@localhost:5432/tasks
-// JWT_SECRET=k8Jq2v…           // JWT_SECRET=change-me
+// DATABASE_URL=postgres://user:password@localhost:5432/tasks
+//
+// JWT_SECRET=change-me
+// JWT_SECRET=k8Jq2v…
 
 // src/config/index.js: the only file that reads process.env
 function required(name) {
@@ -862,7 +894,8 @@ module.exports = {
 };
 
 // src/server.js: load .env FIRST, before anything reads the config
-require('dotenv').config();        // or start with: node --env-file=.env src/server.js
+// or start with: node --env-file=.env src/server.js
+require('dotenv').config();
 const config = require('./config');
 const app = require('./app');
 app.listen(config.port, () => console.log(\`Listening on http://localhost:\${config.port}\`));`,
@@ -883,13 +916,14 @@ app.listen(config.port, () => console.log(\`Listening on http://localhost:\${con
         + '<tr><th scope="row">Koa</th><td>Minimal; middleware written with <code>async</code>/<code>await</code></td><td>Lightweight custom servers</td></tr>'
         + '<tr><th scope="row">NestJS</th><td>Structured, TypeScript first, many built-in conventions</td><td>Large applications built by big teams</td></tr>'
         + '</tbody></table>',
-      '<p>Express is <strong>unopinionated</strong>: no fixed folders, no database, so you meet every moving part. Many projects pin <strong>Express 4</strong> (<code>"express": "^4.22.3"</code>), as the examples here do; Express 5 is the npm default today, and the first difference you will notice is how it handles errors in <code>async</code> handlers (see <a href="#/server/runtime/async-errors">Errors in async code</a>). Express itself is the subject of <a href="#/server/routes/what-is-express">Routes and middleware</a>.</p>',
+      '<p>Express is <strong>unopinionated</strong>: no fixed folders, no database, so you meet every moving part. Many projects pin <strong>Express 4</strong> (<code>"express": "^4.22.3"</code>), as the examples here do; Express 5 is the npm default today, and the first difference you will notice is how it handles errors in <code>async</code> handlers (see <a href="#/server/runtime/async-errors">Errors in async code</a> and <a href="#/server/routes/express-async-errors">Async handlers: Express 4 versus Express 5</a>). Express itself is the subject of <a href="#/server/routes/what-is-express">Routes and middleware</a>.</p>',
     ],
     code: `// The server of "A first server", with Express
 const express = require('express');
 const app = express();
 
-app.get('/health', (req, res) => res.json({ status: 'ok' }));   // one line per route
+// one line per route
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
 // Any other path: Express answers 404 by itself
 
 app.listen(3000, () => console.log('Listening on http://localhost:3000'));`,

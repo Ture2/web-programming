@@ -43,7 +43,8 @@ DATA.en.COMPONENTS_CONCEPTS = [
 npm create vite@latest my-app -- --template react
 cd my-app
 npm install
-npm run dev          # http://localhost:5173, reloads on save
+# http://localhost:5173, reloads on save
+npm run dev
 
 <!-- index.html: the only HTML page -->
 <body>
@@ -730,7 +731,8 @@ function App() {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.target));
     setSent(data);
-    e.target.reset();               // back to the default values
+    // back to the default values
+    e.target.reset();
   }
 
   return (

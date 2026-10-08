@@ -29,7 +29,7 @@ DATA.en.JS_CONCEPTS = [
       '<p>JavaScript is the <strong>behaviour</strong> of a page, next to HTML for its structure and CSS for its presentation (see <a href="#/http/web/course-map">From static pages to a full-stack app</a>). A program called an <strong>engine</strong> (V8 in Chrome and Node.js, SpiderMonkey in Firefox) reads your code and runs it statement by statement, from top to bottom.</p>',
       '<p>The <strong>core language</strong> (variables, numbers, strings, <code>if</code>, loops, functions, arrays, objects) is the same everywhere. What changes is the <strong>environment</strong> around it: a browser adds <code>document</code> (the page) and <code>window</code>; Node.js has no page, but it can reach files and the network (see <a href="#/server/runtime/what-is-node">What Node.js is</a>).</p>',
       '<dl><dt>Dynamically typed</dt><dd>You never write a type: the value decides it while the program runs, and a variable can hold a number now and a string later.</dd>'
-        + '<dt>Single-threaded</dt><dd>One statement runs at a time: while a long loop runs, the page cannot react to clicks.</dd>'
+        + '<dt>Single-threaded</dt><dd>One statement runs at a time: while a long loop runs, the page cannot react to clicks (see <a href="#/server/runtime/why-async">Blocking and non-blocking</a>).</dd>'
         + '<dt>Interpreted and JIT-compiled</dt><dd>There is no separate compile step for you: the engine translates frequently used code into machine code on the fly (<strong>Just-In-Time</strong>) to make it fast.</dd>'
         + '</dl>',
       '<h3>Three ways to run it while you learn</h3>',
@@ -59,10 +59,13 @@ console.log(typeof document); // no page here, like Node` },
     ],
     code: `const price = 4;
 const total = price * 2;
-console.log('total is', total);                   // total is 8
+// total is 8
+console.log('total is', total);
 
-console.assert(total === 8, 'double 4');          // silent: passed
-console.assert(price * 0 === 1, 'times zero');    // Assertion failed: times zero`,
+// silent: passed
+console.assert(total === 8, 'double 4');
+// Assertion failed: times zero
+console.assert(price * 0 === 1, 'times zero');`,
     example: 'Converting 100 °C to Fahrenheit with `const f = 100 * 9 / 5 + 32;`: add `console.assert(f === 212, \'boiling\')` under it. An empty console means the check passed; if a later edit breaks the formula, `Assertion failed: boiling` tells you exactly which check to look at.',
     mistake: 'Thinking that printing a value is the same as producing it. `console.log` shows a value **to you**; it does not give the value back to the code that asked for it. A function that only logs its result returns `undefined` (see [Functions](#/browser/js/functions)).',
     live: { kind: 'js', code: `const price = 20;
@@ -91,13 +94,16 @@ console.error('errors print in red');` } },
   const user = undefined;
   console.log(user.name);
 } catch (err) {
-  console.log(err.name);    // TypeError
+  console.log(err.name);
+  // → TypeError
 }
 
 try {
-  console.log(totl);        // typo for total
+  // typo for total
+  console.log(totl);
 } catch (err) {
-  console.log(err.name);    // ReferenceError
+  console.log(err.name);
+  // → ReferenceError
 }
 
 const list = [];
@@ -131,11 +137,14 @@ console.log(0 / list.length); // NaN: no error, but a logic bug` } },
     mistake: 'An empty catch: `catch (err) {}`. The error disappears, the program goes on with a wrong or missing value, and nothing tells you where it broke. At least log `err.message`; if this code cannot fix the problem, rethrow it with `throw err`.',
     live: { kind: 'js', code: `try {
   const user = undefined;
-  console.log(user.name);          // throws a TypeError
+  // throws a TypeError
+  console.log(user.name);
   console.log('never printed');
 } catch (err) {
-  console.log(err.name);           // TypeError
-  console.log(err.message);        // Cannot read properties of undefined (reading 'name')
+  console.log(err.name);
+  // → TypeError
+  // Cannot read properties of undefined (reading 'name')
+  console.log(err.message);
 } finally {
   console.log('finally runs either way');
 }
@@ -143,7 +152,8 @@ console.log(0 / list.length); // NaN: no error, but a logic bug` } },
 try {
   throw new Error('Price must be positive');
 } catch (err) {
-  console.log(err.message);        // Price must be positive
+  // Price must be positive
+  console.log(err.message);
 }
 console.log('the program keeps going');` } },
 
@@ -165,17 +175,20 @@ console.log('the program keeps going');` } },
     mistake: '"`const` means the value can never change." It only freezes the **binding** (which value the name points at). `const items = []; items.push(\'pen\');` is legal, because the array is changed, not replaced. See [Values vs references](#/browser/js/value-reference).',
     live: { kind: 'js', code: `let count = 0;
 count = count + 1;
-console.log(count);           // 1
+console.log(count);
+// → 1
 
 const city = 'Madrid';
 try {
   city = 'Bilbao';
 } catch (err) {
-  console.log(err.name);      // TypeError
+  console.log(err.name);
+  // → TypeError
 }
 
 const items = [];
-items.push('pen');            // allowed: changes the array
+// allowed: changes the array
+items.push('pen');
 console.log(items);` } },
 
   { id: 'data-types', hub: 'types', topic: 'types',
@@ -205,7 +218,8 @@ console.log(typeof [1, 2], Array.isArray([1, 2]));
 console.log(typeof function () {});
 
 let x = 5;
-x = 'five';          // the value decides the type
+// the value decides the type
+x = 'five';
 console.log(typeof x);` } },
 
   { id: 'strings', hub: 'types', topic: 'types',
@@ -239,8 +253,10 @@ console.log('a,b,c'.split(','));
 const goals = 3;
 console.log(\`\${club} scored \${goals} goal\${goals === 1 ? '' : 's'}\`);
 
-club.toLowerCase();       // result thrown away...
-console.log(club);        // ...so club is unchanged` } },
+// result thrown away...
+club.toLowerCase();
+// ...so club is unchanged
+console.log(club);` } },
 
   { id: 'numbers', hub: 'types', topic: 'types',
     title: 'Numbers, arithmetic and the remainder operator',
@@ -256,8 +272,10 @@ console.log(club);        // ...so club is unchanged` } },
     ],
     example: 'Converting 135 minutes into hours and minutes: `Math.floor(135 / 60)` is `2` whole hours and `135 % 60` is `15` minutes left over, so for `m = 135` the template literal `${Math.floor(m / 60)} h ${m % 60} min` (between backticks) prints `2 h 15 min`.',
     mistake: 'Testing `x === NaN` to detect a failed conversion. It is **always** false, even when `x` is `NaN`, because `NaN` never equals anything. Use `Number.isNaN(x)`.',
-    live: { kind: 'js', code: `console.log(17 % 5);             // 2
-console.log(10 % 2 === 0);       // true: 10 is even
+    live: { kind: 'js', code: `console.log(17 % 5);
+    // → 2
+console.log(10 % 2 === 0);
+// → true: 10 is even
 console.log(0.1 + 0.2);
 console.log(Math.round(12.3456 * 100) / 100);
 console.log(Number('42') + 1, Number('abc'));
@@ -266,7 +284,8 @@ console.log(Number('abc') === NaN, Number.isNaN(Number('abc')));
 let score = 10;
 score += 5;
 score++;
-console.log(score);              // 16` } },
+console.log(score);
+// → 16` } },
 
   { id: 'coercion-equality', hub: 'types', topic: 'types',
     title: 'Type coercion and == vs ===',
@@ -289,13 +308,16 @@ console.log(score);              // 16` } },
     ],
     example: 'An age gate reads `const raw = \'18\';` from a form. `raw >= 18` is `true` (coerced), `raw === 18` is `false` (string vs number), and `Number(raw) === 18` is `true`. Converting once, at the point where the input enters your code, makes every later comparison predictable.',
     mistake: 'Comparing text from a form with a number: `if (age === 18)` is never true while `age` is the string `\'18\'`. Switching to `==` makes it "work" but hides the real problem; convert with `Number()` instead.',
-    live: { kind: 'js', code: `console.log('5' + 1);                 // '51': + joins text
-console.log('5' - 1);                 // 4: - converts to number
+    live: { kind: 'js', code: `console.log('5' + 1);
+    // → '51': + joins text
+console.log('5' - 1);
+// → 4: - converts to number
 console.log('5' == 5, '5' === 5);
 console.log(0 == '', 0 === '');
 console.log(null == undefined, null === undefined);
 console.log(NaN === NaN);
-console.log([1] === [1]);             // two different arrays` } },
+// two different arrays
+console.log([1] === [1]);` } },
 
   { id: 'truthy-falsy', hub: 'types', topic: 'types',
     title: 'Truthy and falsy values',
@@ -342,10 +364,14 @@ for (const pair of cases) {
     ],
     example: 'A greeting: `const display = nickname || fullName || \'guest\';` picks the first non-empty name. A volume setting: `const volume = settings.volume ?? 50;` keeps a deliberate volume of `0`, which `||` would wrongly replace by 50.',
     mistake: 'Using `||` for a default when `0`, `\'\'` or `false` is a legitimate value. `const volume = settings.volume || 50` turns a muted player (volume 0) into volume 50. Use `??` when only "missing" should trigger the default.',
-    live: { kind: 'js', code: `console.log(true && 'yes');       // 'yes'
-console.log(0 && 'never');        // 0
-console.log('' || 'guest');       // 'guest'
-console.log(0 || 50, 0 ?? 50);    // 50 0
+    live: { kind: 'js', code: `console.log(true && 'yes');
+    // → 'yes'
+console.log(0 && 'never');
+// → 0
+console.log('' || 'guest');
+// → 'guest'
+console.log(0 || 50, 0 ?? 50);
+// → 50 0
 console.log(null ?? 'default');
 console.log(!'hello', !!'hello');
 
@@ -353,9 +379,11 @@ function shout() {
   console.log('shout ran');
   return true;
 }
-console.log(false && shout());    // shout never runs
+// shout never runs
+console.log(false && shout());
 const user = undefined;
-console.log(user && user.name);   // undefined, no crash` } },
+console.log(user && user.name);
+// → undefined, no crash` } },
 
   { id: 'conditionals', hub: 'logic', topic: 'logic',
     title: 'Conditionals: if/else, the ternary and switch',
@@ -454,8 +482,10 @@ while (n > 1) {
 console.log('halvings:', steps);
 
 for (let i = 1; i <= 10; i++) {
-  if (i % 3 !== 0) continue;   // skip non-multiples
-  if (i > 7) break;            // stop completely
+  // skip non-multiples
+  if (i % 3 !== 0) continue;
+  // stop completely
+  if (i > 7) break;
   console.log('multiple of 3:', i);
 }` },
     widget: 'loop-tracer',
@@ -480,8 +510,10 @@ for (let i = 1; i <= 10; i++) {
     mistake: 'Reading the last element with `arr[arr.length]`. Because indexes start at 0, that position is one past the end and gives `undefined`; the last element is `arr[arr.length - 1]`. The same slip in a loop, `for (let i = 0; i <= arr.length; i++)`, reads that missing element on its last pass: use `i < arr.length`.',
     live: { kind: 'js', code: `const students = ['Anna', 'Bob', 'Joan'];
 console.log(students[0], students.length);
-console.log(students[students.length - 1]);  // last
-console.log(students[10]);                   // undefined, no error
+// last
+console.log(students[students.length - 1]);
+console.log(students[10]);
+// → undefined, no error
 
 students.push('Zoe');
 const removed = students.pop();
@@ -520,7 +552,8 @@ console.log(squad[1].name);` } },
   name: 'Sofia',
   number: 10,
   stats: { goals: 7, assists: 3 },
-  celebrate() {                 // method shorthand
+  // method shorthand
+  celebrate() {
     return 'Goal!';
   },
 };
@@ -528,7 +561,8 @@ console.log(squad[1].name);` } },
 console.log(player.name, player['number']);
 const field = 'assists';
 console.log(player.stats[field], player.stats.field);
-console.log(player.club);       // undefined: missing key
+console.log(player.club);
+// → undefined: missing key
 
 player.club = 'Riverside';
 console.log(Object.keys(player));
@@ -571,7 +605,8 @@ for (const ch of 'hey') {
 try {
   for (const x of player) {}
 } catch (err) {
-  console.log(err.name);        // TypeError: objects are not iterable
+  console.log(err.name);
+  // → TypeError: objects are not iterable
 }` } },
 
   { id: 'value-reference', hub: 'data', topic: 'data',
@@ -592,23 +627,28 @@ try {
     live: { kind: 'js', code: `let a = 5;
 let b = a;
 b = 6;
-console.log(a, b);            // 5 6: independent
+console.log(a, b);
+// → 5 6: independent
 
 const list = ['x'];
-const alias = list;           // same array
+// same array
+const alias = list;
 alias.push('y');
 console.log(list);
 
-const copy = [...list];       // a new array
+// a new array
+const copy = [...list];
 copy.push('z');
 console.log(list.length, copy.length);
 
 console.log([1] === [1], list === alias);
 
 const team = { name: 'A', players: ['Ana'] };
-const clone = { ...team };    // shallow copy
+// shallow copy
+const clone = { ...team };
 clone.players.push('Bea');
-console.log(team.players);    // nested array is shared` },
+// nested array is shared
+console.log(team.players);` },
     widget: 'value-reference' },
 
   { id: 'json', hub: 'data', topic: 'data',
@@ -642,19 +682,24 @@ console.log(team.players);    // nested array is shared` },
     mistake: 'Treating JSON text as an object: after `const text = JSON.stringify(task);`, `text.title` is `undefined`, because `text` is a string. Parse it first: `JSON.parse(text).title`. The reverse slip: `\'Task: \' + task` gives `\'Task: [object Object]\'`; stringify the object to see its data.',
     live: { kind: 'js', code: `const task = { id: 1, title: 'Buy milk', done: false, tags: ['home'] };
 const text = JSON.stringify(task);
-console.log(text);               // {"id":1,"title":"Buy milk","done":false,"tags":["home"]}
-console.log(typeof text);        // string
+console.log(text);
+// → {"id":1,"title":"Buy milk","done":false,"tags":["home"]}
+// string
+console.log(typeof text);
 
 const back = JSON.parse(text);
-console.log(back.title, back === task);   // Buy milk false: a new object
+// Buy milk false: a new object
+console.log(back.title, back === task);
 
 console.log(JSON.stringify({ a: undefined, f() {}, when: new Date(0) }));
 // {"when":"1970-01-01T00:00:00.000Z"}
 
 try {
-  JSON.parse("{ title: 'x' }");  // not JSON: keys and strings need double quotes
+  // not JSON: keys and strings need double quotes
+  JSON.parse("{ title: 'x' }");
 } catch (err) {
-  console.log(err.name);         // SyntaxError
+  console.log(err.name);
+  // → SyntaxError
 }` } },
 
   /* ---- 5. Functions and scope -------------------------------------------------------------- */
@@ -688,17 +733,21 @@ try {
 }
 
 const a = area(3, 4);
-console.log(a);                 // 12
+console.log(a);
+// → 12
 console.log(area(3, 4) + area(1, 2));
-console.log(area(3));           // NaN: height is undefined
+console.log(area(3));
+// → NaN: height is undefined
 
 function logOnly(x) {
   console.log('inside:', x * 2);
 }
 const r = logOnly(5);
-console.log('returned:', r);    // undefined
+console.log('returned:', r);
+// → undefined
 
-console.log(typeof area);       // without () you get the function itself` },
+// without () you get the function itself
+console.log(typeof area);` },
     practice: { href: '#/browser/js/practice/playground', label: 'Write functions in the JavaScript playground' } },
 
   { id: 'scope-hoisting', hub: 'functions', topic: 'vars',
@@ -729,11 +778,13 @@ console.log(typeof area);       // without () you get the function itself` },
     },
     example: 'Shadowing plus TDZ: `let x = \'outer\'; { console.log(x); let x = \'inner\'; }` throws `ReferenceError` instead of printing `outer`. The inner `let x` was hoisted to the top of its block and is in its TDZ at the `console.log` line, which proves `let` **is** hoisted, just locked.',
     mistake: '"`let` and `const` are not hoisted." They are; they are just unusable until their line. The visible difference with `var` is the error versus the silent `undefined`, not whether hoisting happens.',
-    live: { kind: 'js', code: `console.log(a);          // undefined: var is hoisted with undefined
+    live: { kind: 'js', code: `console.log(a);
+    // → undefined: var is hoisted with undefined
 var a = 1;
 
 try {
-  console.log(b);        // b is in its temporal dead zone
+  // b is in its temporal dead zone
+  console.log(b);
 } catch (err) {
   console.log(err.name); // ReferenceError
 }
@@ -747,7 +798,8 @@ console.log(leaky);
 console.log(typeof tidy); // 'undefined': not visible out here
 
 for (var i = 0; i < 3; i++) {}
-console.log(i);          // 3: the var counter survived the loop` } },
+console.log(i);
+// → 3: the var counter survived the loop` } },
 
   { id: 'function-syntaxes', hub: 'functions', topic: 'functions',
     title: 'Declarations, expressions and arrow functions',
@@ -770,7 +822,8 @@ console.log(i);          // 3: the var counter survived the loop` } },
     ],
     example: '`const toEuros = (cents) => cents / 100;` (concise body, implicit return) and `const toEuros = (cents) => { return cents / 100; };` (block body) are equivalent; `toEuros(1250)` is `12.5` in both.',
     mistake: 'Adding braces to an arrow function and forgetting `return`: `const square = (n) => { n * n; };` makes `square(4)` return `undefined`. Either remove the braces or write `return n * n;`.',
-    live: { kind: 'js', code: `console.log(early(2));     // works: declarations are hoisted
+    // works: declarations are hoisted
+    live: { kind: 'js', code: `console.log(early(2));
 function early(x) {
   return x + 1;
 }
@@ -778,7 +831,8 @@ function early(x) {
 try {
   late(2);
 } catch (err) {
-  console.log(err.name);   // ReferenceError: const not ready yet
+  console.log(err.name);
+  // → ReferenceError: const not ready yet
 }
 const late = function (x) {
   return x + 1;
@@ -803,11 +857,15 @@ console.log(makeUser('Ana'));` } },
     live: { kind: 'js', code: `function shippingCost(weightKg, ratePerKg = 4) {
   return weightKg * ratePerKg;
 }
-console.log(shippingCost(2));            // 8
-console.log(shippingCost(2, 6));         // 12
+console.log(shippingCost(2));
+// → 8
+console.log(shippingCost(2, 6));
+// → 12
 console.log(shippingCost(2, undefined)); // 8
-console.log(shippingCost(2, null));      // 0
-console.log(shippingCost(2, 0));         // 0: free shipping kept
+console.log(shippingCost(2, null));
+// → 0
+console.log(shippingCost(2, 0));
+// → 0: free shipping kept
 
 function box(w, h = w) {
   return w + ' x ' + h;
@@ -839,11 +897,14 @@ console.log(box(3), box(3, 5));` } },
     mistake: 'Expecting to read a function\'s local variable from outside: after `function scale(x) { const result = x * 2; return result; }`, writing `console.log(result)` at the top level is a `ReferenceError`. Use the returned value: `const r = scale(5);`.',
     live: { kind: 'js', code: `const rate = 2;
 function scale(x) {
-  const result = x * rate;    // reads the outer rate
+  // reads the outer rate
+  const result = x * rate;
   return result;
 }
-console.log(scale(5));        // 10
-console.log(typeof result);   // 'undefined': local to scale
+console.log(scale(5));
+// → 10
+console.log(typeof result);
+// → 'undefined': local to scale
 
 function applyTwice(fn, value) {
   return fn(fn(value));
@@ -852,13 +913,14 @@ console.log(applyTwice((n) => n + 3, 1));
 console.log(applyTwice((s) => s + '!', 'hi'));
 
 const tools = [Math.floor, Math.ceil];
-console.log(tools[1](2.1));    // a function stored in an array` } },
+// a function stored in an array
+console.log(tools[1](2.1));` } },
 
   { id: 'array-methods', hub: 'functions', topic: 'data',
     title: 'Array methods: forEach, map, filter, find, includes',
     summary: 'Array methods run a function you give them (a **callback**) on each element: `forEach` does something, `map` transforms, `filter` keeps some, `find` returns the first match, and `includes` checks membership.',
     html: [
-      '<p>The method runs the loop for you; the small callback you hand it says what to do with <strong>one</strong> element, usually written as an arrow function: <code>(price) =&gt; price * 2</code>. Choose the method by what you want back.</p>',
+      '<p>The method runs the loop for you; the small <a href="#/browser/js/function-scope">callback</a> you hand it says what to do with <strong>one</strong> element, usually written as an arrow function: <code>(price) =&gt; price * 2</code>. Choose the method by what you want back.</p>',
       '<table><caption>What each method returns (none of them changes the original array)</caption><thead><tr><th scope="col">Method</th><th scope="col">The callback returns…</th><th scope="col">The method returns…</th></tr>'
         + '</thead>'
         + '<tbody><tr><th scope="row"><code>arr.forEach(fn)</code></th><td>nothing useful</td><td><code>undefined</code>: use it for an action per element</td></tr>'
@@ -876,9 +938,11 @@ prices.forEach((p) => console.log('price', p));
 console.log(prices.map((p) => p * 2));
 console.log(prices.filter((p) => p < 20));
 console.log(prices.find((p) => p > 40));
-console.log(prices.find((p) => p > 100));   // undefined
+console.log(prices.find((p) => p > 100));
+// → undefined
 console.log(prices.includes(8), prices.includes('8'));
-console.log(prices);                         // unchanged
+// unchanged
+console.log(prices);
 
 console.log(prices.map((p) => { p * 2; })); // missing return` },
     practice: { href: '#/browser/js/practice/playground', label: 'Try the methods in the JavaScript playground' } },

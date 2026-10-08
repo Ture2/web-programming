@@ -53,8 +53,10 @@ DATA.en.MONGO_CONCEPTS = [
   title: 'Set up CI',
   done: false,
   priority: 5,
-  tags: [ 'devops', 'urgent' ],              // an array inside the document
-  owner: { name: 'Ben', email: 'ben@example.com' },   // a sub-document
+  // an array inside the document
+  tags: [ 'devops', 'urgent' ],
+  // a sub-document
+  owner: { name: 'Ben', email: 'ben@example.com' },
   createdAt: ISODate('2026-09-04T09:00:00.000Z'),
   due: ISODate('2026-09-20T09:00:00.000Z')
 }`,
@@ -101,7 +103,8 @@ const task = { title: 'Set up CI', createdAt: new Date('2026-09-04T09:00:00Z') }
 const text = JSON.stringify(task);
 console.log(text);
 const back = JSON.parse(text);
-console.log(typeof back.createdAt);          // 'string', not a Date any more
+console.log(typeof back.createdAt);
+// → 'string', not a Date any more
 console.log(back.createdAt instanceof Date); // false
 // That is why BSON (and Extended JSON) add real date and ObjectId types.` },
     example: 'Ben\'s user document has `_id: ObjectId(\'6a93ea08a1b2c3d4e5000002\')`. In the playground, `db.users.findOne({ _id: ObjectId(\'6a93ea08a1b2c3d4e5000002\') })` returns Ben; the same query with the plain string `\'6a93ea08a1b2c3d4e5000002\'` returns `null`. Switch the data view to **Extended JSON** to see how the same documents look as plain JSON.',
@@ -184,10 +187,14 @@ db.users.insertMany([
         + '<li><strong>Missing matches <code>null</code>:</strong> a missing field never equals a value, but <code>{ due: null }</code> finds tasks with <code>due: null</code> <strong>and</strong> tasks with no <code>due</code> at all.</li>'
         + '<li><strong>A cursor, not an array:</strong> <code>find</code> returns a pointer that fetches documents in batches as you read them. The shell prints the first 20; in Node.js you call <code>.toArray()</code> (or loop with <code>for await</code>), and chain <code>.sort()</code>, <code>.skip()</code> and <code>.limit()</code> before reading.</li></ul>',
     ],
-    code: `db.tasks.find({ done: false })                       // every open task
-db.tasks.find({ done: false, 'owner.name': 'Ana' })  // AND: both conditions
-db.tasks.findOne({ title: 'Buy milk' })              // one document, or null
-db.tasks.countDocuments({ done: true })              // 3
+    code: `// every open task
+db.tasks.find({ done: false })
+// AND: both conditions
+db.tasks.find({ done: false, 'owner.name': 'Ana' })
+// one document, or null
+db.tasks.findOne({ title: 'Buy milk' })
+db.tasks.countDocuments({ done: true })
+// → 3
 
 // Node.js driver (inside an async function)
 const open = await db.collection('tasks').find({ done: false }).toArray();`,
@@ -272,11 +279,16 @@ async function deleteTasks(tasks, query) {
         + '<li><strong>Inside or outside:</strong> comparison operators go <strong>inside</strong> a field; <code>$and</code>, <code>$or</code> and <code>$nor</code> go at the <strong>top</strong> of the filter and take an array of filters.</li>'
         + '<li><strong><code>$and</code> is rarely needed:</strong> conditions on different fields are already combined with AND. Use it only to put two conditions on the <strong>same</strong> field in separate objects.</li></ul>',
     ],
-    code: `db.tasks.find({ priority: { $gt: 3 } })                 // 4 or 5
-db.tasks.find({ priority: { $gte: 2, $lte: 4 } })       // a range
-db.tasks.find({ tags: { $in: ['db', 'api'] } })         // any of these tags
-db.tasks.find({ due: { $exists: true } })              // tasks that have a due date
-db.tasks.find({ title: /write/i })                      // 'Write …' in any case
+    code: `db.tasks.find({ priority: { $gt: 3 } })
+// → 4 or 5
+// a range
+db.tasks.find({ priority: { $gte: 2, $lte: 4 } })
+// any of these tags
+db.tasks.find({ tags: { $in: ['db', 'api'] } })
+// tasks that have a due date
+db.tasks.find({ due: { $exists: true } })
+db.tasks.find({ title: /write/i })
+// → 'Write …' in any case
 db.tasks.find({ $or: [{ priority: 5 }, { done: true }] })`,
     dialect: 'mongosh',
     example: 'In the playground, `db.tasks.find({ $or: [{ priority: 5 }, { done: true }] })` returns 4 tasks: Set up CI (priority 5) plus the 3 finished ones. The SQL panel shows `WHERE priority = 5 OR done = TRUE`. Mistype an operator (`$get`) and the error says `unknown operator: $get (did you mean $gt?)`.',
@@ -298,11 +310,16 @@ db.tasks.find({ $or: [{ priority: 5 }, { done: true }] })`,
       '<h3>Several conditions on one element</h3>',
       '<p><code>{ \'comments.author\': \'Ben\', \'comments.text\': /done/ }</code> matches if some comment is by Ben and some, possibly <strong>another</strong>, mentions "done". To require <strong>one element</strong> that meets every condition, use <code>$elemMatch</code>: <code>{ comments: { $elemMatch: { author: \'Ben\', text: /done/ } } }</code>.</p>',
     ],
-    code: `db.tasks.find({ 'owner.name': 'Ben' })               // inside a sub-document
-db.tasks.find({ 'comments.author': 'Ben' })           // inside an array of sub-documents
-db.tasks.find({ tags: 'urgent' })                     // the array contains 'urgent'
-db.tasks.find({ tags: { $all: ['api', 'urgent'] } })  // contains both
-db.tasks.find({ tags: { $size: 0 } })                 // no tags at all
+    code: `// inside a sub-document
+db.tasks.find({ 'owner.name': 'Ben' })
+// inside an array of sub-documents
+db.tasks.find({ 'comments.author': 'Ben' })
+// the array contains 'urgent'
+db.tasks.find({ tags: 'urgent' })
+// contains both
+db.tasks.find({ tags: { $all: ['api', 'urgent'] } })
+// no tags at all
+db.tasks.find({ tags: { $size: 0 } })
 db.tasks.find({ comments: { $elemMatch: { author: 'Ben', text: /sort/i } } })`,
     dialect: 'mongosh',
     example: 'Against the seed data, `{ \'owner.name\': \'Ben\' }` finds 3 tasks, `{ \'comments.author\': \'Ben\' }` finds 2 (Write the SQL schema and Add pagination), and `{ tags: \'urgent\' }` finds 4. The SQL panel shows why these are hard in SQL: each needs a JOIN with `users`, `comments` or `task_tags`.',
@@ -321,9 +338,12 @@ db.tasks.find({ comments: { $elemMatch: { author: 'Ben', text: /sort/i } } })`,
         + '<li><strong>Dot paths work:</strong> <code>{ \'owner.name\': 1, _id: 0 }</code> returns <code>{ owner: { name: \'Ben\' } }</code>.</li>'
         + '<li><strong>In Node.js</strong> the projection goes in the options: <code>find(filter, { projection: { title: 1 } })</code>, or <code>find(filter).project({ title: 1 })</code>.</li></ul>',
     ],
-    code: `db.tasks.find({}, { title: 1 })            // _id and title
-db.tasks.find({}, { title: 1, _id: 0 })    // only title
-db.tasks.find({}, { comments: 0, owner: 0 })  // everything except comments and owner
+    code: `// _id and title
+db.tasks.find({}, { title: 1 })
+// only title
+db.tasks.find({}, { title: 1, _id: 0 })
+// everything except comments and owner
+db.tasks.find({}, { comments: 0, owner: 0 })
 db.tasks.find({}, { title: 1, done: 0 })
 // MongoServerError: Cannot do exclusion on field done in inclusion projection
 
@@ -359,7 +379,8 @@ await tasks.find({ done: false }, { projection: { title: 1, _id: 0 } }).toArray(
     },
     code: `// GET /tasks?page=2&limit=4   (oldest first: an array body, the total in a header)
 const page = Number(req.query.page) || 1;
-const limit = Math.min(Number(req.query.limit) || 10, 50);   // cap the page size
+// cap the page size
+const limit = Math.min(Number(req.query.limit) || 10, 50);
 const filter = { done: false };
 
 const [items, total] = await Promise.all([
@@ -505,9 +526,12 @@ const owner = await db.collection('users').findOne({ _id: task.ownerId });`,
     },
     code: `// The 3 open tasks with the highest priority, as small documents
 db.tasks.aggregate([
-  { $match: { done: false } },                       // 10 → 7 documents
-  { $sort: { priority: -1, createdAt: 1 } },         // order them
-  { $limit: 3 },                                     // 7 → 3
+  { $match: { done: false } },
+  // → 10 → 7 documents
+  // order them
+  { $sort: { priority: -1, createdAt: 1 } },
+  { $limit: 3 },
+  // → 7 → 3
   { $project: { _id: 0, title: 1, owner: '$owner.name', tagCount: { $size: '$tags' } } }
 ])
 // { title: 'Set up CI', owner: 'Ben', tagCount: 2 }
@@ -590,7 +614,8 @@ ORDER BY open DESC;`,
     },
     code: `// Tasks per tag
 db.tasks.aggregate([
-  { $unwind: '$tags' },                         // 10 tasks → 17 (task, tag) documents
+  { $unwind: '$tags' },
+  // → 10 tasks → 17 (task, tag) documents
   { $group: { _id: '$tags', n: { $sum: 1 } } },
   { $sort: { n: -1, _id: 1 } }
 ])
@@ -636,8 +661,10 @@ db.tasks.createIndex({ priority: 1 })
 db.tasks.find({ priority: 5 }).explain('executionStats')
 // winningPlan: FETCH ← IXSCAN { priority: 1 } · totalDocsExamined: 1 · nReturned: 1
 
-db.tasks.createIndex({ ownerId: 1, createdAt: -1 })   // compound: owner, then newest first
-db.users.createIndex({ email: 1 }, { unique: true })  // one account per email
+// compound: owner, then newest first
+db.tasks.createIndex({ ownerId: 1, createdAt: -1 })
+// one account per email
+db.users.createIndex({ email: 1 }, { unique: true })
 db.users.insertOne({ name: 'Ana 2', email: 'ana@example.com' })
 // MongoServerError: E11000 duplicate key error … index: email_1 dup key: { email: 'ana@example.com' }`,
     dialect: 'mongosh',
@@ -681,7 +708,8 @@ function createTasksModel(db) {
   const toDto = ({ _id, ...rest }) => ({ id: _id.toString(), ...rest });
   return {
     async findById(id) {
-      if (!ObjectId.isValid(id)) return null;              // bad id → treated as not found
+      // bad id → treated as not found
+      if (!ObjectId.isValid(id)) return null;
       const doc = await tasks.findOne({ _id: new ObjectId(id) });
       return doc ? toDto(doc) : null;
     },
@@ -727,14 +755,18 @@ const taskSchema = new mongoose.Schema({
   priority: { type: Number, min: 1, max: 5, default: 3 },
   tags:     [String],
   owner:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-}, { timestamps: true });          // adds createdAt and updatedAt
+// adds createdAt and updatedAt
+}, { timestamps: true });
 
-const Task = mongoose.model('Task', taskSchema);   // collection 'tasks'
+// collection 'tasks'
+const Task = mongoose.model('Task', taskSchema);
 
 // inside async functions (connect once at startup: await mongoose.connect(url))
-const task = await Task.create({ title: '  Study  ', owner: userId });   // title → 'Study'
+// title → 'Study'
+const task = await Task.create({ title: '  Study  ', owner: userId });
 const open = await Task.find({ done: false }).sort({ createdAt: -1 }).limit(10).populate('owner', 'name');
-await Task.findByIdAndUpdate(id, { priority: 9 }, { runValidators: true });  // rejected: max 5`,
+// rejected: max 5
+await Task.findByIdAndUpdate(id, { priority: 9 }, { runValidators: true });`,
     dialect: 'js',
     example: '`await Task.create({ owner: userId })` throws a `ValidationError` ("Path `title` is required") without contacting the database, which your error handler can turn into `400 Bad Request`. The same insert through the bare driver would have been stored.',
     mistake: 'Believing Mongoose makes MongoDB itself enforce the schema. The rules live in your Node process: a script, another service or the shell that writes to the same collection bypasses them, and updates skip validation unless you ask for it. For rules that must always hold, add a `$jsonSchema` validator or a unique index in the database too.' },

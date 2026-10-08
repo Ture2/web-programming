@@ -46,7 +46,8 @@ DATA.en.CSS_CONCEPTS = [
 
 /* styles.css: one file, every page */
 nav a {
-  color: #1A1F6C;        /* text colour */
+  /* text colour */
+  color: #1A1F6C;
   text-decoration: none; /* no underline */
 }`,
     example: 'A club site has `index.html`, `fixtures.html` and `login.html`, each with the same `<link rel="stylesheet" href="styles.css">`. Changing `nav a { color: … }` once in `styles.css` recolours the navigation on all three pages, and the browser reuses its cached copy of the file on the next page.',
@@ -117,8 +118,10 @@ a[target] { color: #FF5700; font-weight: bold; }` } },
 <div class="card">Card 1</div>
 <div class="card">Card 2</div>
 <div class="card">Card 3</div>`,
-      css: `.menu a   { color: #1A1F6C; }               /* every link inside .menu */
-.menu > a { background: #FFE9DC; }          /* only the direct child */
+      css: `/* every link inside .menu */
+.menu a   { color: #1A1F6C; }
+/* only the direct child */
+.menu > a { background: #FFE9DC; }
 
 .card { border: 1px solid #999; padding: 6px; }
 .card + .card { border-top: 4px solid #FF5700; } /* every card that follows a card */` } },
@@ -165,7 +168,8 @@ li:first-child   { font-weight: bold; }` } },
       html: `<a class="primary btn" href="#">Which colour am I?</a>
 <p>Swap the two rules on the right. Then try swapping the class names in the HTML: nothing changes.</p>`,
       css: `.btn     { background: grey;    color: white; padding: 8px 12px; }
-.primary { background: #FF5700; }  /* same specificity (0,1,0): the later rule wins */` } },
+/* same specificity (0,1,0): the later rule wins */
+.primary { background: #FF5700; }` } },
 
   { id: 'specificity', hub: 'cascade', topic: 'cascade',
     title: 'Specificity: the (a, b, c) score',
@@ -184,8 +188,10 @@ li:first-child   { font-weight: bold; }` } },
       html: `<nav id="main-nav"><a class="link" href="#">Which colour wins?</a></nav>
 <p>Delete rules one by one, starting with the id rule.</p>`,
       css: `#main-nav a { color: #FF5700; } /* (1,0,1) */
-.link       { color: navy; }    /* (0,1,0) */
-nav a       { color: black; }   /* (0,0,2) */
+/* (0,1,0) */
+.link       { color: navy; }
+/* (0,0,2) */
+nav a       { color: black; }
 a { font-size: 20px; font-weight: bold; }` } },
 
   { id: 'inheritance', hub: 'cascade', topic: 'cascade',
@@ -217,9 +223,12 @@ a { font-size: 20px; font-weight: bold; }` } },
   <button>A button</button>
 </article>`,
       css: `.card {
-  font-family: Georgia, serif;  /* inherited */
-  color: darkred;               /* inherited */
-  border: 2px solid #1A1F6C;    /* NOT inherited: one border only */
+  /* inherited */
+  font-family: Georgia, serif;
+  /* inherited */
+  color: darkred;
+  /* NOT inherited: one border only */
+  border: 2px solid #1A1F6C;
   padding: 12px;
 }
 /* Uncomment to make the link and the button follow the card: */
@@ -241,7 +250,8 @@ a { font-size: 20px; font-weight: bold; }` } },
       html: `<ul class="em"><li>em level 1<ul><li>em level 2<ul><li>em level 3</li></ul></li></ul></li></ul>
 <ul class="rem"><li>rem level 1<ul><li>rem level 2<ul><li>rem level 3</li></ul></li></ul></li></ul>
 <div class="vw">This bar is 50vw wide: half of the preview's width.</div>`,
-      css: `.em li  { font-size: 0.8em; }  /* shrinks at every level */
+      css: `/* shrinks at every level */
+.em li  { font-size: 0.8em; }
 .rem li { font-size: 0.8rem; } /* always 0.8 x 16px = 12.8px */
 .vw { width: 50vw; background: #FFE9DC; padding: 0.5rem; }` } },
 
@@ -282,30 +292,20 @@ button { background: #FF5700; color: white; border: 0; border-radius: 4px; paddi
 <p>Inline-block: <span class="ib">span</span> <span class="ib">span</span></p>
 <p>Block: <span class="b">span</span> <span class="b">span</span></p>`,
       css: `span { width: 120px; height: 40px; padding: 6px; margin: 8px; background: #FFE9DC; border: 1px solid #FF5700; }
-.i  { display: inline; }       /* width, height, vertical margin ignored */
+/* width, height, vertical margin ignored */
+.i  { display: inline; }
 .ib { display: inline-block; } /* in the line, but sized */
-.b  { display: block; }        /* own line each */` } },
+/* own line each */
+.b  { display: block; }` } },
 
   { id: 'box-model', hub: 'box', topic: 'box',
     title: 'The box model: content, padding, border, margin',
     summary: 'Every element is drawn as a rectangle of four layers, inside out: **content**, **padding**, **border** and **margin**.',
     html: [
-      '<p>The background fills the content and the padding, up to the outer edge of the border, but never the margin. Most spacing bugs put space in the wrong layer: padding makes the box itself bigger and coloured; margin pushes other boxes away.</p>',
+      '<p>The background fills the content and the padding, up to the outer edge of the border, but never the margin. Most spacing bugs put space in the wrong layer: padding makes the box itself bigger and coloured; margin pushes other boxes away. The box model tool on this card draws the four layers nested inside each other, with their sizes.</p>',
       '<dl><dt><code>padding: 10px</code></dt><dd>All four sides.</dd><dt><code>padding: 10px 20px</code></dt><dd>Top and bottom 10px, left and right 20px.</dd><dt><code>padding: 10px 20px 5px</code></dt><dd>Top 10px, left and right 20px, bottom 5px.</dd><dt><code>padding: 10px 20px 5px 0</code></dt><dd>Top, right, bottom, left: clockwise from the top. <code>margin</code> takes the same 1 to 4 values.</dd></dl>',
       '<ul><li><strong><code>border: 2px solid #ccc</code></strong> sets width, style and colour; without a style (<code>solid</code>, <code>dashed</code>, <code>dotted</code>…) no border is drawn at all.</li><li><strong>To see the layers</strong> of any element, select it in DevTools and open the <strong>Computed</strong> tab: its box diagram shows the exact sizes.</li></ul>',
     ],
-    diagram: {
-      kind: 'layers',
-      title: 'From the outside in: margin, border, padding, content.',
-      desc: 'Four nested layers, outermost first. The margin is transparent space that pushes neighbours away. The border is drawn only when it has a style. The padding is inside the border and painted with the background. The content holds the text, images and child elements.',
-      nodes: [
-        { id: 'margin', label: 'Margin', note: 'transparent, pushes neighbours away' },
-        { id: 'border', label: 'Border', note: 'drawn only with a style' },
-        { id: 'padding', label: 'Padding', note: 'painted with the background' },
-        { id: 'content', label: 'Content', note: 'text, images, children' },
-      ],
-      edges: [],
-    },
     widget: 'box-model',
     practice: { href: '#/browser/css/practice/box-model', label: 'Practise with the box model' },
     example: '`.card { padding: 16px; border: 1px solid #ddd; margin-bottom: 12px; background: white; }` gives each card 16px of white breathing room around its text, a thin grey frame, and 12px of empty space before the card that follows it.',
@@ -315,10 +315,13 @@ button { background: #FF5700; color: white; border: 0; border-radius: 4px; paddi
 <div class="box">second box</div>`,
       css: `body { background: #EEF0FA; }
 .box {
-  background: #FFE9DC;          /* fills content + padding */
-  padding: 20px;                /* inside the border */
+  /* fills content + padding */
+  background: #FFE9DC;
+  /* inside the border */
+  padding: 20px;
   border: 6px solid #FF5700;
-  margin: 24px;                 /* outside: shows the page background */
+  /* outside: shows the page background */
+  margin: 24px;
 }` } },
 
   { id: 'box-sizing', hub: 'box', topic: 'box',
@@ -347,7 +350,8 @@ button { background: #FF5700; color: white; border: 0; border-radius: 4px; paddi
   background: #FFE9DC;
 }
 .content { box-sizing: content-box; } /* 350px wide on screen */
-.border  { box-sizing: border-box; }  /* 300px wide on screen */` } },
+/* 300px wide on screen */
+.border  { box-sizing: border-box; }` } },
 
   { id: 'margins-centering', hub: 'box', topic: 'box',
     title: 'Margins: centring with auto, and collapsing',
@@ -371,7 +375,8 @@ button { background: #FF5700; color: white; border: 0; border-radius: 4px; paddi
       css: `body { background: #EEF0FA; }
 .login {
   max-width: 260px;
-  margin: 0 auto;           /* try text-align: center instead: the box stays left */
+  /* try text-align: center instead: the box stays left */
+  margin: 0 auto;
   padding: 1rem;
   background: white;
   border: 1px solid #ccc;
@@ -416,7 +421,8 @@ button { background: #FF5700; color: white; border: 0; border-radius: 4px; paddi
 </div>`,
       css: `.scroller {
   height: 170px;
-  overflow: auto;              /* try hidden or visible */
+  /* try hidden or visible */
+  overflow: auto;
   border: 2px solid #1A1F6C;
 }
 .bar {
@@ -428,7 +434,8 @@ button { background: #FF5700; color: white; border: 0; border-radius: 4px; paddi
   color: white;
 }
 .card {
-  position: relative;          /* remove it: the badge jumps away */
+  /* remove it: the badge jumps away */
+  position: relative;
   margin: 16px 12px;
   padding: 8px 12px;
   border: 1px solid #999;
@@ -464,9 +471,11 @@ p { margin: 8px 12px; }` } },
 </header>`,
       css: `header {
   display: flex;
-  flex-direction: row;            /* try column */
+  /* try column */
+  flex-direction: row;
   justify-content: space-between; /* main axis */
-  align-items: center;            /* cross axis */
+  /* cross axis */
+  align-items: center;
   padding: 0 1rem;
   background: #1A1F6C;
   color: white;
@@ -494,7 +503,8 @@ nav a  { color: white; }` } },
       css: `.row {
   display: flex;
   justify-content: space-between; /* try center, space-around, space-evenly */
-  align-items: stretch;           /* try flex-start, center, flex-end */
+  /* try flex-start, center, flex-end */
+  align-items: stretch;
   height: 120px;
   background: #EEF0FA;
 }
@@ -529,13 +539,16 @@ nav a  { color: white; }` } },
       html: `<form class="search"><input placeholder="Search articles"><button>Search</button></form>
 <div class="split"><div class="one">flex: 1</div><div class="two">flex: 2</div></div>`,
       css: `.search { display: flex; gap: 8px; }
-.search input  { flex: 1; padding: 6px; }    /* takes all the leftover space */
-.search button { flex: none; }                /* keeps its natural width */
+/* takes all the leftover space */
+.search input  { flex: 1; padding: 6px; }
+/* keeps its natural width */
+.search button { flex: none; }
 
 .split { display: flex; margin-top: 1rem; }
 .split div { padding: 8px; color: white; }
 .one { flex: 1; background: #1A1F6C; }
-.two { flex: 2; background: #FF5700; }        /* twice the share */` } },
+/* twice the share */
+.two { flex: 2; background: #FF5700; }` } },
 
   /* ---- 6. Grid ----------------------------------------------------------------------------- */
   { id: 'grid-tracks', hub: 'grid', topic: 'grid',
@@ -701,8 +714,10 @@ aside     { background: #3E7C6B; }
 
 /* styles.css */
 img {
-  max-width: 100%;   /* shrink with the container, never stretch */
-  height: auto;      /* keep the aspect ratio */
+  /* shrink with the container, never stretch */
+  max-width: 100%;
+  /* keep the aspect ratio */
+  height: auto;
 }
 .container {
   max-width: 1100px; /* a ceiling, not a fixed width */
@@ -719,7 +734,8 @@ img {
       css: `.column { width: 240px; border: 2px dashed #999; padding: 8px; }
 img {
   max-width: 100%;
-  height: auto;     /* delete this line: the circle is squashed */
+  /* delete this line: the circle is squashed */
+  height: auto;
 }` } },
 
   { id: 'media-queries', hub: 'responsive', topic: 'responsive',
@@ -744,14 +760,16 @@ img {
     code: `/* Desktop-first: wide layout is the base */
 main { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
 
-@media (max-width: 768px) {          /* 768px or narrower */
+/* 768px or narrower */
+@media (max-width: 768px) {
   main { grid-template-columns: 1fr; }
 }
 
 /* Mobile-first: one column is the base */
 .cards { display: grid; gap: 1rem; }
 
-@media (min-width: 600px) {          /* 600px or wider */
+/* 600px or wider */
+@media (min-width: 600px) {
   .cards { grid-template-columns: repeat(2, 1fr); }
 }
 @media (min-width: 1000px) {
@@ -769,7 +787,8 @@ main { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
 .cards  { display: grid; gap: 8px; margin-top: 8px; }
 .cards div { background: #1A1F6C; color: white; padding: 16px; }
 
-@media (min-width: 480px) {   /* 480px or wider */
+/* 480px or wider */
+@media (min-width: 480px) {
   .banner { background: #1A1F6C; }
   .cards  { grid-template-columns: repeat(3, 1fr); }
 }` } },

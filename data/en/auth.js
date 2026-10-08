@@ -115,7 +115,8 @@ DATA.en.AUTH_CONCEPTS = [
       ],
       edges: [['pw', 'bcrypt'], ['salt', 'bcrypt'], ['bcrypt', 'stored']],
     },
-    code: `const bcrypt = require('bcrypt');   // npm install bcrypt (bcryptjs has the same API)
+    code: `// npm install bcrypt (bcryptjs has the same API)
+const bcrypt = require('bcrypt');
 
 // sign-up: a new random salt every time
 const hash = await bcrypt.hash('correct horse battery staple', 10);
@@ -123,8 +124,10 @@ const hash = await bcrypt.hash('correct horse battery staple', 10);
 //   '$2b$' version · '10$' cost · then 22 chars of salt and 31 chars of hash
 
 // log-in: re-hash the attempt with the salt and cost stored in the hash
-await bcrypt.compare('correct horse battery staple', hash);   // true
-await bcrypt.compare('Correct horse battery staple', hash);   // false`,
+await bcrypt.compare('correct horse battery staple', hash);
+// → true
+await bcrypt.compare('Correct horse battery staple', hash);
+// → false`,
     example: 'Two users both choose `123456`. Unsalted SHA-256 stores the same value twice, `8d969eef6ecad3c2…`, and a web search for it reveals the password: crack one, crack both. With bcrypt the two rows look completely unrelated. In the password-hashing tool on this card, hash a password at 2^16 and then 2^18 iterations: the time roughly quadruples, and so does the attacker\'s.',
     mistake: 'Thinking the salt must be kept secret, or storing it "safely" elsewhere. A salt is not a secret: its only job is to be **different for every user**. Using one fixed salt for everybody defeats that job, because equal passwords become equal hashes again.',
     widget: 'hash-cost' },
@@ -160,10 +163,14 @@ await bcrypt.compare('Correct horse battery staple', hash);   // false`,
     },
     code: `// Express 4: after a successful log-in with a server-side session
 res.cookie('sid', sessionId, {
-  httpOnly: true,           // invisible to JavaScript
-  secure: true,             // HTTPS only
-  sameSite: 'lax',          // not sent on other sites' fetch / form POSTs
-  maxAge: 60 * 60 * 1000,   // in milliseconds here (1 hour)
+  // invisible to JavaScript
+  httpOnly: true,
+  // HTTPS only
+  secure: true,
+  // not sent on other sites' fetch / form POSTs
+  sameSite: 'lax',
+  // in milliseconds here (1 hour)
+  maxAge: 60 * 60 * 1000,
 });
 // Response header:
 // Set-Cookie: sid=8f3a…; Max-Age=3600; Path=/; Expires=…; HttpOnly; Secure; SameSite=Lax`,
@@ -280,7 +287,8 @@ try {
       ],
     },
     code: `// The heart of the log-in check: one answer for both failure cases.
-const user = await usersModel.findByEmail(email);       // null if unknown
+const user = await usersModel.findByEmail(email);
+// → null if unknown
 const ok = user !== null && (await bcrypt.compare(password, user.password_hash));
 if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
 // … sign the token and answer 200 { token }`,
@@ -333,7 +341,8 @@ const res = await fetch('http://localhost:3000/tasks', {
 const jwt = require('jsonwebtoken');
 
 function auth(req, res, next) {
-  const header = req.headers.authorization || '';   // Node lower-cases header names
+  // Node lower-cases header names
+  const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'Missing token' });
   try {
@@ -345,8 +354,10 @@ function auth(req, res, next) {
 }
 
 // app.js
-app.use('/auth', authRouter);           // open: this is where tokens come from
-app.use('/tasks', auth, tasksRouter);   // every /tasks route is behind the gate`,
+// open: this is where tokens come from
+app.use('/auth', authRouter);
+// every /tasks route is behind the gate
+app.use('/tasks', auth, tasksRouter);`,
     example: 'Ana\'s React page calls `GET /tasks?page=2` with her token. `auth` verifies it and sets `req.user.sub = 1`; the list controller then asks the model for **her** tasks only (`findByOwner(1, { limit, offset })`). Ben\'s token on the same URL gives Ben\'s tasks: same route, different `req.user`.',
     mistake: 'Mounting the gate on the whole app, `app.use(auth)`, above the log-in route. Now `/auth/login` itself demands a token, so nobody can ever get one: every log-in answers **401** `Missing token`. Mount `auth` on the routers it protects, after the open `/auth` router.' },
 
@@ -427,9 +438,11 @@ router.delete('/:id', requireRole('admin'), deleteNote);`,
         + '<li><strong><code>app.use(cors())</code> with no options</strong> sends <code>Access-Control-Allow-Origin: *</code> on every route: fine for a public, read-only API, too wide for one with user accounts.</li>'
         + '<li><strong>Pass <code>origin</code></strong> with the exact front-end origin, or an array of them, and mount it <strong>before</strong> the routers.</li></ul>',
     ],
-    code: `const cors = require('cors');            // npm install cors
+    code: `// npm install cors
+const cors = require('cors');
 
-app.use(cors({ origin: 'http://localhost:5173' }));   // before the routers (and before auth)
+// before the routers (and before auth)
+app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(express.json());
 app.use('/api/tasks', tasksRouter);
 
@@ -574,7 +587,8 @@ function validate(schema) {
   return (req, res, next) => {
     const result = schema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.issues });
-    req.body = result.data;   // continue with the parsed data only
+    // continue with the parsed data only
+    req.body = result.data;
     next();
   };
 }
@@ -607,9 +621,12 @@ router.put('/:id', validate(taskSchema), replaceTask);`,
 const rateLimit = require('express-rate-limit');
 
 app.use(helmet());
-app.use(express.json({ limit: '100kb' }));   // the default: keep it small
-app.use('/auth/login', rateLimit({ windowMs: 15 * 60 * 1000, limit: 10 }));   // 10 tries / 15 min / IP
-app.use(rateLimit({ windowMs: 60 * 1000, limit: 100 }));                      // 100 requests / min / IP
+// the default: keep it small
+app.use(express.json({ limit: '100kb' }));
+app.use('/auth/login', rateLimit({ windowMs: 15 * 60 * 1000, limit: 10 }));
+// → 10 tries / 15 min / IP
+app.use(rateLimit({ windowMs: 60 * 1000, limit: 100 }));
+// → 100 requests / min / IP
 // express-rate-limit 7 calls the option \`limit\`; older versions and many tutorials call it \`max\`.`,
     example: 'An attacker scripts 10,000 log-in attempts for `ana@example.com`. With the log-in limiter, attempt 11 within 15 minutes gets **429**; at 10 tries per quarter of an hour, 10,000 guesses take more than ten days, and bcrypt makes each one slow on top. Without it, the only limit is your server\'s CPU.',
     mistake: 'Thinking `helmet()` "secures the API". It only sets response headers: it does nothing against broken access control, injection or a leaked secret. Security middleware is a seatbelt, not a substitute for driving carefully.' },
@@ -628,10 +645,12 @@ app.use(rateLimit({ windowMs: 60 * 1000, limit: 100 }));                      //
 // JWT_SECRET=3f9c2b7e0d8a41f6b5c3e9a7d2f1084c6b5a3e2d1f0c9b8a7e6d5c4b3a291807
 
 // config.js
-require('dotenv').config();              // or start Node 20.6+ with: node --env-file=.env src/server.js
+// or start Node 20.6+ with: node --env-file=.env src/server.js
+require('dotenv').config();
 const isProduction = process.env.NODE_ENV === 'production';
 if (isProduction && !process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET is missing');   // crash at start-up, not on the first log-in
+  // crash at start-up, not on the first log-in
+  throw new Error('JWT_SECRET is missing');
 }
 module.exports = { jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-me' };`,
     example: 'A pair pushes `const JWT_SECRET = \'riverside123\';` to a public repository. Anyone can read it, sign a token saying `role: admin` and delete every fixture. The fix: generate a new random secret, put it in the server\'s environment, remove it from the code, and accept that every user has to log in again.',
@@ -653,15 +672,21 @@ module.exports = { jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-me' }
   return { page, limit, offset: (page - 1) * limit };
 }
 
-console.log(clampPage({}));                             // nothing sent: defaults
-console.log(clampPage({ page: '3', limit: '10' }));     // query values are strings
-console.log(clampPage({ page: '0', limit: '999' }));    // both clamps at work
-console.log(clampPage({ page: '-4', limit: '-1' }));    // negative values
-console.log(clampPage({ page: 'abc', limit: '2.7' }));  // junk and decimals
+// nothing sent: defaults
+console.log(clampPage({}));
+// query values are strings
+console.log(clampPage({ page: '3', limit: '10' }));
+// both clamps at work
+console.log(clampPage({ page: '0', limit: '999' }));
+// negative values
+console.log(clampPage({ page: '-4', limit: '-1' }));
+// junk and decimals
+console.log(clampPage({ page: 'abc', limit: '2.7' }));
 
 // A common snippet with no lower bound for limit:
 const naiveLimit = (q) => Math.min(100, Number(q.limit) || 20);
-console.log(naiveLimit({ limit: '-1' }));                // -1 would reach SQL as LIMIT -1` },
+console.log(naiveLimit({ limit: '-1' }));
+// → -1 would reach SQL as LIMIT -1` },
     example: '`GET /tasks?limit=999999` gives 100 items, `?page=0` is treated as page 1, and `?limit=abc` falls back to 20. With the naive snippet, `?limit=-1` passes `-1` to the database: PostgreSQL rejects `LIMIT -1` with an error (a `500` for the client) and SQLite treats it as "no limit at all".',
     mistake: 'Clamping only the upper bound (as many tutorial snippets do), or using `req.query.limit` directly. Remember that `Number(\'0\') || 20` is `20` (0 is falsy) and that `Number(\'-5\')` is a perfectly truthy `-5`.' },
 

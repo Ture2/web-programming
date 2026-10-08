@@ -57,15 +57,18 @@ DATA.en.EXPRESS_CONCEPTS = [
       edges: [['client', 'server', 'request'], ['server', 'app'], ['app', 'handler', 'first match']],
     },
     code: `const express = require('express');
-const app = express();                       // an empty list of layers
+// an empty list of layers
+const app = express();
 
-app.get('/health', (req, res) => {           // one route
+// one route
+app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(\`Listening on http://localhost:\${PORT}\`);   // runs once, when ready
+  // runs once, when ready
+  console.log(\`Listening on http://localhost:\${PORT}\`);
 });`,
     example: 'Run it with `node --watch src/server.js`: the terminal prints `Listening on http://localhost:3000` once and stays busy. In a second terminal, `curl http://localhost:3000/health` prints `{"status":"ok"}`. Adding `GET /tasks/:id` is one more line, `app.get(\'/tasks/:id\', getTask)`, with the id waiting in `req.params.id`; any unknown URL still gets a `404` from Express, without another `else`.',
     mistake: 'Thinking Express replaces Node. It is an npm package: `express()` returns an ordinary function that Node\'s `http` server calls for each request, so every error is a Node error and everything in Server-side JavaScript still applies. Starting it twice, for instance, gives Node\'s `EADDRINUSE` (see [A first server](#/server/runtime/first-server)).' },
@@ -104,11 +107,16 @@ app.listen(PORT, () => {
         + '<li><strong>Never the query string:</strong> <code>?done=true</code> plays no part.</li>'
         + '<li><strong>No match:</strong> Express answers <code>404</code> with an HTML page, <code>Cannot GET /x</code>. It sends no <code>405</code> when the path exists with another method: <code>POST /health</code> on an app with only <code>GET /health</code> is <code>Cannot POST /health</code>.</li></ul>',
     ],
-    code: `app.get('/tasks', listTasks);          // GET    /tasks
-app.post('/tasks', createTask);        // POST   /tasks
-app.get('/tasks/:id', getTask);        // GET    /tasks/7, /tasks/abc …
-app.patch('/tasks/:id', updateTask);   // PATCH  /tasks/7
-app.delete('/tasks/:id', deleteTask);  // DELETE /tasks/7`,
+    code: `// GET    /tasks
+app.get('/tasks', listTasks);
+// POST   /tasks
+app.post('/tasks', createTask);
+// GET    /tasks/7, /tasks/abc …
+app.get('/tasks/:id', getTask);
+// PATCH  /tasks/7
+app.patch('/tasks/:id', updateTask);
+// DELETE /tasks/7
+app.delete('/tasks/:id', deleteTask);`,
     example: 'With the five routes above: `GET /tasks` → `listTasks`; `GET /Tasks/` → `listTasks` too (case and trailing slash ignored); `PUT /tasks/7` → no route has PUT, so Express answers `404 Cannot PUT /tasks/7`; `GET /tasks/7/comments` → `404`, because `/tasks/:id` has two segments and the URL has three.',
     mistake: 'Testing a `POST` route by typing its URL in the browser\'s address bar. The browser always sends `GET`, so you get `Cannot GET /tasks` and conclude the route is broken. Use [curl](#/server/routes/curl-basics) with `-X POST`, or a `fetch` call with `method: \'POST\'`.',
     widget: 'route-matcher' },
@@ -124,7 +132,8 @@ app.delete('/tasks/:id', deleteTask);  // DELETE /tasks/7`,
     ],
     code: `app.get('/users/:userId/tasks/:taskId', (req, res) => {
   // GET /users/7/tasks/42
-  console.log(req.params);           // { userId: '7', taskId: '42' }
+  console.log(req.params);
+  // → { userId: '7', taskId: '42' }
   const taskId = Number(req.params.taskId);
   if (Number.isNaN(taskId)) {
     return res.status(400).json({ error: 'taskId must be a number' });
@@ -150,10 +159,14 @@ app.delete('/tasks/:id', deleteTask);  // DELETE /tasks/7`,
     live: { kind: 'js', code: `// What Express does with "?done=false&page=2&tag=css&tag=html&q=hello+world"
 const params = new URLSearchParams('done=false&page=2&tag=css&tag=html&q=hello+world');
 
-console.log(params.get('page'), typeof params.get('page'));   // a string
-console.log(params.getAll('tag'));                           // repeated key
-console.log(params.get('q'));                                // + is a space
-console.log(params.get('sort'));                             // missing → null (undefined in req.query)
+// a string
+console.log(params.get('page'), typeof params.get('page'));
+// repeated key
+console.log(params.getAll('tag'));
+// + is a space
+console.log(params.get('q'));
+// missing → null (undefined in req.query)
+console.log(params.get('sort'));
 
 const done = params.get('done');
 if (done) console.log('"false" is a non-empty string, so this runs!');
@@ -170,10 +183,12 @@ console.log('compare as text:', done === 'true');` },
     ],
     code: `// Wrong order: GET /tasks/stats → getTask with id 'stats' → 404
 app.get('/tasks/:id', getTask);
-app.get('/tasks/stats', taskStats);   // never reached
+// never reached
+app.get('/tasks/stats', taskStats);
 
 // Right order
-app.get('/tasks/stats', taskStats);   // fixed path first
+// fixed path first
+app.get('/tasks/stats', taskStats);
 app.get('/tasks/:id', getTask);`,
     example: 'A tasks API needs a `GET /tasks/stats` endpoint. A developer adds it at the bottom of the file, under `app.get(\'/tasks/:id\', getTask)`, and gets `{"error":"Task not found"}`. Nothing is wrong with the stats code: moving its line above the `:id` route fixes it.',
     mistake: '"Express picks the best-matching route." It does not compare routes at all; it walks the list in order. The same goes for middleware (see [Order is configuration](#/server/routes/middleware-order)): order in the file **is** the configuration.',
@@ -244,9 +259,11 @@ app.get('/tasks/:id', getTask);`,
 function createTask(req, res) {
   const { title } = req.body;
   if (!title) res.status(400).json({ error: 'title is required' });
-  const task = { id: tasks.length + 1, title, done: false };   // still runs!
+  // still runs!
+  const task = { id: tasks.length + 1, title, done: false };
   tasks.push(task);
-  res.status(201).json(task);   // → Error [ERR_HTTP_HEADERS_SENT]
+  res.status(201).json(task);
+  // → Error [ERR_HTTP_HEADERS_SENT]
 }
 
 // Fixed: return stops the function after the 400
@@ -287,13 +304,15 @@ function createTask(req, res) {
     code: `// Logs, then passes the request on
 function logger(req, res, next) {
   console.log(\`\${req.method} \${req.url}\`);
-  next();                        // forget this and every request hangs
+  // forget this and every request hangs
+  next();
 }
 
 // Answers early, or passes on
 function requireJson(req, res, next) {
   if (req.method === 'POST' && !req.is('application/json')) {
-    return res.status(415).json({ error: 'Send JSON' });   // ends here
+    // ends here
+    return res.status(415).json({ error: 'Send JSON' });
   }
   next();
 }
@@ -318,10 +337,12 @@ app.use(requireJson);`,
         + '</tbody></table>',
       '<p>An HTML form sends <code>application/x-www-form-urlencoded</code> (<code>title=Study&amp;done=on</code>, built from the inputs\' <code>name</code> attributes, see <a href="#/browser/html/forms-basics">Forms</a>). For those, add <code>express.urlencoded({ extended: false })</code>.</p>',
     ],
-    code: `app.use(express.json());                          // before the routes!
+    code: `// before the routes!
+app.use(express.json());
 
 app.post('/tasks', (req, res) => {
-  console.log(req.body);                          // { title: 'Buy milk' }
+  console.log(req.body);
+  // → { title: 'Buy milk' }
   res.status(201).json({ received: req.body });
 });
 
@@ -372,16 +393,20 @@ app.post('/tasks', (req, res) => {
       edges: [['guard', 'stop', 'no valid token'], ['guard', 'pass', 'valid token']],
     },
     code: `function requireAuth(req, res, next) {
-  const header = req.get('Authorization');            // "Bearer <token>"
+  const header = req.get('Authorization');
+  // → "Bearer <token>"
   if (header !== 'Bearer demo-token') {
     return res.status(401).json({ error: 'Log in first' });
   }
-  req.user = { id: 1, name: 'Ana' };    // a real app verifies a JWT here
+  // a real app verifies a JWT here
+  req.user = { id: 1, name: 'Ana' };
   next();
 }
 
-app.get('/api/health', health);         // public: above the guard
-app.use('/api', requireAuth);           // guards everything below under /api
+// public: above the guard
+app.get('/api/health', health);
+// guards everything below under /api
+app.use('/api', requireAuth);
 app.get('/api/me', (req, res) => res.json({ user: req.user }));`,
     example: '`curl http://localhost:3000/api/me` → `401 {"error":"Log in first"}`. `curl -H "Authorization: Bearer demo-token" http://localhost:3000/api/me` → `200 {"user":{"id":1,"name":"Ana"}}`. `curl http://localhost:3000/api/health` → `200` without a token, because that route is registered before the guard.',
     mistake: 'Registering the guard after the route it should protect. The route answers first, `req.user` is `undefined`, and `res.json({ user: undefined })` sends `{}` with status `200`: no error anywhere, just an unprotected endpoint.',
@@ -445,9 +470,12 @@ const express = require('express');
 const { listTasks, createTask, getTask } = require('../controllers/tasksController');
 
 const router = express.Router();
-router.get('/', listTasks);       // GET  /tasks
-router.post('/', createTask);     // POST /tasks
-router.get('/:id', getTask);      // GET  /tasks/7
+// GET  /tasks
+router.get('/', listTasks);
+// POST /tasks
+router.post('/', createTask);
+// GET  /tasks/7
+router.get('/:id', getTask);
 module.exports = router;
 
 // src/app.js
@@ -583,10 +611,12 @@ console.log(isErrorHandler(errorHandler), isErrorHandler(looksLikeOne));` },
     ],
     code: `// Both reach the error handler
 app.get('/boom', (req, res, next) => {
-  next(new Error('Boom!'));            // explicit
+  // explicit
+  next(new Error('Boom!'));
 });
 app.get('/boom2', (req, res) => {
-  throw new Error('Boom!');            // caught by Express (synchronous)
+  // caught by Express (synchronous)
+  throw new Error('Boom!');
 });
 
 // An error with a status, for the central handler
@@ -633,7 +663,8 @@ function getTask(req, res, next) {
     },
     code: `// Express 4: a rejection here crashes the process
 app.get('/stats', async (req, res) => {
-  const stats = await db.getStats();      // rejects: database offline
+  // rejects: database offline
+  const stats = await db.getStats();
   res.json(stats);
 });
 
@@ -643,7 +674,8 @@ app.get('/stats', async (req, res, next) => {
     const stats = await db.getStats();
     res.json(stats);
   } catch (err) {
-    next(err);                            // → error handler → 500 JSON
+    next(err);
+    // → error handler → 500 JSON
   }
 });
 
@@ -665,11 +697,13 @@ router.get('/', asyncHandler(listTasks));`,
     ],
     code: `// … every route and router above …
 
-app.use((req, res) => {                     // 404 catch-all
+app.use((req, res) => {
+// → 404 catch-all
   res.status(404).json({ error: \`Not found: \${req.method} \${req.originalUrl}\` });
 });
 
-app.use((err, req, res, next) => {          // error handler, last
+// error handler, last
+app.use((err, req, res, next) => {
   console.error(err.message);
   res.status(err.status || 500).json({ error: err.message });
 });`,

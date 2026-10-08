@@ -54,10 +54,14 @@ const TASKS = [
   { id: 3, title: 'Document the endpoints', done: true },
 ];
 
-function TaskSummary({ tasks }) {                        // prop
-  const [showDone, setShowDone] = useState(true);        // state
-  const visible = showDone ? tasks : tasks.filter((t) => !t.done);  // derived
-  const doneCount = tasks.filter((t) => t.done).length;            // derived
+// prop
+function TaskSummary({ tasks }) {
+  // state
+  const [showDone, setShowDone] = useState(true);
+  // derived
+  const visible = showDone ? tasks : tasks.filter((t) => !t.done);
+  // derived
+  const doneCount = tasks.filter((t) => t.done).length;
 
   return (
     <section>
@@ -107,7 +111,8 @@ function App() {
 
 function App() {
   const [count, setCount] = useState(0);
-  let clicks = 0;                        // a plain local variable
+  // a plain local variable
+  let clicks = 0;
   console.log(\`App rendered: count = \${count}, clicks = \${clicks}\`);
 
   return (
@@ -137,7 +142,8 @@ function App() {
     code: `// Wrong: the hook only runs sometimes
 function TaskDetail({ task }) {
   if (!task) return <p>Select a task</p>;
-  const [editing, setEditing] = useState(false);   // slot depends on task
+  // slot depends on task
+  const [editing, setEditing] = useState(false);
   …
 }
 
@@ -219,12 +225,16 @@ function App() {
         + '<li><strong>Naming:</strong> the parameter is up to you; common choices are the first letter (<code>c</code> for count) or <code>prev</code>.</li>'
         + '<li><strong>Pure:</strong> an updater only computes and returns the next value. No <code>fetch</code>, no changes to other variables: in development, StrictMode calls updaters twice to expose them.</li></ul>',
     ],
-    code: `setCount(count + 1);          // "make it 1" (if count is 0 in this render)
-setCount((c) => c + 1);       // "add one to whatever it is by then"
+    code: `setCount(count + 1);
+// → "make it 1" (if count is 0 in this render)
+setCount((c) => c + 1);
+// → "add one to whatever it is by then"
 
 // Mixing: value then updater
-setCount(10);                 // queue: replace with 10
-setCount((c) => c * 2);       // queue: 10 → 20   (next render: 20)`,
+// queue: replace with 10
+setCount(10);
+// queue: 10 → 20   (next render: 20)
+setCount((c) => c * 2);`,
     example: 'The Try it box has the same three-call button, this time with updaters, so a click adds 3. The **Reset then +1** button queues a value and then an updater: the queue goes "replace with 0" → "0 + 1", and the screen shows 1.',
     live: { kind: 'react', code: `import { useState } from 'react';
 
@@ -238,8 +248,10 @@ function App() {
   }
 
   function resetThenOne() {
-    setCount(0);              // a value: replace
-    setCount((c) => c + 1);   // an updater: receives 0
+    // a value: replace
+    setCount(0);
+    // an updater: receives 0
+    setCount((c) => c + 1);
   }
 
   return (
@@ -283,10 +295,12 @@ function App() {
 
   function handleClick() {
     setCount((c) => c + 1);
-    setStatus('saving');            // same batch as the line above
+    // same batch as the line above
+    setStatus('saving');
     setTimeout(() => {
       setCount((c) => c + 1);
-      setStatus('saved');           // batched too, inside the timer
+      // batched too, inside the timer
+      setStatus('saved');
     }, 1000);
   }
 
@@ -307,7 +321,8 @@ function App() {
     ],
     code: `// Duplicated: a second list that every update must remember to change
 const [tasks, setTasks] = useState(START);
-const [visible, setVisible] = useState(START);   // goes stale on the first missed update
+// goes stale on the first missed update
+const [visible, setVisible] = useState(START);
 
 // Derived during render: always right
 const visible = tasks.filter((t) => t.title.toLowerCase().includes(search.toLowerCase()));`,
@@ -373,8 +388,10 @@ function App() {
   const [task, setTask] = useState({ title: 'Add full CRUD', done: false });
 
   function mutate() {
-    task.done = !task.done;   // edits the object of this render
-    setTask(task);            // same reference: React skips the render
+    // edits the object of this render
+    task.done = !task.done;
+    // same reference: React skips the render
+    setTask(task);
   }
 
   function replace() {
@@ -422,7 +439,8 @@ function App() {
   const addWithPush = () => {
     tasks.push({ id: nextId++, title: 'Pushed task', done: false });
     console.log('array length is now', tasks.length);
-    setTasks(tasks);   // same array: no render
+    // same array: no render
+    setTasks(tasks);
   };
   const toggle = (id) => setTasks(tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
   const remove = (id) => setTasks(tasks.filter((t) => t.id !== id));
@@ -470,8 +488,10 @@ function App() {
 useEffect(() => {
   // setup: runs after the commit
   const id = setInterval(tick, 1000);
-  return () => clearInterval(id);     // cleanup: undoes the setup
-}, []);                               // dependencies: when to re-synchronise`,
+  // cleanup: undoes the setup
+  return () => clearInterval(id);
+// dependencies: when to re-synchronise
+}, []);`,
     example: 'The Try it box subscribes to the pointer position only while the checkbox is ticked. The effect depends on `tracking`: ticking starts a `pointermove` listener, unticking runs the cleanup, which removes it. Move the pointer over the preview and watch the console.',
     live: { kind: 'react', code: `import { useState, useEffect } from 'react';
 
@@ -480,7 +500,8 @@ function App() {
   const [pos, setPos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    if (!tracking) return;              // nothing to synchronise
+    // nothing to synchronise
+    if (!tracking) return;
     console.log('subscribe to pointermove');
     const onMove = (e) => setPos({ x: e.clientX, y: e.clientY });
     window.addEventListener('pointermove', onMove);
@@ -571,7 +592,8 @@ function StaleTicker({ count }) {
   useEffect(() => {
     const id = setInterval(() => console.log(\`stale ticker sees \${count}\`), 1000);
     return () => clearInterval(id);
-  }, []);              // count is missing: the linter would warn
+  // count is missing: the linter would warn
+  }, []);
   return <p>Stale ticker running</p>;
 }
 
@@ -579,7 +601,8 @@ function FixedTicker({ count }) {
   useEffect(() => {
     const id = setInterval(() => console.log(\`fixed ticker sees \${count}\`), 1000);
     return () => clearInterval(id);
-  }, [count]);         // a new interval for every count
+  // a new interval for every count
+  }, [count]);
   return <p>Fixed ticker running</p>;
 }
 
@@ -655,8 +678,10 @@ function App() {
     });
     if (!res.ok) { console.log('could not create:', res.status); return; }
     const task = await res.json();
-    setCreated((prev) => [...prev, task]);   // respond to the event here…
-    setTitle('');                            // …and reset here, no effect
+    // respond to the event here…
+    setCreated((prev) => [...prev, task]);
+    // …and reset here, no effect
+    setTitle('');
   }
 
   return (
@@ -745,13 +770,17 @@ function App() {
 
 function App() {
   const [seconds, setSeconds] = useState(0);
-  const intervalRef = useRef(null);   // the timer id: never shown
-  const inputRef = useRef(null);      // the <input> element, after the commit
-  const clicksRef = useRef(0);        // changes without re-rendering
+  // the timer id: never shown
+  const intervalRef = useRef(null);
+  // the <input> element, after the commit
+  const inputRef = useRef(null);
+  // changes without re-rendering
+  const clicksRef = useRef(0);
   console.log('render');
 
   function start() {
-    if (intervalRef.current) return;  // already running
+    // already running
+    if (intervalRef.current) return;
     intervalRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
   }
   function stop() {
@@ -852,7 +881,8 @@ createRoot(document.getElementById('root')).render(
     }
   }
   load();
-  return () => { ignore = true; };   // a newer run or an unmount wins
+  // a newer run or an unmount wins
+  return () => { ignore = true; };
 }, [userId]);`,
     example: 'The Try it box loads the tasks of a user from the mock API (it answers `/api/…` after 300 ms and logs each request). Change the user: the effect re-runs with the new id, the cleanup of the previous run flips its `ignore` flag, and the list switches over.',
     live: { kind: 'react', api: true, code: `import { useState, useEffect } from 'react';
@@ -954,7 +984,8 @@ function App() {
       const saved = localStorage.getItem(key);
       return saved === null ? initial : JSON.parse(saved);
     } catch {
-      return initial;                      // blocked or invalid: use the default
+      // blocked or invalid: use the default
+      return initial;
     }
   });
 

@@ -60,7 +60,8 @@ DATA.en.SQL_CONCEPTS = [
   user_id  INTEGER,
   title    TEXT,
   done     BOOLEAN,
-  due_date DATE        -- may be empty (NULL): not every task has a date
+  -- may be empty (NULL): not every task has a date
+  due_date DATE
 );`,
     dialect: 'SQL (PostgreSQL)',
     example: 'The row `(7, 3, \'Draft project plan\', FALSE, \'2026-10-12\')` fits this table: an id, the id of its owner, a title, a boolean and a date. `INSERT INTO tasks (id, title, done) VALUES (8, \'Study\', \'maybe\')` is refused, because `\'maybe\'` is not a boolean. The columns an `INSERT` leaves out stay empty (NULL) until the table declares a rule for them.',
@@ -77,7 +78,8 @@ DATA.en.SQL_CONCEPTS = [
       '<p><code>PRIMARY KEY</code> means: required, unique, and "this is the row\'s identity".</p>',
     ],
     code: `CREATE TABLE users (
-  id    SERIAL PRIMARY KEY,         -- 1, 2, 3… chosen by the database
+  id    SERIAL PRIMARY KEY,
+  -- → 1, 2, 3… chosen by the database
   email TEXT
 );
 -- MySQL: id INT AUTO_INCREMENT PRIMARY KEY`,
@@ -114,7 +116,8 @@ DATA.en.SQL_CONCEPTS = [
 
 INSERT INTO tasks (user_id, title) VALUES (99, 'Ghost task');
 -- ERROR: insert or update on table "tasks" violates foreign key constraint
-DELETE FROM users WHERE id = 2;   -- also deletes every task with user_id = 2`,
+-- also deletes every task with user_id = 2
+DELETE FROM users WHERE id = 2;`,
     dialect: 'SQL (PostgreSQL)',
     example: 'In the sample database ben (user 2) owns three tasks. `DELETE FROM users WHERE id = 2` removes ben **and** tasks 5, 6 and 9, because of `ON DELETE CASCADE`; their rows in `task_tags` go too, since that table cascades from `tasks`. Try the "ON DELETE CASCADE" example in the SQL runner.',
     mistake: 'Thinking `REFERENCES` is only documentation, or that the database "joins the tables for you". A foreign key is a **rule** checked on every change; reading the related rows together is a separate step that you write with `JOIN`.' },
@@ -150,7 +153,8 @@ DELETE FROM users WHERE id = 2;   -- also deletes every task with user_id = 2`,
 CREATE TABLE task_tags (
   task_id INT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
   tag_id  INT NOT NULL REFERENCES tags(id)  ON DELETE CASCADE,
-  PRIMARY KEY (task_id, tag_id)      -- each pair at most once
+  -- each pair at most once
+  PRIMARY KEY (task_id, tag_id)
 );
 -- task 7 has the tags 1 (urgent) and 3 (planning):
 INSERT INTO task_tags (task_id, tag_id) VALUES (7, 1), (7, 3);`,
@@ -247,13 +251,17 @@ SELECT email FROM users WHERE id IN (1, 3);`,
     ],
     code: `INSERT INTO tasks (user_id, title)
 VALUES (3, 'Write tests')
-RETURNING id, user_id, title, done;      -- → 10 | 3 | Write tests | false
+RETURNING id, user_id, title, done;
+-- → 10 | 3 | Write tests | false
 
 UPDATE tasks SET done = TRUE WHERE id = 10
-RETURNING id, done;                       -- → 10 | true   (1 row changed)
+RETURNING id, done;
+-- → 10 | true   (1 row changed)
 
-DELETE FROM tasks WHERE id = 10;          -- 1 row changed
-DELETE FROM tasks WHERE id = 10;          -- 0 rows changed → the API answers 404`,
+DELETE FROM tasks WHERE id = 10;
+-- → 1 row changed
+DELETE FROM tasks WHERE id = 10;
+-- → 0 rows changed → the API answers 404`,
     dialect: 'SQL (PostgreSQL)',
     example: '`PATCH /tasks/5` with `{ "done": true }` runs `UPDATE tasks SET done = TRUE WHERE id = 5 RETURNING id, title, done`: one row changes and comes back, so the controller sends `200` with it. `PATCH /tasks/999` runs the same statement, zero rows change, `rows` is empty, and the controller sends `404`.',
     mistake: 'Running `SELECT` after `INSERT` to "find the row I just added", for example by taking the highest id. Another request may have inserted a row in between, so you would return someone else\'s task. `RETURNING` (or `insertId` in MySQL) gives you exactly your row from the same statement.',
@@ -272,10 +280,12 @@ DELETE FROM tasks WHERE id = 10;          -- 0 rows changed → the API answers 
     code: `-- 1. preview: which rows would change?
 SELECT id, title FROM tasks WHERE user_id = 2 AND done = TRUE;
 -- 2. change exactly those
-DELETE FROM tasks WHERE user_id = 2 AND done = TRUE;   -- 1 row changed
+DELETE FROM tasks WHERE user_id = 2 AND done = TRUE;
+-- → 1 row changed
 
 -- The accident:
-UPDATE tasks SET done = TRUE;      -- 9 rows changed: every task is now done`,
+UPDATE tasks SET done = TRUE;
+-- → 9 rows changed: every task is now done`,
     dialect: 'SQL',
     example: 'The preview shows one row (task 6, "Review pull request"), so the `DELETE` with the same `WHERE` reports "1 row changed": the count you expected. Load "UPDATE without WHERE" in the SQL runner to see the accident: the runner warns you, and because every run starts from a fresh copy, nothing is really lost there.',
     mistake: 'Believing a narrow-looking condition is narrow. `DELETE FROM tasks WHERE title LIKE \'%test%\'` also deletes "Contest entry" and "Latest notes". Preview with `SELECT` and read the count before changing anything that is not selected by its key.' },
@@ -291,8 +301,10 @@ UPDATE tasks SET done = TRUE;      -- 9 rows changed: every task is now done`,
         + '<dt>In JavaScript</dt><dd>pg turns SQL NULL into <code>null</code>.</dd></dl>',
       '<p>A model\'s <code>update</code> uses <code>COALESCE</code> to mean "keep the old value when the client did not send one": <code>SET done = COALESCE($3, done)</code>, with <code>fields.done ?? null</code> as the value. A missing field becomes NULL (keep), while <code>false</code> stays <code>false</code> (change).</p>',
     ],
-    code: `SELECT id FROM tasks WHERE due_date = NULL;      -- always 0 rows
-SELECT id FROM tasks WHERE due_date IS NULL;     -- the tasks with no date
+    code: `-- always 0 rows
+SELECT id FROM tasks WHERE due_date = NULL;
+-- the tasks with no date
+SELECT id FROM tasks WHERE due_date IS NULL;
 SELECT id, COALESCE(due_date, 'no date') AS due FROM tasks;
 
 -- PATCH: change only what was sent ($3 is NULL when "done" was not sent)
@@ -317,9 +329,12 @@ RETURNING id, title, done;`,
       '<p>MySQL accepts the same <code>LIMIT 10 OFFSET 20</code> (and the older <code>LIMIT 20, 10</code>).</p>',
     ],
     code: `-- page 1, 2, 3 of 4 tasks each
-SELECT id, title FROM tasks ORDER BY id LIMIT 4 OFFSET 0;   -- ids 1–4
-SELECT id, title FROM tasks ORDER BY id LIMIT 4 OFFSET 4;   -- ids 5–8
-SELECT id, title FROM tasks ORDER BY id LIMIT 4 OFFSET 8;   -- id 9
+-- ids 1–4
+SELECT id, title FROM tasks ORDER BY id LIMIT 4 OFFSET 0;
+-- ids 5–8
+SELECT id, title FROM tasks ORDER BY id LIMIT 4 OFFSET 4;
+-- id 9
+SELECT id, title FROM tasks ORDER BY id LIMIT 4 OFFSET 8;
 
 -- the model, with parameters (pg)
 SELECT id, user_id, title, done FROM tasks
@@ -420,9 +435,12 @@ GROUP BY u.id, u.email;`,
 SELECT u.email, COUNT(*) AS open_tasks
 FROM tasks t
 JOIN users u ON u.id = t.user_id
-WHERE t.done = FALSE          -- rows: keep the open tasks
-GROUP BY u.id, u.email        -- one group per user
-HAVING COUNT(*) >= 2          -- groups: keep the busy users
+-- rows: keep the open tasks
+WHERE t.done = FALSE
+-- one group per user
+GROUP BY u.id, u.email
+-- groups: keep the busy users
+HAVING COUNT(*) >= 2
 ORDER BY open_tasks DESC;`,
     dialect: 'SQL',
     example: 'On the sample data the groups are ana (3 open tasks), ben (2) and cleo (1); `HAVING COUNT(*) >= 2` drops cleo, so the result is `ana@example.com 3`, `ben@example.com 2`. "Who has the most open tasks?" is the same query with `LIMIT 1` instead of `HAVING` (with a tie, `LIMIT 1` silently hides the other users).',
@@ -517,8 +535,10 @@ module.exports = pool;
 
 // anywhere in a model
 const result = await pool.query("SELECT id, title FROM tasks WHERE id = $1", [7]);
-result.rows;      // [ { id: 7, title: "Draft project plan" } ]
-result.rowCount;  // 1
+result.rows;
+// → [ { id: 7, title: "Draft project plan" } ]
+result.rowCount;
+// → 1
 
 // MySQL with mysql2: "?" placeholders, the result is [rows, fields]
 const mysql = require("mysql2/promise");
@@ -551,7 +571,8 @@ const [rows] = await db.query("SELECT id, title FROM tasks WHERE id = ?", [7]);`
     },
     code: `// VULNERABLE: the input becomes SQL
 const sql = \`SELECT id, title FROM tasks WHERE user_id = \${req.query.user}\`;
-await pool.query(sql);            // ?user=1 OR 1=1  → every task
+// ?user=1 OR 1=1  → every task
+await pool.query(sql);
 
 // SAFE: fixed SQL text + values apart
 await pool.query("SELECT id, title FROM tasks WHERE user_id = $1", [req.query.user]);
@@ -559,7 +580,8 @@ await pool.query("SELECT id, title FROM tasks WHERE user_id = $1", [req.query.us
 
 // Identifiers cannot be parameters: use an allow-list
 const SORTABLE = { id: "id", title: "title", due: "due_date" };
-const column = SORTABLE[req.query.sort] || "id";     // never the raw input
+// never the raw input
+const column = SORTABLE[req.query.sort] || "id";
 await pool.query(\`SELECT id, title FROM tasks ORDER BY \${column} LIMIT $1\`, [limit]);`,
     dialect: 'JavaScript (Node, pg)',
     example: 'In the SQL runner\'s injection demo, type `\' OR \'1\'=\'1`: the concatenated query returns all 9 tasks; the `$1` query returns none, because no user has that strange email. Then try `x\'; DELETE FROM tasks; --` and look at "tasks left afterwards": 0 for concatenation, 9 for the placeholder.',
@@ -576,7 +598,8 @@ await pool.query(\`SELECT id, title FROM tasks ORDER BY \${column} LIMIT $1\`, [
       '<pre><code>BEGIN;\n'
         + 'UPDATE accounts SET balance = balance - 50 WHERE id = 1;\n'
         + 'UPDATE accounts SET balance = balance + 50 WHERE id = 2;\n'
-        + 'COMMIT;        -- or ROLLBACK; to undo both</code></pre>',
+        + '-- or ROLLBACK; to undo both\n'
+        + 'COMMIT;</code></pre>',
       '<h3>From Node: one client for the whole transaction</h3>',
       '<p><code>pool.query()</code> may run each call on a different connection (see <a href="#/database/relational/drivers-pools">Connecting from Node</a>), so a <code>BEGIN</code> on one and an <code>UPDATE</code> on another are not one transaction. Take one client with <code>pool.connect()</code>, use it from <code>BEGIN</code> to <code>COMMIT</code>, and always give it back.</p>',
     ],
@@ -591,17 +614,21 @@ await pool.query(\`SELECT id, title FROM tasks ORDER BY \${column} LIMIT $1\`, [
       ],
       edges: [['begin', 'commit', 'all worked'], ['begin', 'rollback', 'an error']],
     },
-    code: `const client = await pool.connect();          // one connection for the whole unit
+    code: `// one connection for the whole unit
+const client = await pool.connect();
 try {
   await client.query("BEGIN");
   await client.query("UPDATE accounts SET balance = balance - $1 WHERE id = $2", [50, fromId]);
   await client.query("UPDATE accounts SET balance = balance + $1 WHERE id = $2", [50, toId]);
-  await client.query("COMMIT");                 // both, or…
+  // both, or…
+  await client.query("COMMIT");
 } catch (err) {
-  await client.query("ROLLBACK");               // …neither
+  // …neither
+  await client.query("ROLLBACK");
   throw err;
 } finally {
-  client.release();                             // back to the pool, always
+  // back to the pool, always
+  client.release();
 }`,
     dialect: 'JavaScript (Node, pg)',
     example: 'In the SQL runner, the "Transaction" example runs `BEGIN`, marks all of ana\'s tasks done, shows them done, then `ROLLBACK`s: the last `SELECT` shows them open again, as if the update never happened. Replace `ROLLBACK` with `COMMIT` and the change stays.',
@@ -647,7 +674,8 @@ function createTagsModel(db) {
     },
     async findByName(name) {
       const { rows } = await db.query("SELECT id, name FROM tags WHERE name = $1", [name]);
-      return rows[0] ?? null;                      // one object, or null
+      // one object, or null
+      return rows[0] ?? null;
     },
     async create(name) {
       const { rows } = await db.query(
@@ -691,7 +719,8 @@ const row = {
   email: "ana@example.com",
   password_hash: "$2b$10$Qe3…",
   created_at: new Date("2026-09-01T09:00:00Z"),
-  task_count: "4",                  // COUNT(*) is a bigint: pg sends a string
+  // COUNT(*) is a bigint: pg sends a string
+  task_count: "4",
 };
 
 // Opt-in mapping: only the listed fields leave the server
@@ -705,7 +734,8 @@ function toUserDto(r) {
 }
 
 console.log(toUserDto(row));
-console.log("password_hash" in toUserDto(row));   // false` },
+console.log("password_hash" in toUserDto(row));
+// → false` },
     example: 'Run the Try it box: the DTO has `createdAt`, a real number `taskCount: 4`, and no `password_hash`. Without it, `res.json(row)` would send `password_hash`, `created_at` and `"task_count": "4"` (a string) to every client, and the front end would break the day someone renames a column.',
     mistake: 'Removing secrets with `delete row.password_hash` before `res.json(row)`. It works until someone adds another sensitive column, or forgets the `delete` in one route. An explicit list of the fields to send (`{ id, email, createdAt }`) cannot leak what it does not name.' },
 ];

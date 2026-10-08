@@ -87,10 +87,13 @@ export default function App() {
     code: `src/
   components/
     TaskCard.jsx
-    TaskCard.css      /* only .task-card… classes */
+    /* only .task-card… classes */
+    TaskCard.css
     ProfileCard.jsx
-    ProfileCard.css   /* only .profile-card… classes */
-  index.css           /* reset, fonts, tokens: imported once in main.jsx */`,
+    /* only .profile-card… classes */
+    ProfileCard.css
+  /* reset, fonts, tokens: imported once in main.jsx */
+  index.css`,
     dialect: 'Folder tree',
     live: { kind: 'react', code: `import { useState } from 'react';
 import './TaskCard.css';
@@ -576,7 +579,7 @@ describe('remaining', () => {
     title: 'Vitest: describe, it, expect',
     summary: '**Vitest** is the test runner made for Vite projects: it finds the `*.test.js` and `*.test.jsx` files, runs them and reports each test as passed or failed.',
     html: [
-      '<p>Vitest reuses your Vite configuration, so tests compile JSX and resolve imports exactly as the app does. Its API is compatible with <strong>Jest</strong>, the runner many Node projects use. Each test follows <strong>Arrange, Act, Assert</strong>: prepare the data, do the thing, check the result.</p>',
+      '<p>Vitest reuses your Vite configuration, so tests compile JSX and resolve imports exactly as the app does. Its API is compatible with <strong>Jest</strong>, the runner many Node projects use. Each test follows <strong>Arrange, Act, Assert</strong>: prepare the data, do the thing, check the result. The vocabulary is the same as for API tests (see <a href="#/http/api-design/automated-tests">Automated API tests with supertest</a>).</p>',
       '<h3>Set it up and run it</h3>',
       '<ol><li>Install it: <code>npm install -D vitest</code>.</li><li>Add <code>"test": "vitest"</code> to the <code>scripts</code> of <code>package.json</code>.</li><li>Run <code>npm test</code> (or <code>npx vitest</code>): <strong>watch mode</strong>, which reruns the affected tests on every save. <code>npx vitest run</code> runs once, as a CI server does.</li></ol>',
       '<p>Component tests need a simulated page and Testing Library on top: see <a href="#/browser/styling-testing/rtl-philosophy">Testing Library</a>.</p>',
@@ -592,7 +595,8 @@ describe('addTask', () => {
     const after = addTask(before, { id: 2, title: 'Call Ana' });
     expect(after).toHaveLength(2);
     expect(after[1]).toEqual({ id: 2, title: 'Call Ana' }); // contents
-    expect(after).not.toBe(before);                          // a new array
+    // a new array
+    expect(after).not.toBe(before);
   });
 
   it('calls the logger once', () => {
@@ -639,11 +643,13 @@ import Counter from './Counter';
 
 test('the count goes up when the user clicks Increment', async () => {
   const user = userEvent.setup();
-  render(<Counter />);                                         // Arrange
+  // Arrange
+  render(<Counter />);
 
   await user.click(screen.getByRole('button', { name: 'Increment' })); // Act
 
-  expect(screen.getByText('Count: 1')).toBeInTheDocument();    // Assert
+  // Assert
+  expect(screen.getByText('Count: 1')).toBeInTheDocument();
 });`,
     example: 'Read the test aloud: "render the counter; click the button named Increment; the text Count: 1 is on the page". It mentions nothing a user could not see. If `Counter` is rewritten with `useReducer`, split into two components and moved to CSS Modules, the test stays green as long as the screen behaves the same.',
     mistake: 'Looking for the state: wanting to check that `count` is 1, or reaching for a library that exposes component internals. State is a means; the behaviour is what the screen shows. Assert on the text, the attributes and the callbacks, and the test keeps working when the state is reorganised.' },
