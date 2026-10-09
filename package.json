@@ -7,7 +7,8 @@
     "serve": "node tools/serve.mjs",
     "test": "node --test \"test/*.test.mjs\"",
     "pdfs": "node tools/build-pdfs.mjs",
-    "check": "node tools/check.mjs --axe"
+    "check": "node tools/check.mjs --axe",
+    "check:quiz": "node tools/check-quiz.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

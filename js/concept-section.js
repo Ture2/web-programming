@@ -106,7 +106,7 @@ function ConceptSection(cfg) {
   const isWatched = (id) => !!(watchedStore && watchedStore.load()[id]);
   const store = HAS_QUIZ ? makeStore(cfg.quizKey) : null;
   const best = store ? store.load() : {};              // topic ('all' or a key) -> best score
-  const quiz = { topic: null, order: [], i: 0, score: 0, picked: null, typed: '', missed: [], done: false };
+  const quiz = { topic: null, order: [], i: 0, score: 0, picked: null, typed: '', missed: [], skipped: [], results: {}, done: false, retry: false };
   let route = { page: 'concept', concept: 0, topic: 'all', rest: '' };
   let lastPage = null;                                  // to move focus only when navigating inside the section
   const { ui } = railUi;
@@ -146,9 +146,17 @@ function ConceptSection(cfg) {
         </li>`;
     };
 
+    /* Per topic: the run in progress, else the best score with a meter, else the number of questions. */
     const quizLink = (tp) => {
       const n = pool(tp).length;
-      const b = best[tp] ? `<span class="rail-score" title="${esc(t('Best: {score} of {total}', { score: best[tp], total: n }))}">${best[tp]}/${n}</span>` : `<span class="rail-count">${n}</span>`;
+      const answered = Object.keys(quiz.results).length;
+      const live = quiz.topic === tp && !quiz.done && answered > 0;
+      let b;
+      if (live) b = `<span class="rail-live" title="${esc(t('In progress: {n} of {total} answered', { n: answered, total: quiz.order.length }))}">${answered}/${quiz.order.length}</span>`;
+      else if (best[tp]) {
+        const perfect = best[tp] >= n;
+        b = `<span class="rail-score${perfect ? ' perfect' : ''}" title="${esc(t('Best: {score} of {total}', { score: best[tp], total: n }))}"><span class="rail-meter" aria-hidden="true"><span style="width:${Math.round((100 * best[tp]) / n)}%"></span></span>${perfect ? '✓ ' : ''}${best[tp]}/${n}</span>`;
+      } else b = `<span class="rail-count">${n}</span>`;
       const cur = onQuizPage && route.topic === tp;
       return `<li><a href="${BASE}/quiz${tp === 'all' ? '' : `/${tp}`}"${cur ? ' aria-current="page"' : ''}><span class="rail-text">${esc(tp === 'all' ? t('All topics') : TOPICS[tp])}</span>${b}</a></li>`;
     };
@@ -558,8 +566,12 @@ function ConceptSection(cfg) {
   QUIZ.forEach((q, k) => { (POOLS[q.topic] = POOLS[q.topic] || []).push(k); });
   const pool = (topic) => POOLS[topic] || [];
 
-  function startQuiz(topic) {
-    Object.assign(quiz, { topic, order: shuffle(pool(topic)), i: 0, score: 0, picked: null, typed: '', missed: [], done: false });
+  /* A run over the topic's pool, or over `only` (the questions missed in the last run: no best score is saved). */
+  function startQuiz(topic, only) {
+    Object.assign(quiz, {
+      topic, order: shuffle(only || pool(topic)), i: 0, score: 0, picked: null, typed: '',
+      missed: [], skipped: [], results: {}, done: false, retry: !!only,
+    });
   }
 
   const normAnswer = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -578,6 +590,50 @@ function ConceptSection(cfg) {
         <label for="quiz-topic">${esc(t('Topic'))}</label>
         <select id="quiz-topic">${QUIZ_TOPICS.map((tp) => `<option value="${tp}"${quiz.topic === tp ? ' selected' : ''}>${esc(t('{topic} ({n} questions)', { topic: tp === 'all' ? t('All topics') : TOPICS[tp], n: pool(tp).length }))}</option>`).join('')}</select>
       </div>`;
+  }
+
+  const wrongCount = () => Object.values(quiz.results).filter((r) => r === 'bad').length;
+  const pendingSkips = () => quiz.skipped.filter((k) => !quiz.results[k]).length;
+
+  /* One cell per question in run order: right, wrong, skipped (still to answer) or pending; the current one is outlined. */
+  function stripHtml() {
+    const answered = Object.keys(quiz.results).length;
+    const label = t('{right} right, {wrong} wrong, {left} to go', { right: quiz.score, wrong: wrongCount(), left: quiz.order.length - answered });
+    return `<div class="q-strip" role="img" aria-label="${esc(label)}">${quiz.order.map((k, p) => {
+      const r = quiz.results[k];
+      let cls = r === 'ok' ? 'ok' : r === 'bad' ? 'bad' : quiz.skipped.includes(k) ? 'skip' : '';
+      if (!quiz.done && p === quiz.i) cls += ' cur';
+      return `<span class="q-cell ${cls}"></span>`;
+    }).join('')}</div>`;
+  }
+
+  /* Topic, Start over, the running score and the strip. */
+  function quizHead() {
+    const topic = quiz.topic === 'all' ? t('All topics') : TOPICS[quiz.topic];
+    const title = quiz.retry ? t('{topic}: the ones you missed', { topic }) : topic;
+    const skips = pendingSkips();
+    return `<header class="q-head">
+        <div class="q-head-row">
+          <p class="q-topic">${esc(title)}</p>
+          ${quiz.done ? '' : `<button type="button" class="btn ghost btn-sm" data-action="restart" data-fid="restart-top">${esc(t('Start over'))}</button>`}
+        </div>
+        <div class="q-stats">
+          <span class="q-pos">${esc(quiz.done ? t('{total} questions', { total: quiz.order.length }) : t('Question {n} of {total}', { n: quiz.i + 1, total: quiz.order.length }))}</span>
+          <span class="q-counts">
+            <span class="q-ok">${esc(t('{n} right', { n: quiz.score }))}</span>
+            <span class="q-bad">${esc(t('{n} wrong', { n: wrongCount() }))}</span>
+            ${skips ? `<span class="q-skip">${esc(t('{n} skipped', { n: skips }))}</span>` : ''}
+          </span>
+        </div>
+        ${stripHtml()}
+      </header>`;
+  }
+
+  /* Keys that answer the current question: letters (or 1–7) for multiple choice, T / F for true or false. */
+  function keysHint(q) {
+    if (q.type === 'mc') return t('Keys: {keys} to answer, Enter for next', { keys: `A–${'ABCDEFG'[q.choices.length - 1]}` });
+    if (q.type === 'tf') return t('Keys: {keys} to answer, Enter for next', { keys: `${t('True')[0]} / ${t('False')[0]}` });
+    return '';
   }
 
   function renderQuiz() {
@@ -621,37 +677,47 @@ function ConceptSection(cfg) {
       ? `<section class="feedback ${right ? 'ok' : 'bad'}" aria-labelledby="qf-title">
            <h3 id="qf-title" tabindex="-1">${esc(right ? t('Correct') : t('Not quite'))}</h3>
            <p>${right ? '' : `${md(t('The answer is “{answer}”.', { answer: answerText(q) }))} `}${md(q.why || '')}</p>
-         </section>
-         <p class="actions"><button type="button" class="btn" data-action="next" data-fid="next">${esc(last ? t('See result') : t('Next question'))}</button></p>`
+         </section>`
       : '';
+    // Skip sends the question to the end of the run; not offered when it is the only one left.
+    const action = answered
+      ? `<button type="button" class="btn" data-action="next" data-fid="next">${esc(last ? t('See result') : t('Next question'))}</button>`
+      : (last ? '' : `<button type="button" class="btn ghost" data-action="skip" data-fid="skip">${esc(t('Skip for now'))}</button>`);
+    const hint = keysHint(q);
 
     const kind = { mc: t('Multiple choice'), tf: t('True or false'), fib: t('Fill in the blank') }[q.type];
+    const topic = quiz.topic === 'all' && TOPICS[q.topic] ? ` · ${TOPICS[q.topic]}` : '';
     view().innerHTML = layout(`
       ${topicsHtml()}
       <article class="quiz" aria-labelledby="q-title">
-        <p class="q-progress">${esc(t('Question {n} of {total} · {kind} · {topic}. Correct: {score}.', { n: quiz.i + 1, total: quiz.order.length, kind, topic: TOPICS[q.topic] || '', score: quiz.score }))}</p>
+        ${quizHead()}
         <h2 id="q-title" class="q-text">${md(q.q).replace(/_{3,}/g, '<span class="blank">_____</span>')}</h2>
+        <p class="q-kind">${esc(kind + topic)}</p>
         ${answerUi}
         <div id="q-fb">${verdict}</div>
+        ${action || hint ? `<div class="q-actions">${action}${hint ? `<span class="q-keys">${esc(hint)}</span>` : ''}</div>` : ''}
       </article>`);
   }
 
   function renderQuizEnd() {
     const total = quiz.order.length;
     const missed = quiz.missed.map((k) => QUIZ[k]);
+    const bestLine = quiz.retry ? '' : `<p class="meta">${esc(t('Best result on this device for this topic: {best} of {total}.', { best: best[quiz.topic] || 0, total }))}</p>`;
     view().innerHTML = layout(`
       ${topicsHtml()}
       <article class="quiz" aria-labelledby="q-title">
-        <h2 id="q-title" tabindex="-1">${esc(t('You got {score} of {total} right', { score: quiz.score, total }))}</h2>
-        <p class="meta">${esc(t('Best result on this device for this topic: {best} of {total}.', { best: best[quiz.topic] || 0, total }))}</p>
-        ${missed.length
-          ? `<h3>${esc(t('To review'))}</h3><ul class="plain review">${missed.map((q) => `<li>${md(q.q).replace(/_{3,}/g, '_____')} <strong>${md(t('Answer: {answer}.', { answer: answerText(q) }))}</strong> ${md(q.why || '')}</li>`).join('')}</ul>`
-          : `<p class="story">${esc(cfg.perfectText())}</p>`}
+        ${quizHead()}
+        <h2 id="q-title" class="q-result" tabindex="-1"><span class="q-result-n">${quiz.score}<span> / ${total}</span></span>${esc(t('right answers'))}</h2>
+        ${bestLine}
         <p class="actions">
-          <button type="button" class="btn" data-action="restart" data-fid="restart">${esc(t('Repeat in a different order'))}</button>
+          ${missed.length ? `<button type="button" class="btn" data-action="retry-missed" data-fid="retry-missed">${esc(t('Retry the {n} I missed', { n: missed.length }))}</button>` : ''}
+          <button type="button" class="btn${missed.length ? ' ghost' : ''}" data-action="restart" data-fid="restart">${esc(t('Repeat in a different order'))}</button>
           <a class="btn ghost" href="${BASE}">${esc(t('Review the concepts'))}</a>
           ${cfg.nextLink ? `<a class="btn ghost" href="${cfg.nextLink.href}">${esc(cfg.nextLink.label())}</a>` : ''}
         </p>
+        ${missed.length
+          ? `<h3>${esc(t('To review'))}</h3><ul class="plain review">${missed.map((q) => `<li>${md(q.q).replace(/_{3,}/g, '_____')} <strong>${md(t('Answer: {answer}.', { answer: answerText(q) }))}</strong> ${md(q.why || '')}</li>`).join('')}</ul>`
+          : `<p class="story">${esc(cfg.perfectText())}</p>`}
       </article>`);
     $('#q-title')?.focus({ preventScroll: true });
   }
@@ -660,24 +726,40 @@ function ConceptSection(cfg) {
     if (quiz.picked !== null) return;
     const qi = quiz.order[quiz.i];
     quiz.picked = value;
-    if (isRight(QUIZ[qi], value)) quiz.score++; else quiz.missed.push(qi);
+    if (isRight(QUIZ[qi], value)) { quiz.score++; quiz.results[qi] = 'ok'; } else { quiz.missed.push(qi); quiz.results[qi] = 'bad'; }
     renderQuiz();
-    reveal($('#qf-title'));
+    $('#qf-title')?.focus({ preventScroll: true });
+    $('.q-actions')?.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+  }
+
+  const focusQuestion = () => (quiz.done ? $('#q-title') : $('#fib-in') || $('.options .opt'))?.focus({ preventScroll: true });
+
+  function nextQuestion() {
+    if (quiz.i < quiz.order.length - 1) { quiz.i++; quiz.picked = null; quiz.typed = ''; }
+    else {
+      quiz.done = true;
+      if (!quiz.retry && quiz.score > (best[quiz.topic] || 0)) { best[quiz.topic] = quiz.score; store.save(best); }
+    }
+    renderQuiz();
+    focusQuestion();
+  }
+
+  function skipQuestion() {
+    const [k] = quiz.order.splice(quiz.i, 1);
+    quiz.order.push(k);
+    if (!quiz.skipped.includes(k)) quiz.skipped.push(k);
+    quiz.typed = '';
+    renderQuiz();
+    focusQuestion();
+    announce(t('Skipped. It comes back at the end.'));
   }
 
   /* Events inside "Try it" boxes and tools never reach here: js/main.js gives them to those modules. */
   function onClick(el) {
     switch (el.dataset.action) {
       case 'answer': answer(+el.dataset.i); break;
-      case 'next':
-        if (quiz.i < quiz.order.length - 1) { quiz.i++; quiz.picked = null; quiz.typed = ''; }
-        else {
-          quiz.done = true;
-          if (quiz.score > (best[quiz.topic] || 0)) { best[quiz.topic] = quiz.score; store.save(best); }
-        }
-        renderQuiz();
-        (quiz.done ? $('#q-title') : $('#fib-in') || $('.options .opt'))?.focus({ preventScroll: true });
-        break;
+      case 'next': nextQuestion(); break;
+      case 'skip': skipQuestion(); break;
       case 'toggle-side': toggleSide(); break;
       case 'concept-toggle': toggleConcept(el); break;
       case 'concept-next': {
@@ -690,13 +772,37 @@ function ConceptSection(cfg) {
         if (watchedStore) { const all = watchedStore.load(); all[el.dataset.id] = !!el.checked; watchedStore.save(all); }
         break;
       case 'restart':
-        startQuiz(quiz.topic);
+      case 'retry-missed':
+        startQuiz(quiz.topic, el.dataset.action === 'retry-missed' ? quiz.missed.slice() : null);
         renderQuiz();
-        $('#q-title')?.focus({ preventScroll: true });
+        focusQuestion();
         break;
       default:
         break;
     }
+  }
+
+  /* Quiz keys: A–G or 1–7 pick an option, T / F (or 1 / 2) answer true or false, Enter moves on. */
+  function onKeydown(e) {
+    if (route.page !== 'quiz' || e.ctrlKey || e.metaKey || e.altKey || quiz.done || !quiz.order.length) return;
+    const tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    const q = QUIZ[quiz.order[quiz.i]];
+    if (quiz.picked !== null) {
+      if (e.key === 'Enter' && !e.target.closest('button, a')) { e.preventDefault(); nextQuestion(); }
+      return;
+    }
+    const key = e.key.toLowerCase();
+    let pick = -1;
+    if (q.type === 'mc') {
+      pick = 'abcdefg'.indexOf(key);
+      if (pick < 0 && /^[1-7]$/.test(key)) pick = +key - 1;
+      if (pick >= q.choices.length) pick = -1;
+    } else if (q.type === 'tf') {
+      if (key === t('True')[0].toLowerCase() || key === '1') pick = 1;
+      else if (key === t('False')[0].toLowerCase() || key === '2') pick = 0;
+    }
+    if (pick >= 0 && key.length === 1) { e.preventDefault(); answer(pick); }
   }
 
   function onSubmit(form) {
@@ -795,5 +901,5 @@ function ConceptSection(cfg) {
     }));
   }
 
-  return { render, afterNavigate, onClick, onChange, onSubmit, progress, topicScores, progressKeys: ['read-v1', ...(HAS_QUIZ ? [cfg.quizKey] : []), ...(VIDEOS.length ? ['video-watched-v2'] : [])], wide: true };
+  return { render, afterNavigate, onClick, onChange, onKeydown, onSubmit, progress, topicScores, progressKeys: ['read-v1', ...(HAS_QUIZ ? [cfg.quizKey] : []), ...(VIDEOS.length ? ['video-watched-v2', 'video-progress-v1'] : [])], wide: true };
 }
