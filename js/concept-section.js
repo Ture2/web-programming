@@ -101,6 +101,9 @@ function ConceptSection(cfg) {
   const TOPICS = cfg.topics || {};
   const HAS_QUIZ = QUIZ.length > 0;
   const PRACTICE = cfg.practice || null;
+  const VIDEOS = cfg.videos || [];
+  const watchedStore = VIDEOS.length ? makeStore('video-watched-v2') : null;
+  const isWatched = (id) => !!(watchedStore && watchedStore.load()[id]);
   const store = HAS_QUIZ ? makeStore(cfg.quizKey) : null;
   const best = store ? store.load() : {};              // topic ('all' or a key) -> best score
   const quiz = { topic: null, order: [], i: 0, score: 0, picked: null, typed: '', missed: [], done: false };
@@ -122,6 +125,12 @@ function ConceptSection(cfg) {
     return list.filter((g) => g.items.length);
   })();
   const hubOf = (k) => HUBS.findIndex((h) => h.items.includes(k));
+  /* The videos of a group (PREFIX_VIDEOS entries whose `group` is the group key), and the page of a video. */
+  const videosOf = (h) => VIDEOS.filter((v) => v.group === h.key);
+  const videoHref = (v) => {
+    const h = HUBS.find((x) => x.key === v.group);
+    return h ? conceptHref(h.items[0]) : BASE;
+  };
 
   function sideHtml() {
     const onQuiz = route.page !== 'concept';         // the overview, a quiz or a practice page: no card is current
@@ -385,6 +394,7 @@ function ConceptSection(cfg) {
           ${cfg.pdf ? `<a class="btn ghost" href="${summaryPdf(cfg.pdf)}" download>${esc(t('Summary (PDF)'))}</a>` : ''}
         </p>
       </header>
+      ${VideoHtml.list(VIDEOS, { t, hrefFor: (v) => videoHref(v), watched: isWatched })}
       <ol class="ov-groups">
         ${HUBS.map((h, g) => `<li class="ov-group">
             <h2><span class="ov-n" aria-hidden="true">${g + 1}</span><a href="${conceptHref(h.items[0])}">${esc(t(h.label))}</a></h2>
@@ -412,6 +422,7 @@ function ConceptSection(cfg) {
           ${h.items.length > 1 ? `<p class="group-tools"><button type="button" class="btn ghost" data-action="concepts-all" data-fid="concepts-all" aria-pressed="${!!ui.allOpen}">${esc(t('Show all concepts'))}</button></p>` : ''}
         </div>
       </header>
+      ${videosOf(h).map((v) => VideoHtml.figure(v, { t, watched: isWatched(v.id) })).join('')}
       <div class="group-body">${h.items.map((k, j) => cardHtml(CONCEPTS[k], {
         n: j + 1,
         open: !!ui.allOpen || h.items.length === 1 || k === route.concept,
@@ -678,6 +689,9 @@ function ConceptSection(cfg) {
         break;
       }
       case 'concepts-all': toggleAll(el); break;
+      case 'video-watched':
+        if (watchedStore) { const all = watchedStore.load(); all[el.dataset.id] = !!el.checked; watchedStore.save(all); }
+        break;
       case 'restart':
         startQuiz(quiz.topic);
         renderQuiz();
@@ -773,6 +787,7 @@ function ConceptSection(cfg) {
       const byTopic = Object.entries(best).filter(([tp]) => tp !== 'all').reduce((sum, [, v]) => sum + (+v || 0), 0);
       parts.push({ label: t('Quiz'), done: Math.min(QUIZ.length, Math.max(+best.all || 0, byTopic)), total: QUIZ.length, next: { href: `${BASE}/quiz`, label: t('Test yourself') } });
     }
+    parts.unshift(...VIDEOS.map((v) => ({ label: t('Watch: {title}', { title: v.title }), done: isWatched(v.id) ? 1 : 0, total: 1, next: { href: videoHref(v), label: t('Watch: {title}', { title: v.title }) } })));
     return parts;
   }
 
@@ -783,5 +798,5 @@ function ConceptSection(cfg) {
     }));
   }
 
-  return { render, afterNavigate, onClick, onChange, onSubmit, progress, topicScores, progressKeys: HAS_QUIZ ? ['read-v1', cfg.quizKey] : ['read-v1'], wide: true };
+  return { render, afterNavigate, onClick, onChange, onSubmit, progress, topicScores, progressKeys: ['read-v1', ...(HAS_QUIZ ? [cfg.quizKey] : []), ...(VIDEOS.length ? ['video-watched-v2'] : [])], wide: true };
 }

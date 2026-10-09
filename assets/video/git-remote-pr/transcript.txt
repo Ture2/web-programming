@@ -1,0 +1,19 @@
+Working with a remote: transcript
+
+Working with a remote. Your commits stay on your laptop until you say so.
+
+Ana has a project on her laptop. Another copy lives on GitHub. Git never syncs them by itself. The copy on GitHub has a name: origin. She creates a branch, validate-form, and makes a commit. It exists only on her laptop. Reviewers and deployment tools read GitHub, not her laptop.
+
+To share it, she pushes. The first time, she adds -u, so Git remembers the link. Commits fly up. Only commits: not files, not edits. On GitHub, the branch validate-form now exists.
+
+Her laptop also keeps a picture of the remote: origin/main. It's a ghost label. It moves only when she talks to GitHub. So when Luis pushes to main, her picture is already out of date. git status says: up to date with origin/main. That means the picture. Not GitHub, live.
+
+git fetch asks GitHub what's new. Luis's commits fly down. Only the ghost label moves. Her branch and her files don't change. git log origin/main shows what arrived. Now she can look first. A fetch can never cause a conflict.
+
+git pull is a fetch, followed by a merge into your current branch. The ghost label moves, and then main catches up. If she had no new commits, it's a fast-forward. If both sides have new commits, pull makes a merge commit, and it may conflict. Her habit: pull before you start, and pull before you push. Skip it, and her next push is rejected: fetch first. Never force it. Pull, then push again.
+
+Back on validate-form, her branch is on GitHub. Now she opens a pull request. She says what changed and why, and asks Luis to review. It's a page that says: please merge this branch into main. It shows the diff. Luis reads it and leaves a comment. Ana fixes it and pushes to the same branch. The pull request updates. Luis approves.
+
+She clicks Merge pull request. On GitHub, validate-form joins main. Her laptop doesn't know yet. She switches to main, and pulls. Now both copies agree. She deletes the branch with git branch -d, and starts the next one. Keep each pull request to one change, and merge it within a day or two.
+
+Practise it with the commit and branch simulator in Version control.

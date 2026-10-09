@@ -92,6 +92,7 @@ const SECTIONS = (() => {
       groups: s.data.groups,
       concepts: s.data.concepts,
       moved: s.data.moved,
+      videos: s.data.videos,
       quiz: s.data.quiz,
       topics: s.data.topics,
       quizKey: `${s.id}-quiz-v1`,

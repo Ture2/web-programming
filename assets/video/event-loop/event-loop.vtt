@@ -1,0 +1,100 @@
+WEBVTT
+
+00:00:00.500 --> 00:00:05.829
+One thread, many tasks. How Node serves a crowd while doing one thing at a time.
+
+00:00:07.200 --> 00:00:11.980
+Your JavaScript runs on one thread. Picture one cook at one counter.
+
+00:00:12.330 --> 00:00:15.857
+The counter is the call stack: the function running right now.
+
+00:00:16.210 --> 00:00:20.102
+A call puts a frame on the counter. A return takes it off.
+
+00:00:21.500 --> 00:00:24.191
+But the cook never stands waiting for the oven.
+
+00:00:24.540 --> 00:00:28.981
+Timers and file or network work belong to libuv and the operating system.
+
+00:00:29.630 --> 00:00:34.306
+They never interrupt the cook. When they finish, they put a ticket on a rail.
+
+00:00:35.700 --> 00:00:39.906
+There are two rails. Promise callbacks go on the microtask rail.
+
+00:00:40.260 --> 00:00:43.264
+Timer and I/O callbacks go on the task rail.
+
+00:00:44.600 --> 00:00:47.761
+The event loop is the cook, glancing at the rails.
+
+00:00:48.410 --> 00:00:50.526
+But only when the counter is empty.
+
+00:00:51.180 --> 00:00:56.352
+First, every microtask. Then one task. Then the rails again.
+
+00:00:58.000 --> 00:01:01.318
+Four lines. script start prints straight away.
+
+00:01:01.670 --> 00:01:06.633
+setTimeout hands its callback to the timer. The ticket reaches the task rail.
+
+00:01:06.980 --> 00:01:11.107
+Then .then() on a finished promise puts a ticket on the microtask rail.
+
+00:01:11.460 --> 00:01:14.830
+script end is printed. The counter is empty.
+
+00:01:15.480 --> 00:01:21.331
+Now the cook looks. Microtasks first: promise. Then the task: timeout.
+
+00:01:21.980 --> 00:01:28.276
+The timer said 0 milliseconds, yet it ran last. A delay is a minimum, not an appointment.
+
+00:01:29.900 --> 00:01:33.479
+Now a harder one. Predict the order before you look.
+
+00:01:33.830 --> 00:01:37.304
+1 and 6 are plain calls. They print first.
+
+00:01:37.650 --> 00:01:42.587
+.then() is a microtask, so 4 comes next. It schedules another timer.
+
+00:01:42.940 --> 00:01:49.314
+Then the first timer's task prints 2, and queues a microtask. That prints 3 before the next task.
+
+00:01:49.960 --> 00:01:56.386
+Last, the second timer: 5. 1, 6, 4, 2, 3, 5.
+
+00:01:57.000 --> 00:02:02.754
+Now give the cook a long job. A loop that runs for 200 milliseconds.
+
+00:02:03.100 --> 00:02:07.123
+The timer finishes at once. Its ticket waits on the rail.
+
+00:02:07.770 --> 00:02:13.386
+Nothing interrupts the cook, so nothing else runs. In a server, every request waits.
+
+00:02:14.040 --> 00:02:18.899
+Long synchronous work blocks. Waiting for a database or a fetch does not.
+
+00:02:20.200 --> 00:02:23.491
+So how do you wait without blocking? With await.
+
+00:02:23.840 --> 00:02:28.176
+In checkHealth, await fetch() sends the request, and the function pauses.
+
+00:02:28.530 --> 00:02:31.534
+The cook is free. Other requests run.
+
+00:02:31.880 --> 00:02:36.321
+When the response arrives, the rest of the function is a microtask on the rail.
+
+00:02:36.970 --> 00:02:40.340
+await means: pause this function, free the cook.
+
+00:02:41.700 --> 00:02:45.880
+Practise it with the event-loop visualiser in Server-side JavaScript.

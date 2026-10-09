@@ -1,0 +1,21 @@
+CORS and the preflight: transcript
+
+CORS and the preflight: why the browser, not your server, decides who may read an answer.
+
+Your front end runs on localhost, port 5173. Your API runs on localhost, port 3000. Same machine, different origins. An origin is scheme, host and port. Change any one, and it's another origin. A page's JavaScript may freely read answers only from its own origin. That's the same-origin policy.
+
+So the page sends a plain GET to the API. It goes out. The server receives it, runs the route, and answers. Your Express terminal even logs the GET. The request arrived. But the answer stops at the browser. The page can't read it, unless the server allows it.
+
+Every answer can carry a permission slip: Access-Control-Allow-Origin. If it names the page's origin, the browser hands the answer over. If it's missing, or names someone else, the page gets a CORS error. In Express, that's one line: app.use(cors({ origin })), with the origin of your front end.
+
+Now the page deletes task 7, with a token in the Authorization header. That's not a simple request. So first, the browser phones ahead: an OPTIONS request called the preflight. It asks: may this origin use DELETE, with an Authorization header? Only if the answer says yes does the real request cross.
+
+But the server allows only GET and POST. The browser blocks the call. Chrome's console says: Method DELETE is not allowed by Access-Control-Allow-Methods in preflight response. The DELETE was never sent. Task 7 is still there.
+
+Add DELETE to methods. The preflight passes. The real DELETE crosses, and the server answers 204. In the Network tab you'll see two rows: OPTIONS first, then DELETE. And mount cors first. A preflight carries no token, so auth would answer 401, and the preflight would fail.
+
+Notice who did the blocking. The browser, not the server. curl and Postman never ask permission, so they never see a CORS error. CORS doesn't protect your API either. Anyone outside a browser can still call it. Authentication does that.
+
+One more case: cookies. The page asks with credentials: include, and the server must name the exact origin, never a star (*), and allow credentials. A Bearer token in a header needs none of this.
+
+Practise it with the CORS simulator in Authentication and security.

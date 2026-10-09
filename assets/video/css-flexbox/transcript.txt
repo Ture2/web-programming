@@ -1,0 +1,19 @@
+Flexbox: one line, two axes: transcript
+
+Flexbox: one line, two axes, and the declaration that lines up a header.
+
+A news site header. A title on the left, links on the right. Out of the box, it's a stack. Block elements pile up, one under another. One declaration fixes that: display: flex, on the header. The header is now a flex container. Its direct children, the h1 and the nav, become flex items, side by side.
+
+Flexbox is one-dimensional. It lays items along a line: the main axis. By default that runs left to right. Across it runs the cross axis, top to bottom. Every alignment property is named after an axis, never after left or right.
+
+justify-content works along the main axis. flex-start packs the items at the start. center puts half the leftover space before the first item, and half after the last. space-between sends the first item to one edge and the last to the other. Title left, nav right.
+
+align-items works across the line. flex-start hugs the top. center puts both items in the middle of the header's height. That's the whole header: three declarations, two axes.
+
+Now the links. The nav holds a ul, and the ul holds the li elements. Put display: flex on the nav, and nothing changes. The links stay stacked. Flex only reaches direct children. The nav's only child is the ul, so the ul is the single item. Make the ul the container, with a gap of 1rem. Now the links sit in a row.
+
+Change flex-direction to column, and the axes turn. The main axis now runs top to bottom. The cross axis runs left to right. justify-content didn't change. It still follows the main axis, so it now moves items vertically. align-items moves them horizontally. And vertical centring only shows if the container is taller than its content.
+
+Last question: how wide is each item? Flexbox works in two steps. First, every item gets its basis: its width, or its content size. Then it compares the total with the container, and shares out the difference. By default, items never grow. The leftover space just stays empty. Give two items flex: 1 and flex: 2, in a 600px container. Both start from 0. flex: 1 is shorthand for flex-grow: 1, flex-shrink: 1, flex-basis: 0%. 600px to share, in the ratio 1 to 2. 200px, and 400px. Too wide instead? flex-shrink takes the excess back, the same way.
+
+Practise it with the Flexbox playground in CSS.

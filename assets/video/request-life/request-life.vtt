@@ -1,0 +1,97 @@
+WEBVTT
+
+00:00:00.500 --> 00:00:04.575
+The life of a request: from the moment it reaches your app to the answer.
+
+00:00:05.900 --> 00:00:10.628
+A request reaches your server. Does it go straight to your code? No.
+
+00:00:11.280 --> 00:00:15.538
+First it walks a corridor of checkpoints. Each one is a middleware.
+
+00:00:15.890 --> 00:00:20.749
+A middleware is just a function with three parameters: req, res, and next.
+
+00:00:21.100 --> 00:00:27.657
+Their order is the order you wrote them in app.js. Reading the file from top to bottom is reading the journey.
+
+00:00:29.000 --> 00:00:31.508
+Take a GET request for /tasks.
+
+00:00:31.860 --> 00:00:37.163
+express.json() looks for a body. There isn't one, so it passes the request on.
+
+00:00:37.510 --> 00:00:41.324
+The logger prints the method and the path, then passes it on too.
+
+00:00:41.670 --> 00:00:47.809
+Notice what they do to req. express.json() fills req.body. Later layers can rely on it.
+
+00:00:48.160 --> 00:00:52.627
+/health and /echo don't match this URL. They are skipped.
+
+00:00:53.280 --> 00:00:59.732
+/tasks matches. The door opens, listTasks runs, and a 200 goes back with the JSON.
+
+00:01:01.100 --> 00:01:06.116
+Every checkpoint makes the same choice. Call next(), and the request moves on.
+
+00:01:06.470 --> 00:01:09.944
+Or send a response, and the request turns back right there.
+
+00:01:10.690 --> 00:01:14.713
+Do neither, and it waits forever. The browser just spins.
+
+00:01:15.060 --> 00:01:22.818
+The classic bug: a logger that forgets next. The terminal prints the line, so it seems fine. But nothing ever comes back.
+
+00:01:24.200 --> 00:01:26.760
+That second choice is how a guard works.
+
+00:01:27.110 --> 00:01:34.398
+requireAuth reads the Authorization header. Without the demo token, it answers 401, and your route never runs.
+
+00:01:34.750 --> 00:01:42.169
+With Bearer demo-token, it writes Ana onto req.user and calls next(). /api/me answers 200.
+
+00:01:43.500 --> 00:01:48.150
+Now move that guard below the route. Same code, different file order.
+
+00:01:48.800 --> 00:01:54.860
+The route answers first. Nobody is checked, and there is no error anywhere. Just an open door.
+
+00:01:55.210 --> 00:02:00.304
+A layer only affects what comes after it. That is why order is configuration.
+
+00:02:00.650 --> 00:02:07.808
+Same with express.json() at the bottom. Every route above it sees req.body as undefined, and a POST crashes.
+
+00:02:09.200 --> 00:02:12.413
+Now a POST to /tasks with broken JSON.
+
+00:02:12.760 --> 00:02:16.783
+express.json() can't parse it, so it calls next(err) with an error.
+
+00:02:17.430 --> 00:02:23.177
+The logger, the routes and the catch-all are all skipped. The request jumps ahead to the error handler.
+
+00:02:23.530 --> 00:02:29.617
+Express recognises it by its four parameters. It answers 400, and your route never ran.
+
+00:02:29.970 --> 00:02:37.493
+A throw inside a handler takes the same road. And without an error handler, Express sends an HTML page with the stack trace.
+
+00:02:38.800 --> 00:02:43.006
+One last path. A request for a URL nobody handles.
+
+00:02:43.660 --> 00:02:49.041
+It passes every route unanswered and reaches the catch-all, which answers 404 in JSON.
+
+00:02:49.390 --> 00:02:56.495
+Without it, the client gets Express's own HTML page, Cannot GET /nope. Not much use to a fetch call.
+
+00:02:56.850 --> 00:03:00.768
+That's why it sits after the last route, and before the error handler.
+
+00:03:02.100 --> 00:03:05.653
+Practise it with the Middleware pipeline in Routes and middleware.

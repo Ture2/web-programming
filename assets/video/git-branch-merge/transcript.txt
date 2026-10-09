@@ -1,0 +1,19 @@
+Branches and merging: transcript
+
+Branches and merging. Work on something new without breaking what already works.
+
+A branch sounds like a copy of your whole project. It isn't. It's a label stuck to one commit. Here, main points at the contact form commit. Run git switch -c add-footer. Git writes one tiny label. Nothing is copied, so it's instant. git branch on its own lists them all. A star marks the one you're on.
+
+HEAD is a you-are-here pin. It now sits on add-footer. Edit, then commit. The new commit appears, and only the branch you're on moves forward. Main stays behind. Switch back to it, and the footer is gone. A classic slip: git branch alone makes the label but never moves HEAD. Your commits then land on main.
+
+To bring the footer in, stand on the receiving branch. Switch to main, then git merge add-footer. Main has nothing new, so the history is one straight line. Git just slides the label up. That's a fast-forward. No new commit. Same history, one label moved. Afterwards, git branch -d add-footer removes the label. The commits stay in main's history.
+
+Now the harder case. Ana starts add-search from the old commit. While she works, main moves ahead. The history forks. Merge add-search into main. Git finds the common ancestor, combines both sets of changes, and ties the knot with a merge commit. It has two parents: the tip of main, and the tip of add-search. The log shows it as a picture: two lines that split, then meet again.
+
+One habit. Check which branch you're standing on before you merge. Merge main into add-footer, and you've updated the wrong branch.
+
+Sometimes Git can't tie the knot. Two branches rewrote the same line: the heading. Everything else, Git still combines by itself. Only that one line needs you. The merge stops with a conflict in index.html. It isn't an error. It's a question. git status lists the file as both modified. Both versions sit in the file, between markers. Above the ======= is yours. Below is theirs.
+
+Edit the line into what you want: yours, theirs, both, or something new. Delete all three markers. Then git add the file, and git commit. The merge is complete. Search for the markers before you commit, or they end up on your page. And if you panic, git merge --abort puts everything back.
+
+Practise it with the Commit and branch simulator, in Version control.

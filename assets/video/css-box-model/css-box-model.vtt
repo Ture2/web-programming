@@ -1,0 +1,79 @@
+WEBVTT
+
+00:00:00.500 --> 00:00:04.079
+The box model: padding inside, margin outside.
+
+00:00:05.400 --> 00:00:10.598
+A box with some text. Nothing else yet. The text touches its own edge.
+
+00:00:11.250 --> 00:00:16.814
+Every element is four layers, inside out: content, padding, border, margin.
+
+00:00:18.200 --> 00:00:20.525
+Add padding: 20px.
+
+00:00:20.880 --> 00:00:24.537
+The box grows on every side, and the background grows with it.
+
+00:00:25.190 --> 00:00:30.754
+Padding is a cushion inside the box. It belongs to the box, so it takes the box's colour.
+
+00:00:32.100 --> 00:00:35.679
+Add a border: 6px solid orange.
+
+00:00:36.030 --> 00:00:42.117
+The border is the frame, just outside the padding. Leave out the style, and no border is drawn at all.
+
+00:00:42.470 --> 00:00:47.381
+In DevTools, the Computed tab draws all four layers, with their exact sizes.
+
+00:00:48.700 --> 00:00:51.286
+Now margin: 24px.
+
+00:00:51.640 --> 00:00:56.577
+Nothing inside changes. The box doesn't grow, and its colour doesn't follow.
+
+00:00:57.230 --> 00:01:00.521
+Margin is empty space that pushes other boxes away.
+
+00:01:01.370 --> 00:01:05.497
+Padding: cushion inside. Margin: air outside.
+
+00:01:06.800 --> 00:01:11.162
+Here's the classic mistake. Two cards, and you want a gap between them.
+
+00:01:11.510 --> 00:01:17.335
+So you add padding. Each card grows, its white background grows with it, and they still touch.
+
+00:01:17.990 --> 00:01:23.345
+Space between boxes is margin. 12px at the bottom, and the gap appears.
+
+00:01:24.700 --> 00:01:30.212
+Padding takes 1 to 4 values. With two, it's top and bottom, then left and right.
+
+00:01:30.560 --> 00:01:37.352
+With four, go clockwise from the top: top, right, bottom, left. Margin works the same way.
+
+00:01:38.700 --> 00:01:43.716
+Now size. width: 300px, padding: 20px, border: 5px.
+
+00:01:44.070 --> 00:01:52.220
+By default, width measures only the content. So the box is 350px wide: 300, plus 40, plus 10.
+
+00:01:52.870 --> 00:01:59.583
+Set box-sizing to border-box, and 300px means the whole box. The content shrinks to 250px.
+
+00:01:59.930 --> 00:02:02.542
+Margin stays outside, either way.
+
+00:02:03.900 --> 00:02:10.431
+Margin has two more tricks. margin: 0 auto shares the leftover space equally, so a narrow block centres.
+
+00:02:10.780 --> 00:02:15.325
+It needs a width, or a max-width. Otherwise there's nothing left to share.
+
+00:02:15.980 --> 00:02:23.373
+And vertical margins collapse. 30px below one heading, 20px above the next: the gap is 30px, not 50px.
+
+00:02:24.700 --> 00:02:27.861
+Practise it with the box model tool in CSS.

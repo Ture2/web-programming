@@ -1,0 +1,73 @@
+WEBVTT
+
+00:00:00.500 --> 00:00:06.743
+One resource, six endpoints. The address names the thing. The method says what to do to it.
+
+00:00:08.100 --> 00:00:17.478
+A task list needs create, delete, update. So the beginner writes /createTask, and /deleteTask?id=6.
+
+00:00:17.830 --> 00:00:22.401
+Every action gets its own address, and every API invents different ones.
+
+00:00:23.150 --> 00:00:28.166
+REST turns it round: one address per thing, and the HTTP method is the action.
+
+00:00:29.500 --> 00:00:36.840
+Our thing is tasks. A GET request to /api/tasks lists them. 200: five tasks.
+
+00:00:37.190 --> 00:00:40.690
+One plural noun for the collection. Never a verb.
+
+00:00:42.000 --> 00:00:46.989
+To add one, POST to the same address, with a title in the body: Study REST.
+
+00:00:47.340 --> 00:00:54.576
+201 Created. The Location header gives the new address: /api/tasks/6.
+
+00:00:55.900 --> 00:01:00.916
+That address is the task. A GET to it answers 200, with the task.
+
+00:01:01.270 --> 00:01:06.338
+A GET changes nothing, so asking twice is harmless. That's what safe means.
+
+00:01:07.700 --> 00:01:13.316
+To tick it off, send a PATCH to the same address, with only the field that changes: done: true.
+
+00:01:13.670 --> 00:01:17.379
+200 again. Every other field stays as it was.
+
+00:01:17.730 --> 00:01:23.555
+A PUT would replace the whole task, so it has to send every field. A PATCH changes just one.
+
+00:01:24.900 --> 00:01:30.699
+DELETE the same address. 204 No Content. Nothing to send back.
+
+00:01:31.050 --> 00:01:37.319
+Ask for it once more. 404. The address never changed. Only the task is gone.
+
+00:01:37.670 --> 00:01:42.346
+The client knew what happened from the number alone, before it read a single byte of body.
+
+00:01:44.100 --> 00:01:50.787
+Now a train enters a tunnel, and the answer is lost. Did the server act? The app can only send it again.
+
+00:01:51.140 --> 00:01:59.055
+Send DELETE twice: the second answers 404, but the state is identical. The task is gone either way. Same for PUT.
+
+00:01:59.410 --> 00:02:03.041
+Send POST twice, and there's a duplicate: task 7.
+
+00:02:03.390 --> 00:02:09.894
+The cure is an Idempotency-Key header. Same key on the retry, and the server repeats its first answer.
+
+00:02:11.200 --> 00:02:18.044
+Look at what the story wrote. One address for the collection, one for the item, and a method and a status for each line.
+
+00:02:18.690 --> 00:02:23.052
+Add PUT, which replaces the whole task, and that's the full set of six.
+
+00:02:23.400 --> 00:02:28.703
+Nouns in the address. Verbs in the method. The story in the status code.
+
+00:02:30.100 --> 00:02:34.149
+Practise it with the API request builder in Designing APIs.

@@ -1,0 +1,21 @@
+The box model and padding: transcript
+
+The box model: padding inside, margin outside.
+
+A box with some text. Nothing else yet. The text touches its own edge. Every element is four layers, inside out: content, padding, border, margin.
+
+Add padding: 20px. The box grows on every side, and the background grows with it. Padding is a cushion inside the box. It belongs to the box, so it takes the box's colour.
+
+Add a border: 6px solid orange. The border is the frame, just outside the padding. Leave out the style, and no border is drawn at all. In DevTools, the Computed tab draws all four layers, with their exact sizes.
+
+Now margin: 24px. Nothing inside changes. The box doesn't grow, and its colour doesn't follow. Margin is empty space that pushes other boxes away. Padding: cushion inside. Margin: air outside.
+
+Here's the classic mistake. Two cards, and you want a gap between them. So you add padding. Each card grows, its white background grows with it, and they still touch. Space between boxes is margin. 12px at the bottom, and the gap appears.
+
+Padding takes 1 to 4 values. With two, it's top and bottom, then left and right. With four, go clockwise from the top: top, right, bottom, left. Margin works the same way.
+
+Now size. width: 300px, padding: 20px, border: 5px. By default, width measures only the content. So the box is 350px wide: 300, plus 40, plus 10. Set box-sizing to border-box, and 300px means the whole box. The content shrinks to 250px. Margin stays outside, either way.
+
+Margin has two more tricks. margin: 0 auto shares the leftover space equally, so a narrow block centres. It needs a width, or a max-width. Otherwise there's nothing left to share. And vertical margins collapse. 30px below one heading, 20px above the next: the gap is 30px, not 50px.
+
+Practise it with the box model tool in CSS.

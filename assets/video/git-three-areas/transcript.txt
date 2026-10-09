@@ -1,0 +1,19 @@
+Where your changes live: transcript
+
+Where your changes live. Saving a file is not saving it in Git.
+
+You create about.html, edit index.html, and press Ctrl+S. Both files are saved. Git has stored nothing. Your project has three rooms, and a fourth copy far away. The working directory holds the files you edit. The staging area holds the next commit, being prepared. The repository holds the commits already saved. The fourth room, the remote, is GitHub. It stays dark for now.
+
+At every step, one command asks the same question: where is everything? git status. index.html is modified. about.html is untracked: Git has never stored it. Both still sit in the working directory.
+
+git add, then both names. Git copies a snapshot of each file into the staging area. Now git diff shows nothing. The changes are not lost. They are staged. Edit a file after adding it, and the staged copy stays the old one. Add it again. That is the point: the staging area holds exactly what the next commit will contain.
+
+git diff compares the working directory with the staging area: edits not added yet. git diff --staged compares the staging area with the last commit. That is what a commit would record right now. Read it before you commit.
+
+git commit, with a message. Everything staged is sealed into a commit. A commit is a complete snapshot of the project, named by a hash. It also points to its parent, the commit before it. Nothing is staged now. git status says: nothing to commit, working tree clean.
+
+git log --oneline lists the history, newest first. Each commit points to its parent. That chain is the history. Change even one letter of a message, and the hash changes. History cannot be altered silently.
+
+So far, only your laptop knows. git status now says: ahead of origin/main by 1 commit. git push uploads the commits the remote does not have yet. Only commits travel, never loose edits. Now the fourth room lights up.
+
+Practise it with the commit and branch simulator, in Version control.

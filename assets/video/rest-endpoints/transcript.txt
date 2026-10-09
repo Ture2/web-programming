@@ -1,0 +1,21 @@
+One resource, six endpoints: transcript
+
+One resource, six endpoints. The address names the thing. The method says what to do to it.
+
+A task list needs create, delete, update. So the beginner writes /createTask, and /deleteTask?id=6. Every action gets its own address, and every API invents different ones. REST turns it round: one address per thing, and the HTTP method is the action.
+
+Our thing is tasks. A GET request to /api/tasks lists them. 200: five tasks. One plural noun for the collection. Never a verb.
+
+To add one, POST to the same address, with a title in the body: Study REST. 201 Created. The Location header gives the new address: /api/tasks/6.
+
+That address is the task. A GET to it answers 200, with the task. A GET changes nothing, so asking twice is harmless. That's what safe means.
+
+To tick it off, send a PATCH to the same address, with only the field that changes: done: true. 200 again. Every other field stays as it was. A PUT would replace the whole task, so it has to send every field. A PATCH changes just one.
+
+DELETE the same address. 204 No Content. Nothing to send back. Ask for it once more. 404. The address never changed. Only the task is gone. The client knew what happened from the number alone, before it read a single byte of body.
+
+Now a train enters a tunnel, and the answer is lost. Did the server act? The app can only send it again. Send DELETE twice: the second answers 404, but the state is identical. The task is gone either way. Same for PUT. Send POST twice, and there's a duplicate: task 7. The cure is an Idempotency-Key header. Same key on the retry, and the server repeats its first answer.
+
+Look at what the story wrote. One address for the collection, one for the item, and a method and a status for each line. Add PUT, which replaces the whole task, and that's the full set of six. Nouns in the address. Verbs in the method. The story in the status code.
+
+Practise it with the API request builder in Designing APIs.

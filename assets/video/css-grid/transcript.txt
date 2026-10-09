@@ -1,0 +1,19 @@
+Grid: draw the tracks first: transcript
+
+Grid: draw the tracks first, then let the items fall into place.
+
+Here is an empty box, 920px wide. We make it a grid. Three columns: 200px, 1fr, 2fr. Nothing is inside yet, but the columns already exist. Between them run numbered lines. Three columns have four lines, 1 to 4.
+
+How wide is 1fr? The browser works it out last. Start with 920. Subtract the fixed track, 200. Subtract 2 gaps of 10. 700px are free. They are shared in three parts: 1fr is about 233px, 2fr about 467px. Resize the box and the fixed track stays put. Only the fr tracks stretch.
+
+Now the items arrive. You don't say where they go. Auto-placement fills the cells in HTML order, left to right. When a row is full, a new row starts. That's why you usually define only the columns.
+
+repeat(3, 1fr) is short for 1fr 1fr 1fr. minmax(200px, 1fr): never narrower than 200px, growing to fill the row. Add auto-fit, and the grid adds or drops columns as the box changes. No media query.
+
+You can also place an item yourself, using those line numbers. grid-column: 1 / 3 runs from line 1 to line 3. That covers 2 columns, not 3. span 2 says the same without counting. 1 / -1 means the full width. The other items auto-place around it. No extra HTML.
+
+For a whole page, name the regions. Each quoted string is one row; each word is one cell. Header, twice. Sidebar and content. Footer, twice. A name repeated across cells spans them. Each element claims its region with grid-area. One without it falls into a free cell, in the wrong place. On a phone, redraw the strings as one column. The sidebar drops below the content, and the HTML never changes.
+
+So Flexbox or Grid? Look at the shape of the problem. A nav is one line of items, sized by their content. Flexbox. A page has rows and columns that must line up. The layout decides the sizes. Grid. Most pages use both: a grid for the skeleton, flex rows inside the regions.
+
+Practise it with the Grid playground in CSS.

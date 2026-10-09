@@ -1,0 +1,21 @@
+Logging in: sessions and tokens: transcript
+
+Logging in: the password is checked once. Then something else must vouch for you.
+
+An API asks two questions, always in this order. Who is calling? That's authentication. And may they do this? That's authorisation.
+
+Ana registers with ana@example.com and password 1. The API stores a hash, never the password. 201 Created. Hashing is one-way, and bcrypt adds a random salt, so two equal passwords still look completely different. Registering again with the same email? 409 Conflict.
+
+Now she logs in. The API fetches her row, hashes the attempt, and compares it with the stored hash. Wrong password: 401, Invalid credentials. An unknown email gets the very same answer, so nobody can discover who has an account. Right password: 200, and a token.
+
+But HTTP forgets. The next request knows nothing about her. So something must travel with every request. Option one: a cloakroom. The server keeps your coat and hands you a numbered ticket. That's a session id, in a cookie. The ticket means nothing on its own. The meaning lives in the server's list. Every request, the server looks the ticket up. Log out, and it throws the row away. Instantly.
+
+Option two: a signed wristband. Everything is written on the band: who you are, your role, when it expires. 1 hour, here. The band has three parts, joined by dots: header, payload, signature. The first two are only encoded, not hidden. The server seals it with its secret signature. Then it keeps nothing. It only checks the seal.
+
+Now someone rewrites the band: role: admin. The seal no longer matches. verify() throws invalid signature, and the answer is 401. Anyone can read the band. Only the server can seal it. That is why you never put secrets in a token, and why you always verify, never just decode.
+
+The price: a copied band works until it expires. A cloakroom ticket can be cancelled at once. A band needs no lookup, though, and works across many servers. Neither is simply better.
+
+With a token, the client sends it on every request, in the Authorization header, after the word Bearer. A gate in front of the routes checks it. Valid, and the route runs. Missing or forged, 401. After the hour is up, the same gate answers 401: jwt expired. Ana logs in again.
+
+Practise it with the JWT inspector in Authentication and security.

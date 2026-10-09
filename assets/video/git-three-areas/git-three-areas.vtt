@@ -1,0 +1,85 @@
+WEBVTT
+
+00:00:00.500 --> 00:00:05.098
+Where your changes live. Saving a file is not saving it in Git.
+
+00:00:06.400 --> 00:00:11.703
+You create about.html, edit index.html, and press Ctrl+S.
+
+00:00:12.350 --> 00:00:16.033
+Both files are saved. Git has stored nothing.
+
+00:00:17.380 --> 00:00:20.959
+Your project has three rooms, and a fourth copy far away.
+
+00:00:21.310 --> 00:00:27.579
+The working directory holds the files you edit. The staging area holds the next commit, being prepared.
+
+00:00:27.930 --> 00:00:35.166
+The repository holds the commits already saved. The fourth room, the remote, is GitHub. It stays dark for now.
+
+00:00:36.500 --> 00:00:40.810
+At every step, one command asks the same question: where is everything?
+
+00:00:41.460 --> 00:00:49.871
+git status. index.html is modified. about.html is untracked: Git has never stored it.
+
+00:00:50.220 --> 00:00:52.649
+Both still sit in the working directory.
+
+00:00:54.000 --> 00:01:00.269
+git add, then both names. Git copies a snapshot of each file into the staging area.
+
+00:01:01.020 --> 00:01:06.532
+Now git diff shows nothing. The changes are not lost. They are staged.
+
+00:01:06.880 --> 00:01:12.052
+Edit a file after adding it, and the staged copy stays the old one. Add it again.
+
+00:01:12.400 --> 00:01:17.180
+That is the point: the staging area holds exactly what the next commit will contain.
+
+00:01:18.500 --> 00:01:23.855
+git diff compares the working directory with the staging area: edits not added yet.
+
+00:01:24.210 --> 00:01:28.964
+git diff --staged compares the staging area with the last commit.
+
+00:01:29.310 --> 00:01:33.646
+That is what a commit would record right now. Read it before you commit.
+
+00:01:35.000 --> 00:01:40.120
+git commit, with a message. Everything staged is sealed into a commit.
+
+00:01:40.970 --> 00:01:44.993
+A commit is a complete snapshot of the project, named by a hash.
+
+00:01:45.340 --> 00:01:48.684
+It also points to its parent, the commit before it.
+
+00:01:49.330 --> 00:01:55.051
+Nothing is staged now. git status says: nothing to commit, working tree clean.
+
+00:01:56.400 --> 00:02:00.501
+git log --oneline lists the history, newest first.
+
+00:02:00.850 --> 00:02:04.873
+Each commit points to its parent. That chain is the history.
+
+00:02:05.520 --> 00:02:11.371
+Change even one letter of a message, and the hash changes. History cannot be altered silently.
+
+00:02:13.300 --> 00:02:15.860
+So far, only your laptop knows.
+
+00:02:16.210 --> 00:02:20.677
+git status now says: ahead of origin/main by 1 commit.
+
+00:02:21.330 --> 00:02:27.782
+git push uploads the commits the remote does not have yet. Only commits travel, never loose edits.
+
+00:02:28.530 --> 00:02:30.515
+Now the fourth room lights up.
+
+00:02:31.900 --> 00:02:35.923
+Practise it with the commit and branch simulator, in Version control.

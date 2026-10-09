@@ -15,13 +15,15 @@ const langData = (key, fallback) => {
 
 /* The content of one section, from data/<lang>/<file>.js: PREFIX_CONCEPTS, PREFIX_QUIZ,
    PREFIX_QUIZ_TOPICS and PREFIX_GROUPS (rail hubs), and the optional PREFIX_MOVED
-   ({ oldCardId: '#/area/slug/newCardId' }: cards merged into another, whose old links redirect). */
+   ({ oldCardId: '#/area/slug/newCardId' }: cards merged into another, whose old links redirect), and the
+   optional PREFIX_VIDEOS (topic videos shown on the group page named by each entry's `group`). */
 const sectionData = (prefix) => ({
   concepts: langData(`${prefix}_CONCEPTS`, []),
   quiz: langData(`${prefix}_QUIZ`, []),
   topics: langData(`${prefix}_QUIZ_TOPICS`, {}),
   groups: langData(`${prefix}_GROUPS`, []),
   moved: (DATA[LANG] && DATA[LANG][`${prefix}_MOVED`]) || DATA.en[`${prefix}_MOVED`] || {},
+  videos: (DATA[LANG] && DATA[LANG][`${prefix}_VIDEOS`]) || DATA.en[`${prefix}_VIDEOS`] || [],
 });
 
 const $ = (sel, root = document) => root.querySelector(sel);
