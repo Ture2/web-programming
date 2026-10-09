@@ -134,6 +134,7 @@
     const title = current.render(route.rest);
     document.title = title ? `${title} · ${t('Web Application Programming')}` : t('Web Application Programming');
     DELEGATES.forEach((d) => d.mountAll(view));
+    VideoPlayer.mountAll(view);
     focusableScrollers(view);
     ProgressPage.updateButton();
   }

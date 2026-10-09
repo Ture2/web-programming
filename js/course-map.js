@@ -4,8 +4,9 @@
    Topic map: every section drawn where its code runs in a web app.
      Browser (web standards, then the front-end application) ⇄ HTTP ⇄
      Server (runtime › routes › auth) ⇄ Database, with version control underneath.
-   Each section is one link with its card count, tool count and progress ring.
-   Used by the home page and by the app bar's "Topic map" dialog.
+   Each section is one link with its card count, tool count and progress ring. On the home page,
+   the play marks of the topic videos sit on their section, or on the wire a journey video travels.
+   Used by the home page and by the app bar's "Topic map" dialog (no play marks there).
    PLACE puts each section id in a zone; a new section needs an entry here.
    ========================================================================== */
 
@@ -32,23 +33,33 @@ const CourseMap = (() => {
     git: { zone: 'vcs', role: 'Every change to the code, recorded' },
   };
 
+  /* Videos about a journey between zones sit on the wire they travel along, not on their section. */
+  const ON_WIRE = { 'request-life': 'http', 'cors-preflight': 'http', 'db-layer': 'db' };
+
   const byId = (id) => SECTIONS.find((s) => s.id === id);
 
+  /* The play marks (home page only: opts.videos is the playback state). */
+  const marks = (opts, videos) => (opts.videos ? VideoHtml.marks(videos, { t, ...opts.videos }) : '');
+  const wireVideos = (key) => SECTIONS.flatMap((s) => (s.data.videos || []).filter((v) => ON_WIRE[v.id] === key));
+
+  /* A section: the title is the link (stretched over the card), so the play marks can be buttons beside it. */
   function node(id, opts) {
     const s = byId(id);
     if (!s) return '';
     const p = ProgressPage.summary().secs.find((x) => x.id === id) || { pct: 0 };
     const n = s.tools.length;
     const cards = s.data.concepts.length;
-    return `<a class="cm-node" href="${s.base}"${opts.current === s ? ' aria-current="page"' : ''}>
-        <span class="cm-node-name">${railIcon(s.icon)}<span>${esc(t(s.title))}</span></span>
-        <span class="cm-role">${esc(t(PLACE[id].role))}</span>
-        <span class="cm-meta">
+    const did = `${opts.idp}-n-${id}`;
+    return `<div class="cm-node">
+        <a class="cm-node-link" href="${s.base}"${opts.current === s ? ' aria-current="page"' : ''} aria-describedby="${did}-r ${did}-m"><span class="cm-node-name">${railIcon(s.icon)}<span>${esc(t(s.title))}</span></span></a>
+        <span class="cm-role" id="${did}-r">${esc(t(PLACE[id].role))}</span>
+        <span class="cm-meta" id="${did}-m">
           <span class="cm-cards">${esc(cards === 1 ? t('1 card') : t('{n} cards', { n: cards }))}</span>
           ${n ? `<span class="cm-tools" title="${esc(t('{n} interactive tools', { n }))}">${railIcon('practice')}${n}<span class="sr-only"> ${esc(n === 1 ? t('interactive tool') : t('interactive tools'))}</span></span>` : ''}
           <span class="cm-ring" title="${esc(t('{pct}% done', { pct: p.pct }))}">${ProgressPage.ring(p.pct, 26)}<span class="sr-only">${esc(t('{pct}% done', { pct: p.pct }))}</span></span>
         </span>
-      </a>`;
+        ${marks(opts, (s.data.videos || []).filter((v) => !ON_WIRE[v.id]))}
+      </div>`;
   }
 
   const ids = (zone) => Object.keys(PLACE).filter((id) => PLACE[id].zone === zone && byId(id));
@@ -60,14 +71,16 @@ const CourseMap = (() => {
       </section>`;
   }
 
-  /* A wire between two zones: one arrow each way, labelled. */
-  const wire = (cls, out, back, body = '') => `<div class="cm-wire ${cls}">
+  /* A wire between two zones: one arrow each way, labelled, and the videos that travel along it. */
+  const wire = (cls, out, back, body = '', vids = '') => `<div class="cm-wire ${cls}">
       <p class="cm-arrow cm-out"><span>${esc(t(out))}</span></p>
+      ${vids}
       ${body}
       <p class="cm-arrow cm-back"><span>${esc(t(back))}</span></p>
     </div>`;
 
-  /* opts: { current: section | null, idp: id prefix (the map can be on the page and in the dialog) }. */
+  /* opts: { current: section | null, idp: id prefix (the map can be on the page and in the dialog),
+     videos: the playback state ({ watched, rec }) to draw the play marks, or nothing }. */
   function html(opts = {}) {
     const o = { current: null, idp: 'cm', ...opts };
     const list = (zoneKey) => `<div class="cm-nodes">${ids(zoneKey).map((id) => node(id, o)).join('')}</div>`;
@@ -83,9 +96,9 @@ const CourseMap = (() => {
     return `<div class="cm">
         <div class="cm-zones">
           ${zone('browser', 'Browser', 'Runs on the user’s device', `${list('browser')}${app}`, o.idp)}
-          ${wire('cm-http', 'Request', 'Response', `<p class="cm-wire-h">HTTP</p>${list('http')}`)}
+          ${wire('cm-http', 'Request', 'Response', `<p class="cm-wire-h">HTTP</p>${list('http')}`, marks(o, wireVideos('http')))}
           ${zone('server', 'Server', 'Answers each request', server, o.idp)}
-          ${wire('cm-db-wire', 'Query', 'Data')}
+          ${wire('cm-db-wire', 'Query', 'Data', '', marks(o, wireVideos('db')))}
           ${zone('database', 'Database', 'Keeps the data', list('database'), o.idp)}
         </div>
         <div class="cm-git">

@@ -51,10 +51,77 @@ test('hrefOf: first concept of the video group, same hub rule as the section', (
   assert.equal(VideoHtml.hrefOf({ group: 'all' }, { base: '#/x', concepts: [{ id: 'q' }] }), '#/x/q');
 });
 
-test('grid: card per entry with thumbnail, section label, duration and watched marker', () => {
-  const h = VideoHtml.grid([{ video: v, href: '#/a/b', section: 'Server <js>' }], { watched: (id) => id === 'request-life' });
-  assert.match(h, /^<ul class="hv-grid"><li class="hv-card"><a href="#\/a\/b"><img class="hv-thumb" src="assets\/video\/request-life\/request-life-poster\.jpg" alt="" loading="lazy" width="320" height="180">/);
-  assert.match(h, /hv-sec">Server &lt;js&gt;<.*hv-title">The life of a &lt;request&gt;<.*hv-dur">3:12<.*hv-done">Watched</);
-  assert.doesNotMatch(VideoHtml.grid([{ video: v, href: '#', section: 's' }]), /hv-done/);
-  assert.equal(VideoHtml.grid([]), '');
+const mk = (id, extra = {}) => ({ video: { ...v, id, title: `T ${id}` }, href: `#/${id}`, section: `S ${id}`, area: extra.area || 'Area A' });
+
+test('parseDuration, fmtTime and resumeAt', () => {
+  assert.equal(VideoHtml.parseDuration('2:48'), 168);
+  assert.equal(VideoHtml.parseDuration('1:02:03'), 3723);
+  assert.equal(VideoHtml.parseDuration('x'), 0);
+  assert.equal(VideoHtml.fmtTime(72), '1:12');
+  assert.equal(VideoHtml.fmtTime(5), '0:05');
+  assert.equal(VideoHtml.resumeAt({ t: 72, d: 192 }, false), 72);
+  assert.equal(VideoHtml.resumeAt({ t: 180, d: 192 }, false), 0);   // 90 % or more counts as finished
+  assert.equal(VideoHtml.resumeAt({ t: 0, d: 192 }, false), 0);
+  assert.equal(VideoHtml.resumeAt({ t: 72, d: 192 }, true), 0);     // watched: start from the top
+  assert.equal(VideoHtml.resumeAt(undefined, false), 0);
+});
+
+test('marks: one play button per video, opening the stage, empty when no videos', () => {
+  assert.equal(VideoHtml.marks([]), '');
+  const h = VideoHtml.marks([v], {});
+  assert.match(h, /^<ul class="hv-marks"><li><button type="button" class="hv-mark" data-action="video-play" data-id="request-life"[^>]* aria-controls="hv-stage" aria-expanded="false">/);
+  assert.match(h, /<span class="sr-only">Video: <\/span><span class="hv-mark-title">The life of a &lt;request&gt;<\/span> <span class="hv-mark-dur">3:12<\/span>/);
+  assert.doesNotMatch(h, /hv-mark-bar|is-done/);
+});
+
+test('markInner: a bar when part-way, a tick when watched', () => {
+  const part = VideoHtml.markInner(v, { rec: () => ({ t: 96, d: 192 }), watched: () => false });
+  assert.match(part, /hv-mark-bar" aria-hidden="true"><span style="width:50%">/);
+  assert.match(part, /sr-only">, Resume at 1:36</);
+  const done = VideoHtml.markInner(v, { rec: () => ({ t: 96, d: 192 }), watched: () => true });
+  assert.match(done, /hv-mark-glyph is-done/);
+  assert.match(done, /sr-only">, Watched</);
+  assert.doesNotMatch(done, /hv-mark-bar/);
+});
+
+test('pickContinue: latest part-way video, else first unwatched, else nothing', () => {
+  const es = [mk('a'), mk('b'), mk('c')];
+  const recs = { a: { t: 50, d: 100, at: 1 }, c: { t: 20, d: 100, at: 2 } };
+  const resumed = VideoHtml.pickContinue(es, { rec: (id) => recs[id], watched: () => false });
+  assert.equal(resumed.entry.video.id, 'c');
+  assert.equal(resumed.kind, 'resume');
+  const fresh = VideoHtml.pickContinue(es, {});
+  assert.equal(fresh.entry.video.id, 'a');
+  assert.equal(fresh.kind, 'start');
+  const some = VideoHtml.pickContinue(es, { watched: (id) => id === 'a' });
+  assert.equal(some.entry.video.id, 'b');
+  assert.equal(some.kind, 'next');
+  assert.equal(VideoHtml.pickContinue(es, { watched: () => true }), null);
+});
+
+test('upNext: after the current one, wrapping round, skipping watched ones', () => {
+  const es = ['a', 'b', 'c', 'd'].map((id) => mk(id));
+  const ids = (list) => list.map((e) => e.video.id);
+  assert.deepEqual(ids(VideoHtml.upNext(es, 'b', {}, 3)), ['c', 'd', 'a']);
+  assert.deepEqual(ids(VideoHtml.upNext(es, 'd', {}, 2)), ['a', 'b']);
+  assert.deepEqual(ids(VideoHtml.upNext(es, 'b', { watched: (id) => id === 'c' }, 3)), ['d', 'a']);
+  assert.deepEqual(VideoHtml.upNext(es, 'a', { watched: () => true }), []);
+});
+
+test('stage: the video, a close button and the next videos', () => {
+  const es = [mk('a'), mk('b'), mk('c')];
+  const h = VideoHtml.stage(es[0], { entries: es });
+  assert.match(h, /<figure class="topic-video" data-video="a">/);
+  assert.match(h, /<video controls preload="metadata"/);
+  assert.match(h, /data-action="video-close"[^>]*>Close video</);
+  assert.match(h, /<aside class="hv-next"[^>]*><h3 id="hvn-h">Up next<\/h3><ul>.*data-id="b".*data-id="c"/);
+  assert.doesNotMatch(VideoHtml.stage(es[0], { entries: [es[0]] }), /hv-next"/);
+});
+
+test('figure: keyboard shortcuts and the place for the next video', () => {
+  const h = VideoHtml.figure(v, {});
+  assert.match(h, /<div class="tv-next" aria-live="polite"><\/div>/);
+  assert.match(h, /<details class="tv-keys"><summary>Keyboard shortcuts<\/summary><dl><dt><kbd>k<\/kbd><\/dt><dd>play or pause<\/dd>/);
+  assert.match(h, /<kbd>&lt; \/ &gt;<\/kbd>/);
+  assert.match(h, /<video controls preload="none"/);
 });
