@@ -966,7 +966,7 @@ DATA.en.SQL_VIDEOS = [
     "mp4": "assets/video/db-layer/db-layer.mp4",
     "poster": "assets/video/db-layer/db-layer-poster.jpg",
     "captions": "assets/video/db-layer/db-layer.vtt",
-    "duration": "3:15",
+    "duration": "3:39",
     "transcript": [
       "From route to row and back: one request, five floors, and the shape of the answer on each.",
       "A request arrives: a GET to /api/tasks/7. The route file only matches. Path and method in, a controller out. No logic here.",

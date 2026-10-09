@@ -1,88 +1,88 @@
 WEBVTT
 
-00:00:00.500 --> 00:00:05.568
+00:00:00.500 --> 00:00:06.325
 Branches and merging. Work on something new without breaking what already works.
 
-00:00:06.900 --> 00:00:10.766
+00:00:07.700 --> 00:00:12.115
 A branch sounds like a copy of your whole project. It isn't.
 
-00:00:11.120 --> 00:00:16.266
+00:00:12.460 --> 00:00:18.390
 It's a label stuck to one commit. Here, main points at the contact form commit.
 
-00:00:16.620 --> 00:00:24.143
+00:00:18.740 --> 00:00:27.360
 Run git switch -c add-footer. Git writes one tiny label. Nothing is copied, so it's instant.
 
-00:00:24.490 --> 00:00:29.088
+00:00:27.710 --> 00:00:33.013
 git branch on its own lists them all. A star marks the one you're on.
 
-00:00:32.900 --> 00:00:36.583
+00:00:34.400 --> 00:00:38.606
 HEAD is a you-are-here pin. It now sits on add-footer.
 
-00:00:36.930 --> 00:00:42.363
+00:00:38.960 --> 00:00:45.203
 Edit, then commit. The new commit appears, and only the branch you're on moves forward.
 
-00:00:43.010 --> 00:00:47.268
+00:00:45.850 --> 00:00:50.735
 Main stays behind. Switch back to it, and the footer is gone.
 
-00:00:47.920 --> 00:00:54.451
+00:00:51.390 --> 00:00:58.913
 A classic slip: git branch alone makes the label but never moves HEAD. Your commits then land on main.
 
-00:00:57.900 --> 00:01:04.143
+00:01:00.300 --> 00:01:07.431
 To bring the footer in, stand on the receiving branch. Switch to main, then git merge add-footer.
 
-00:01:04.490 --> 00:01:11.909
+00:01:07.780 --> 00:01:16.270
 Main has nothing new, so the history is one straight line. Git just slides the label up. That's a fast-forward.
 
-00:01:12.260 --> 00:01:16.100
+00:01:16.620 --> 00:01:21.035
 No new commit. Same history, one label moved.
 
-00:01:16.450 --> 00:01:22.667
+00:01:21.390 --> 00:01:28.521
 Afterwards, git branch -d add-footer removes the label. The commits stay in main's history.
 
-00:01:26.900 --> 00:01:31.080
+00:01:29.900 --> 00:01:34.654
 Now the harder case. Ana starts add-search from the old commit.
 
-00:01:31.730 --> 00:01:35.596
+00:01:35.300 --> 00:01:39.767
 While she works, main moves ahead. The history forks.
 
-00:01:36.350 --> 00:01:44.370
+00:01:40.520 --> 00:01:49.715
 Merge add-search into main. Git finds the common ancestor, combines both sets of changes, and ties the knot with a merge commit.
 
-00:01:44.720 --> 00:01:48.586
+00:01:50.060 --> 00:01:54.501
 It has two parents: the tip of main, and the tip of add-search.
 
-00:01:48.940 --> 00:01:53.120
+00:01:54.850 --> 00:01:59.630
 The log shows it as a picture: two lines that split, then meet again.
 
-00:01:58.900 --> 00:02:03.001
+00:02:01.900 --> 00:02:06.602
 One habit. Check which branch you're standing on before you merge.
 
-00:02:03.350 --> 00:02:07.112
+00:02:06.950 --> 00:02:11.286
 Merge main into add-footer, and you've updated the wrong branch.
 
-00:02:12.200 --> 00:02:17.790
+00:02:15.200 --> 00:02:21.600
 Sometimes Git can't tie the knot. Two branches rewrote the same line: the heading.
 
-00:02:18.140 --> 00:02:23.573
+00:02:21.950 --> 00:02:28.193
 Everything else, Git still combines by itself. Only that one line needs you.
 
-00:02:23.920 --> 00:02:30.085
+00:02:28.540 --> 00:02:35.619
 The merge stops with a conflict in index.html. It isn't an error. It's a question.
 
-00:02:30.440 --> 00:02:33.836
+00:02:35.970 --> 00:02:39.862
 git status lists the file as both modified.
 
-00:02:34.190 --> 00:02:40.877
+00:02:40.210 --> 00:02:47.890
 Both versions sit in the file, between markers. Above the ======= is yours. Below is theirs.
 
-00:02:45.900 --> 00:02:52.431
+00:02:49.200 --> 00:02:56.697
 Edit the line into what you want: yours, theirs, both, or something new. Delete all three markers.
 
-00:02:52.780 --> 00:02:57.639
+00:02:57.050 --> 00:03:02.640
 Then git add the file, and git commit. The merge is complete.
 
-00:02:57.990 --> 00:03:05.853
+00:03:02.990 --> 00:03:12.002
 Search for the markers before you commit, or they end up on your page. And if you panic, git merge --abort puts everything back.
 
-00:03:10.900 --> 00:03:14.923
+00:03:14.200 --> 00:03:18.824
 Practise it with the Commit and branch simulator, in Version control.

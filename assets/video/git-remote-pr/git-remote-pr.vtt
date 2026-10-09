@@ -1,94 +1,94 @@
 WEBVTT
 
-00:00:00.500 --> 00:00:05.071
+00:00:00.500 --> 00:00:05.751
 Working with a remote. Your commits stay on your laptop until you say so.
 
-00:00:06.400 --> 00:00:13.244
+00:00:07.100 --> 00:00:14.963
 Ana has a project on her laptop. Another copy lives on GitHub. Git never syncs them by itself.
 
-00:00:13.590 --> 00:00:16.516
+00:00:15.310 --> 00:00:18.628
 The copy on GitHub has a name: origin.
 
-00:00:16.870 --> 00:00:22.643
+00:00:18.980 --> 00:00:25.615
 She creates a branch, validate-form, and makes a commit. It exists only on her laptop.
 
-00:00:22.990 --> 00:00:26.856
+00:00:25.970 --> 00:00:30.385
 Reviewers and deployment tools read GitHub, not her laptop.
 
-00:00:28.200 --> 00:00:34.234
+00:00:31.700 --> 00:00:38.622
 To share it, she pushes. The first time, she adds -u, so Git remembers the link.
 
-00:00:35.080 --> 00:00:39.521
+00:00:39.470 --> 00:00:44.538
 Commits fly up. Only commits: not files, not edits.
 
-00:00:39.870 --> 00:00:43.240
+00:00:44.890 --> 00:00:48.756
 On GitHub, the branch validate-form now exists.
 
-00:00:44.600 --> 00:00:48.806
+00:00:50.100 --> 00:00:54.933
 Her laptop also keeps a picture of the remote: origin/main.
 
-00:00:49.160 --> 00:00:53.104
+00:00:55.280 --> 00:00:59.799
 It's a ghost label. It moves only when she talks to GitHub.
 
-00:00:53.850 --> 00:00:57.742
+00:01:00.550 --> 00:01:05.017
 So when Luis pushes to main, her picture is already out of date.
 
-00:00:58.490 --> 00:01:05.595
+00:01:05.770 --> 00:01:13.920
 git status says: up to date with origin/main. That means the picture. Not GitHub, live.
 
-00:01:06.900 --> 00:01:09.643
+00:01:15.300 --> 00:01:18.435
 git fetch asks GitHub what's new.
 
-00:01:09.990 --> 00:01:16.233
+00:01:18.780 --> 00:01:25.938
 Luis's commits fly down. Only the ghost label moves. Her branch and her files don't change.
 
-00:01:16.580 --> 00:01:19.950
+00:01:26.290 --> 00:01:30.156
 git log origin/main shows what arrived.
 
-00:01:20.700 --> 00:01:24.671
+00:01:30.910 --> 00:01:35.455
 Now she can look first. A fetch can never cause a conflict.
 
-00:01:26.000 --> 00:01:30.284
+00:01:36.800 --> 00:01:41.737
 git pull is a fetch, followed by a merge into your current branch.
 
-00:01:31.030 --> 00:01:36.986
+00:01:42.490 --> 00:01:49.308
 The ghost label moves, and then main catches up. If she had no new commits, it's a fast-forward.
 
-00:01:37.340 --> 00:01:42.016
+00:01:49.660 --> 00:01:55.015
 If both sides have new commits, pull makes a merge commit, and it may conflict.
 
-00:01:42.370 --> 00:01:46.158
+00:01:55.370 --> 00:01:59.732
 Her habit: pull before you start, and pull before you push.
 
-00:01:46.910 --> 00:01:53.650
+00:02:00.480 --> 00:02:08.212
 Skip it, and her next push is rejected: fetch first. Never force it. Pull, then push again.
 
-00:01:55.000 --> 00:02:00.172
+00:02:09.600 --> 00:02:15.556
 Back on validate-form, her branch is on GitHub. Now she opens a pull request.
 
-00:02:00.520 --> 00:02:03.994
+00:02:15.910 --> 00:02:19.881
 She says what changed and why, and asks Luis to review.
 
-00:02:04.740 --> 00:02:09.912
+00:02:20.630 --> 00:02:26.586
 It's a page that says: please merge this branch into main. It shows the diff.
 
-00:02:10.260 --> 00:02:17.209
+00:02:26.940 --> 00:02:34.933
 Luis reads it and leaves a comment. Ana fixes it and pushes to the same branch. The pull request updates.
 
-00:02:17.560 --> 00:02:19.049
+00:02:35.280 --> 00:02:37.187
 Luis approves.
 
-00:02:20.800 --> 00:02:25.816
+00:02:38.900 --> 00:02:44.647
 She clicks Merge pull request. On GitHub, validate-form joins main.
 
-00:02:26.170 --> 00:02:30.402
+00:02:45.000 --> 00:02:49.859
 Her laptop doesn't know yet. She switches to main, and pulls.
 
-00:02:30.750 --> 00:02:36.784
+00:02:50.210 --> 00:02:57.132
 Now both copies agree. She deletes the branch with git branch -d, and starts the next one.
 
-00:02:37.130 --> 00:02:41.310
+00:02:57.480 --> 00:03:02.287
 Keep each pull request to one change, and merge it within a day or two.
 
-00:02:42.700 --> 00:02:46.592
+00:03:03.600 --> 00:03:08.067
 Practise it with the commit and branch simulator in Version control.

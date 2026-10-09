@@ -937,7 +937,7 @@ DATA.en.AUTH_VIDEOS = [
     "mp4": "assets/video/auth-login/auth-login.mp4",
     "poster": "assets/video/auth-login/auth-login-poster.jpg",
     "captions": "assets/video/auth-login/auth-login.vtt",
-    "duration": "2:55",
+    "duration": "3:18",
     "transcript": [
       "Logging in: the password is checked once. Then something else must vouch for you.",
       "An API asks two questions, always in this order. Who is calling? That's authentication. And may they do this? That's authorisation.",
@@ -958,7 +958,7 @@ DATA.en.AUTH_VIDEOS = [
     "mp4": "assets/video/cors-preflight/cors-preflight.mp4",
     "poster": "assets/video/cors-preflight/cors-preflight-poster.jpg",
     "captions": "assets/video/cors-preflight/cors-preflight.vtt",
-    "duration": "2:46",
+    "duration": "3:08",
     "transcript": [
       "CORS and the preflight: why the browser, not your server, decides who may read an answer.",
       "Your front end runs on localhost, port 5173. Your API runs on localhost, port 3000. Same machine, different origins. An origin is scheme, host and port. Change any one, and it's another origin. A page's JavaScript may freely read answers only from its own origin. That's the same-origin policy.",

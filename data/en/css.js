@@ -1025,7 +1025,7 @@ DATA.en.CSS_VIDEOS = [
     "mp4": "assets/video/css-box-model/css-box-model.mp4",
     "poster": "assets/video/css-box-model/css-box-model-poster.jpg",
     "captions": "assets/video/css-box-model/css-box-model.vtt",
-    "duration": "2:30",
+    "duration": "2:48",
     "transcript": [
       "The box model: padding inside, margin outside.",
       "A box with some text. Nothing else yet. The text touches its own edge. Every element is four layers, inside out: content, padding, border, margin.",
@@ -1046,7 +1046,7 @@ DATA.en.CSS_VIDEOS = [
     "mp4": "assets/video/css-flexbox/css-flexbox.mp4",
     "poster": "assets/video/css-flexbox/css-flexbox-poster.jpg",
     "captions": "assets/video/css-flexbox/css-flexbox.vtt",
-    "duration": "2:58",
+    "duration": "3:21",
     "transcript": [
       "Flexbox: one line, two axes, and the declaration that lines up a header.",
       "A news site header. A title on the left, links on the right. Out of the box, it's a stack. Block elements pile up, one under another. One declaration fixes that: display: flex, on the header. The header is now a flex container. Its direct children, the h1 and the nav, become flex items, side by side.",
@@ -1066,7 +1066,7 @@ DATA.en.CSS_VIDEOS = [
     "mp4": "assets/video/css-grid/css-grid.mp4",
     "poster": "assets/video/css-grid/css-grid-poster.jpg",
     "captions": "assets/video/css-grid/css-grid.vtt",
-    "duration": "3:01",
+    "duration": "3:10",
     "transcript": [
       "Grid: draw the tracks first, then let the items fall into place.",
       "Here is an empty box, 920px wide. We make it a grid. Three columns: 200px, 1fr, 2fr. Nothing is inside yet, but the columns already exist. Between them run numbered lines. Three columns have four lines, 1 to 4.",

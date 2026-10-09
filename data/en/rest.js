@@ -1187,7 +1187,7 @@ DATA.en.REST_VIDEOS = [
     "mp4": "assets/video/rest-endpoints/rest-endpoints.mp4",
     "poster": "assets/video/rest-endpoints/rest-endpoints-poster.jpg",
     "captions": "assets/video/rest-endpoints/rest-endpoints.vtt",
-    "duration": "2:35",
+    "duration": "2:55",
     "transcript": [
       "One resource, six endpoints. The address names the thing. The method says what to do to it.",
       "A task list needs create, delete, update. So the beginner writes /createTask, and /deleteTask?id=6. Every action gets its own address, and every API invents different ones. REST turns it round: one address per thing, and the HTTP method is the action.",

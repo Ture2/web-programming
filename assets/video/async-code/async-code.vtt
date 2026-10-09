@@ -1,0 +1,94 @@
+WEBVTT
+
+00:00:00.500 --> 00:00:04.862
+Code that waits. The same job, written three ways.
+
+00:00:06.200 --> 00:00:11.633
+Two requests reach your server. The first reads a file with `readFileSync`.
+
+00:00:11.980 --> 00:00:16.996
+That line waits for the disk. The second request waits behind it.
+
+00:00:17.350 --> 00:00:23.776
+Say eighty milliseconds each. With a hundred users, the last one waits eight seconds.
+
+00:00:24.130 --> 00:00:30.452
+Plain `readFile` starts the work and returns at once. The next line runs straight away.
+
+00:00:30.800 --> 00:00:34.013
+The data arrives later, in a callback.
+
+00:00:35.400 --> 00:00:42.688
+Here is the job. Read `config.json`. Read the data file it names. Write a copy.
+
+00:00:43.040 --> 00:00:48.918
+With callbacks, each step sits inside the one before. The code drifts to the right.
+
+00:00:49.270 --> 00:00:56.846
+Every callback receives the error first, then the result. So every level repeats: if error, return.
+
+00:00:57.200 --> 00:01:01.040
+Three steps, three levels, three error checks.
+
+00:01:02.400 --> 00:01:06.998
+A promise is an object standing for a result that is not ready yet.
+
+00:01:07.350 --> 00:01:13.933
+It starts pending. Then it settles once: fulfilled with a value, or rejected with an error.
+
+00:01:14.280 --> 00:01:20.079
+`.then` receives the value and returns a new promise. So the steps chain flat.
+
+00:01:20.430 --> 00:01:24.401
+One `.catch` at the end handles a failure in any step.
+
+00:01:25.800 --> 00:01:29.849
+`async` and `await` write the same chain as ordinary lines.
+
+00:01:30.200 --> 00:01:35.529
+`await` pauses this function until the promise settles, then hands back the value.
+
+00:01:35.880 --> 00:01:41.078
+It reads top to bottom. The function waits; the thread stays free.
+
+00:01:41.430 --> 00:01:45.270
+Same three steps. Only the spelling changed.
+
+00:01:46.600 --> 00:01:52.608
+Now the classic mistakes. Forget `await`, and you hold a promise, not the task.
+
+00:01:52.960 --> 00:01:59.151
+`task.title` is `undefined`. Log the task, and you see `Promise { <pending> }`.
+
+00:01:59.500 --> 00:02:06.161
+Sent as JSON, a promise becomes an empty object. Missing await: look there first.
+
+00:02:07.500 --> 00:02:13.038
+A rejected promise makes `await` throw on that line. So `try` and `catch` works.
+
+00:02:13.390 --> 00:02:17.752
+Without it, an unhandled rejection ends the Node process.
+
+00:02:18.100 --> 00:02:26.224
+Every user is disconnected, not just the one whose request failed. With the catch, that one user gets a `500`.
+
+00:02:26.570 --> 00:02:32.813
+And the `await` must sit inside the `try`. Otherwise the error arrives after the net is gone.
+
+00:02:34.200 --> 00:02:43.108
+Last: two independent queries. `findUser` takes 100 milliseconds. `findTasks` takes 120.
+
+00:02:43.460 --> 00:02:49.468
+`await` one, then the other, and the waits stack. 220 milliseconds.
+
+00:02:49.820 --> 00:02:56.978
+Calling the function starts the work. Await only waits. So start both, then wait once.
+
+00:02:57.330 --> 00:03:03.599
+`Promise.all` takes about the slowest: 120. The results come back in order.
+
+00:03:03.950 --> 00:03:09.122
+Use it when the work is independent. One rejection rejects them all.
+
+00:03:10.500 --> 00:03:15.307
+Practise it with the event-loop visualiser in Server-side JavaScript.

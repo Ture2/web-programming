@@ -127,10 +127,7 @@ function ConceptSection(cfg) {
   const hubOf = (k) => HUBS.findIndex((h) => h.items.includes(k));
   /* The videos of a group (PREFIX_VIDEOS entries whose `group` is the group key), and the page of a video. */
   const videosOf = (h) => VIDEOS.filter((v) => v.group === h.key);
-  const videoHref = (v) => {
-    const h = HUBS.find((x) => x.key === v.group);
-    return h ? conceptHref(h.items[0]) : BASE;
-  };
+  const videoHref = (v) => VideoHtml.hrefOf(v, { base: BASE, concepts: CONCEPTS, groups });
 
   function sideHtml() {
     const onQuiz = route.page !== 'concept';         // the overview, a quiz or a practice page: no card is current

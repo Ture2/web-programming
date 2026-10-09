@@ -1,79 +1,79 @@
 WEBVTT
 
-00:00:00.500 --> 00:00:05.620
+00:00:00.500 --> 00:00:06.404
 Logging in: the password is checked once. Then something else must vouch for you.
 
-00:00:07.000 --> 00:00:13.243
+00:00:07.800 --> 00:00:14.958
 An API asks two questions, always in this order. Who is calling? That's authentication.
 
-00:00:13.590 --> 00:00:16.803
+00:00:15.310 --> 00:00:18.967
 And may they do this? That's authorisation.
 
-00:00:18.200 --> 00:00:27.395
+00:00:20.300 --> 00:00:30.880
 Ana registers with ana@example.com and password 1. The API stores a hash, never the password. 201 Created.
 
-00:00:27.740 --> 00:00:34.271
+00:00:31.230 --> 00:00:38.727
 Hashing is one-way, and bcrypt adds a random salt, so two equal passwords still look completely different.
 
-00:00:34.620 --> 00:00:39.296
+00:00:39.080 --> 00:00:44.435
 Registering again with the same email? 409 Conflict.
 
-00:00:40.600 --> 00:00:46.948
+00:00:45.800 --> 00:00:53.088
 Now she logs in. The API fetches her row, hashes the attempt, and compares it with the stored hash.
 
-00:00:47.300 --> 00:00:55.999
+00:00:53.440 --> 00:01:03.445
 Wrong password: 401, Invalid credentials. An unknown email gets the very same answer, so nobody can discover who has an account.
 
-00:00:56.350 --> 00:00:59.380
+00:01:03.800 --> 00:01:07.274
 Right password: 200, and a token.
 
-00:01:00.700 --> 00:01:08.040
+00:01:08.600 --> 00:01:17.011
 But HTTP forgets. The next request knows nothing about her. So something must travel with every request.
 
-00:01:08.790 --> 00:01:16.209
+00:01:17.760 --> 00:01:26.250
 Option one: a cloakroom. The server keeps your coat and hands you a numbered ticket. That's a session id, in a cookie.
 
-00:01:16.560 --> 00:01:21.027
+00:01:26.600 --> 00:01:31.720
 The ticket means nothing on its own. The meaning lives in the server's list.
 
-00:01:21.380 --> 00:01:27.884
+00:01:32.070 --> 00:01:39.515
 Every request, the server looks the ticket up. Log out, and it throws the row away. Instantly.
 
-00:01:29.200 --> 00:01:37.350
+00:01:40.900 --> 00:01:50.278
 Option two: a signed wristband. Everything is written on the band: who you are, your role, when it expires. 1 hour, here.
 
-00:01:37.700 --> 00:01:45.458
+00:01:50.630 --> 00:01:59.538
 The band has three parts, joined by dots: header, payload, signature. The first two are only encoded, not hidden.
 
-00:01:45.810 --> 00:01:51.661
+00:01:59.890 --> 00:02:06.577
 The server seals it with its secret signature. Then it keeps nothing. It only checks the seal.
 
-00:01:52.000 --> 00:01:56.239
+00:02:07.900 --> 00:02:11.583
 Now someone rewrites the band: role: admin.
 
-00:01:56.990 --> 00:02:03.233
+00:02:12.330 --> 00:02:19.461
 The seal no longer matches. verify() throws invalid signature, and the answer is 401.
 
-00:02:03.580 --> 00:02:07.316
+00:02:19.810 --> 00:02:24.094
 Anyone can read the band. Only the server can seal it.
 
-00:02:07.670 --> 00:02:13.051
+00:02:24.440 --> 00:02:30.631
 That is why you never put secrets in a token, and why you always verify, never just decode.
 
-00:02:14.400 --> 00:02:20.539
+00:02:32.000 --> 00:02:39.053
 The price: a copied band works until it expires. A cloakroom ticket can be cancelled at once.
 
-00:02:20.890 --> 00:02:26.585
+00:02:39.400 --> 00:02:45.931
 A band needs no lookup, though, and works across many servers. Neither is simply better.
 
-00:02:27.900 --> 00:02:33.699
+00:02:47.300 --> 00:02:53.961
 With a token, the client sends it on every request, in the Authorization header, after the word Bearer.
 
-00:02:34.050 --> 00:02:40.999
+00:02:54.310 --> 00:03:02.303
 A gate in front of the routes checks it. Valid, and the route runs. Missing or forged, 401.
 
-00:02:41.750 --> 00:02:48.516
+00:03:03.050 --> 00:03:10.782
 After the hour is up, the same gate answers 401: jwt expired. Ana logs in again.
 
-00:02:49.900 --> 00:02:54.471
+00:03:12.100 --> 00:03:17.351
 Practise it with the JWT inspector in Authentication and security.

@@ -1234,7 +1234,7 @@ DATA.en.STATE_VIDEOS = [
     "mp4": "assets/video/react-render/react-render.mp4",
     "poster": "assets/video/react-render/react-render-poster.jpg",
     "captions": "assets/video/react-render/react-render.vtt",
-    "duration": "2:52",
+    "duration": "3:14",
     "transcript": [
       "Render, commit, effect: the three steps behind every change on a React screen.",
       "One click calls setCount(count + 1) three times. The screen goes up by one, not three. To see why, picture a photo booth. The click gets a snapshot. It never sees what happens next.",

@@ -40,7 +40,32 @@ const VideoHtml = (() => {
     return `<section class="video-list" aria-labelledby="vl-h"><h2 id="vl-h">${esc(tr(t, 'Videos'))}</h2><ul class="vl-items">${items}</ul></section>`;
   }
 
-  return { figure, list };
+  /* The page of a video: the first concept of the rail group named by its `group`, the same hub rule as
+     js/concept-section.js (a card with an unknown hub joins the last group; empty groups are dropped).
+     sec = { base, concepts, groups }. Falls back to the section overview. */
+  function hrefOf(v, sec) {
+    const groups = sec.groups && sec.groups.length ? sec.groups : [{ key: 'all' }];
+    const concepts = sec.concepts || [];
+    const items = groups.map(() => []);
+    concepts.forEach((c, k) => {
+      const i = groups.findIndex((g) => g.key === c.hub);
+      items[i < 0 ? groups.length - 1 : i].push(k);
+    });
+    const g = groups.findIndex((x, i) => x.key === v.group && items[i].length);
+    return g < 0 ? sec.base : `${sec.base}/${concepts[items[g][0]].id}`;
+  }
+
+  /* The home page grid: one card per entry { video, href, section }, already in learning order. */
+  function grid(entries, { t, watched } = {}) {
+    if (!entries || !entries.length) return '';
+    const cards = entries.map(({ video: v, href, section }) => {
+      const done = watched && watched(v.id);
+      return `<li class="hv-card"><a href="${esc(href)}"><img class="hv-thumb" src="${esc(v.poster)}" alt="" loading="lazy" width="320" height="180"><span class="hv-body"><span class="hv-sec">${esc(section)}</span><span class="hv-title">${esc(v.title)}</span><span class="hv-meta">${v.duration ? `<span class="hv-dur">${esc(v.duration)}</span>` : ''}${done ? `<span class="hv-done">${esc(tr(t, 'Watched'))}</span>` : ''}</span></span></a></li>`;
+    }).join('');
+    return `<ul class="hv-grid">${cards}</ul>`;
+  }
+
+  return { figure, list, hrefOf, grid };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = VideoHtml;

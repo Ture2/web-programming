@@ -38,3 +38,23 @@ test('list: one link per video to its group page, empty when no videos', () => {
   assert.match(h, /<a href="#\/server\/routes\/structure"><img class="vl-thumb" src="assets\/video\/request-life\/request-life-poster\.jpg" alt=""/);
   assert.match(h, /3:12 · Watched/);
 });
+
+test('hrefOf: first concept of the video group, same hub rule as the section', () => {
+  const sec = {
+    base: '#/server/runtime',
+    concepts: [{ id: 'a', hub: 'one' }, { id: 'b', hub: 'two' }, { id: 'c', hub: 'two' }, { id: 'd', hub: 'gone' }],
+    groups: [{ key: 'one' }, { key: 'two' }, { key: 'three' }],
+  };
+  assert.equal(VideoHtml.hrefOf({ group: 'two' }, sec), '#/server/runtime/b');
+  assert.equal(VideoHtml.hrefOf({ group: 'three' }, sec), '#/server/runtime/d');   // unknown hub joins the last group
+  assert.equal(VideoHtml.hrefOf({ group: 'nope' }, sec), '#/server/runtime');
+  assert.equal(VideoHtml.hrefOf({ group: 'all' }, { base: '#/x', concepts: [{ id: 'q' }] }), '#/x/q');
+});
+
+test('grid: card per entry with thumbnail, section label, duration and watched marker', () => {
+  const h = VideoHtml.grid([{ video: v, href: '#/a/b', section: 'Server <js>' }], { watched: (id) => id === 'request-life' });
+  assert.match(h, /^<ul class="hv-grid"><li class="hv-card"><a href="#\/a\/b"><img class="hv-thumb" src="assets\/video\/request-life\/request-life-poster\.jpg" alt="" loading="lazy" width="320" height="180">/);
+  assert.match(h, /hv-sec">Server &lt;js&gt;<.*hv-title">The life of a &lt;request&gt;<.*hv-dur">3:12<.*hv-done">Watched</);
+  assert.doesNotMatch(VideoHtml.grid([{ video: v, href: '#', section: 's' }]), /hv-done/);
+  assert.equal(VideoHtml.grid([]), '');
+});

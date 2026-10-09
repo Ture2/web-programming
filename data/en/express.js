@@ -955,7 +955,7 @@ DATA.en.EXPRESS_VIDEOS = [
     "mp4": "assets/video/request-life/request-life.mp4",
     "poster": "assets/video/request-life/request-life-poster.jpg",
     "captions": "assets/video/request-life/request-life.vtt",
-    "duration": "3:07",
+    "duration": "3:31",
     "transcript": [
       "The life of a request: from the moment it reaches your app to the answer.",
       "A request reaches your server. Does it go straight to your code? No. First it walks a corridor of checkpoints. Each one is a middleware. A middleware is just a function with three parameters: req, res, and next. Their order is the order you wrote them in app.js. Reading the file from top to bottom is reading the journey.",

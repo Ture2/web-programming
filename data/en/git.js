@@ -955,7 +955,7 @@ DATA.en.GIT_VIDEOS = [
     "mp4": "assets/video/git-three-areas/git-three-areas.mp4",
     "poster": "assets/video/git-three-areas/git-three-areas-poster.jpg",
     "captions": "assets/video/git-three-areas/git-three-areas.vtt",
-    "duration": "2:37",
+    "duration": "2:57",
     "transcript": [
       "Where your changes live. Saving a file is not saving it in Git.",
       "You create about.html, edit index.html, and press Ctrl+S. Both files are saved. Git has stored nothing. Your project has three rooms, and a fourth copy far away. The working directory holds the files you edit. The staging area holds the next commit, being prepared. The repository holds the commits already saved. The fourth room, the remote, is GitHub. It stays dark for now.",
@@ -975,7 +975,7 @@ DATA.en.GIT_VIDEOS = [
     "mp4": "assets/video/git-branch-merge/git-branch-merge.mp4",
     "poster": "assets/video/git-branch-merge/git-branch-merge-poster.jpg",
     "captions": "assets/video/git-branch-merge/git-branch-merge.vtt",
-    "duration": "3:16",
+    "duration": "3:20",
     "transcript": [
       "Branches and merging. Work on something new without breaking what already works.",
       "A branch sounds like a copy of your whole project. It isn't. It's a label stuck to one commit. Here, main points at the contact form commit. Run git switch -c add-footer. Git writes one tiny label. Nothing is copied, so it's instant. git branch on its own lists them all. A star marks the one you're on.",
@@ -995,7 +995,7 @@ DATA.en.GIT_VIDEOS = [
     "mp4": "assets/video/git-remote-pr/git-remote-pr.mp4",
     "poster": "assets/video/git-remote-pr/git-remote-pr-poster.jpg",
     "captions": "assets/video/git-remote-pr/git-remote-pr.vtt",
-    "duration": "2:48",
+    "duration": "3:09",
     "transcript": [
       "Working with a remote. Your commits stay on your laptop until you say so.",
       "Ana has a project on her laptop. Another copy lives on GitHub. Git never syncs them by itself. The copy on GitHub has a name: origin. She creates a branch, validate-form, and makes a commit. It exists only on her laptop. Reviewers and deployment tools read GitHub, not her laptop.",

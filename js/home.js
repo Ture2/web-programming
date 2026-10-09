@@ -56,6 +56,20 @@ const HomePage = (() => {
       </aside>`;
   }
 
+  /* Every topic video, in learning order (SECTIONS, then the order within a section), each linking to its group page. */
+  function videosSection() {
+    const watched = makeStore('video-watched-v2').load();
+    const entries = SECTIONS.flatMap((s) => (s.data.videos || []).map((v) => ({
+      video: v, href: VideoHtml.hrefOf(v, { base: s.base, concepts: s.data.concepts, groups: s.data.groups }), section: t(s.title),
+    })));
+    if (!entries.length) return '';
+    return `<section class="home-videos" aria-labelledby="hv-h">
+          <h2 id="hv-h">${esc(t('Short videos'))}</h2>
+          <p class="home-videos-lead">${esc(t('{n} short explainers for the topics that move: requests, Git, the event loop, CSS layout and more. Each one opens on the page of the topic it explains.', { n: entries.length }))}</p>
+          ${VideoHtml.grid(entries, { t, watched: (id) => !!watched[id] })}
+        </section>`;
+  }
+
   function render() {
     const tools = SECTIONS.reduce((n, s) => n + s.tools.length, 0);
     $('#view').innerHTML = `
@@ -67,6 +81,7 @@ const HomePage = (() => {
           </div>
           <div class="home-side">${continuePanel()}${reviewPanel()}</div>
         </header>
+        ${videosSection()}
         <section class="home-map" aria-labelledby="map-h">
           <h2 id="map-h">${esc(t('How it all fits together'))}</h2>
           <p class="home-map-lead">${esc(t('Each section sits where its code runs. Follow a request from the browser to the database and back.'))}</p>

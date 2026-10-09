@@ -1,100 +1,100 @@
 WEBVTT
 
-00:00:00.500 --> 00:00:05.829
+00:00:00.500 --> 00:00:06.587
 One thread, many tasks. How Node serves a crowd while doing one thing at a time.
 
-00:00:07.200 --> 00:00:11.980
+00:00:07.900 --> 00:00:13.386
 Your JavaScript runs on one thread. Picture one cook at one counter.
 
-00:00:12.330 --> 00:00:15.857
+00:00:13.740 --> 00:00:17.789
 The counter is the call stack: the function running right now.
 
-00:00:16.210 --> 00:00:20.102
+00:00:18.140 --> 00:00:22.607
 A call puts a frame on the counter. A return takes it off.
 
-00:00:21.500 --> 00:00:24.191
+00:00:24.000 --> 00:00:27.056
 But the cook never stands waiting for the oven.
 
-00:00:24.540 --> 00:00:28.981
+00:00:27.410 --> 00:00:32.478
 Timers and file or network work belong to libuv and the operating system.
 
-00:00:29.630 --> 00:00:34.306
+00:00:33.130 --> 00:00:38.485
 They never interrupt the cook. When they finish, they put a ticket on a rail.
 
-00:00:35.700 --> 00:00:39.906
+00:00:39.800 --> 00:00:44.633
 There are two rails. Promise callbacks go on the microtask rail.
 
-00:00:40.260 --> 00:00:43.264
+00:00:44.980 --> 00:00:48.428
 Timer and I/O callbacks go on the task rail.
 
-00:00:44.600 --> 00:00:47.761
+00:00:49.800 --> 00:00:53.405
 The event loop is the cook, glancing at the rails.
 
-00:00:48.410 --> 00:00:50.526
+00:00:54.050 --> 00:00:56.453
 But only when the counter is empty.
 
-00:00:51.180 --> 00:00:56.352
+00:00:57.100 --> 00:01:03.056
 First, every microtask. Then one task. Then the rails again.
 
-00:00:58.000 --> 00:01:01.318
+00:01:04.700 --> 00:01:08.540
 Four lines. script start prints straight away.
 
-00:01:01.670 --> 00:01:06.633
+00:01:08.890 --> 00:01:14.585
 setTimeout hands its callback to the timer. The ticket reaches the task rail.
 
-00:01:06.980 --> 00:01:11.107
+00:01:14.940 --> 00:01:19.668
 Then .then() on a finished promise puts a ticket on the microtask rail.
 
-00:01:11.460 --> 00:01:14.830
+00:01:20.020 --> 00:01:23.886
 script end is printed. The counter is empty.
 
-00:01:15.480 --> 00:01:21.331
+00:01:24.540 --> 00:01:31.280
 Now the cook looks. Microtasks first: promise. Then the task: timeout.
 
-00:01:21.980 --> 00:01:28.276
+00:01:31.930 --> 00:01:39.166
 The timer said 0 milliseconds, yet it ran last. A delay is a minimum, not an appointment.
 
-00:01:29.900 --> 00:01:33.479
+00:01:40.800 --> 00:01:44.901
 Now a harder one. Predict the order before you look.
 
-00:01:33.830 --> 00:01:37.304
+00:01:45.250 --> 00:01:49.221
 1 and 6 are plain calls. They print first.
 
-00:01:37.650 --> 00:01:42.587
+00:01:49.570 --> 00:01:55.239
 .then() is a microtask, so 4 comes next. It schedules another timer.
 
-00:01:42.940 --> 00:01:49.314
+00:01:55.590 --> 00:02:02.904
 Then the first timer's task prints 2, and queues a microtask. That prints 3 before the next task.
 
-00:01:49.960 --> 00:01:56.386
+00:02:03.550 --> 00:02:10.917
 Last, the second timer: 5. 1, 6, 4, 2, 3, 5.
 
-00:01:57.000 --> 00:02:02.754
+00:02:12.600 --> 00:02:18.033
 Now give the cook a long job. A loop that runs for 200 milliseconds.
 
-00:02:03.100 --> 00:02:07.123
+00:02:18.380 --> 00:02:23.004
 The timer finishes at once. Its ticket waits on the rail.
 
-00:02:07.770 --> 00:02:13.386
+00:02:23.650 --> 00:02:30.076
 Nothing interrupts the cook, so nothing else runs. In a server, every request waits.
 
-00:02:14.040 --> 00:02:18.899
+00:02:30.730 --> 00:02:36.320
 Long synchronous work blocks. Waiting for a database or a fetch does not.
 
-00:02:20.200 --> 00:02:23.491
+00:02:37.700 --> 00:02:41.462
 So how do you wait without blocking? With await.
 
-00:02:23.840 --> 00:02:28.176
+00:02:41.810 --> 00:02:46.799
 In checkHealth, await fetch() sends the request, and the function pauses.
 
-00:02:28.530 --> 00:02:31.534
+00:02:47.150 --> 00:02:50.572
 The cook is free. Other requests run.
 
-00:02:31.880 --> 00:02:36.321
+00:02:50.920 --> 00:02:55.988
 When the response arrives, the rest of the function is a microtask on the rail.
 
-00:02:36.970 --> 00:02:40.340
+00:02:56.640 --> 00:03:00.506
 await means: pause this function, free the cook.
 
-00:02:41.700 --> 00:02:45.880
+00:03:01.900 --> 00:03:06.707
 Practise it with the event-loop visualiser in Server-side JavaScript.

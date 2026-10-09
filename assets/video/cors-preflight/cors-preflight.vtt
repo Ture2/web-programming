@@ -1,85 +1,85 @@
 WEBVTT
 
-00:00:00.500 --> 00:00:05.933
+00:00:00.500 --> 00:00:06.743
 CORS and the preflight: why the browser, not your server, decides who may read an answer.
 
-00:00:07.300 --> 00:00:14.771
+00:00:08.100 --> 00:00:16.694
 Your front end runs on localhost, port 5173. Your API runs on localhost, port 3000.
 
-00:00:15.120 --> 00:00:22.774
+00:00:17.040 --> 00:00:25.817
 Same machine, different origins. An origin is scheme, host and port. Change any one, and it's another origin.
 
-00:00:23.120 --> 00:00:29.363
+00:00:26.170 --> 00:00:33.328
 A page's JavaScript may freely read answers only from its own origin. That's the same-origin policy.
 
-00:00:30.700 --> 00:00:33.704
+00:00:34.700 --> 00:00:38.148
 So the page sends a plain GET to the API.
 
-00:00:34.050 --> 00:00:38.569
+00:00:38.500 --> 00:00:43.698
 It goes out. The server receives it, runs the route, and answers.
 
-00:00:38.920 --> 00:00:43.073
+00:00:44.050 --> 00:00:48.804
 Your Express terminal even logs the GET. The request arrived.
 
-00:00:43.720 --> 00:00:49.075
+00:00:49.450 --> 00:00:55.589
 But the answer stops at the browser. The page can't read it, unless the server allows it.
 
-00:00:50.400 --> 00:00:54.632
+00:00:56.900 --> 00:01:01.733
 Every answer can carry a permission slip: Access-Control-Allow-Origin.
 
-00:00:54.980 --> 00:01:03.000
+00:01:02.080 --> 00:01:11.275
 If it names the page's origin, the browser hands the answer over. If it's missing, or names someone else, the page gets a CORS error.
 
-00:01:03.350 --> 00:01:08.783
+00:01:11.620 --> 00:01:17.863
 In Express, that's one line: app.use(cors({ origin })), with the origin of your front end.
 
-00:01:10.100 --> 00:01:14.567
+00:01:19.200 --> 00:01:24.320
 Now the page deletes task 7, with a token in the Authorization header.
 
-00:01:15.220 --> 00:01:21.855
+00:01:24.970 --> 00:01:32.598
 That's not a simple request. So first, the browser phones ahead: an OPTIONS request called the preflight.
 
-00:01:22.200 --> 00:01:26.510
+00:01:32.950 --> 00:01:37.913
 It asks: may this origin use DELETE, with an Authorization header?
 
-00:01:27.160 --> 00:01:30.608
+00:01:38.560 --> 00:01:42.504
 Only if the answer says yes does the real request cross.
 
-00:01:32.000 --> 00:01:34.769
+00:01:43.900 --> 00:01:47.087
 But the server allows only GET and POST.
 
-00:01:35.120 --> 00:01:43.009
+00:01:47.440 --> 00:01:56.504
 The browser blocks the call. Chrome's console says: Method DELETE is not allowed by Access-Control-Allow-Methods in preflight response.
 
-00:01:43.660 --> 00:01:47.396
+00:01:57.150 --> 00:02:01.434
 The DELETE was never sent. Task 7 is still there.
 
-00:01:48.700 --> 00:01:50.502
+00:02:02.800 --> 00:02:04.890
 Add DELETE to methods.
 
-00:01:50.850 --> 00:01:56.048
+00:02:05.240 --> 00:02:11.196
 The preflight passes. The real DELETE crosses, and the server answers 204.
 
-00:01:56.400 --> 00:02:00.762
+00:02:11.550 --> 00:02:16.566
 In the Network tab you'll see two rows: OPTIONS first, then DELETE.
 
-00:02:01.410 --> 00:02:08.254
+00:02:17.220 --> 00:02:25.109
 And mount cors first. A preflight carries no token, so auth would answer 401, and the preflight would fail.
 
-00:02:09.600 --> 00:02:13.388
+00:02:26.500 --> 00:02:30.862
 Notice who did the blocking. The browser, not the server.
 
-00:02:13.740 --> 00:02:18.207
+00:02:31.210 --> 00:02:36.304
 curl and Postman never ask permission, so they never see a CORS error.
 
-00:02:18.560 --> 00:02:25.953
+00:02:36.650 --> 00:02:45.140
 CORS doesn't protect your API either. Anyone outside a browser can still call it. Authentication does that.
 
-00:02:27.300 --> 00:02:35.947
+00:02:46.500 --> 00:02:56.453
 One more case: cookies. The page asks with credentials: include, and the server must name the exact origin, never a star (*), and allow credentials.
 
-00:02:36.600 --> 00:02:39.421
+00:02:57.100 --> 00:03:00.339
 A Bearer token in a header needs none of this.
 
-00:02:40.800 --> 00:02:45.267
+00:03:01.700 --> 00:03:06.820
 Practise it with the CORS simulator in Authentication and security.
