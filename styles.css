@@ -725,16 +725,85 @@ details.try > .live-box, details.try > .tool{ margin: 0; border: 0; }
 @media (max-width: 560px) { .group-end .concept-quiz{ flex-wrap: wrap; } .gq-actions{ justify-content: flex-start; width: 100%; } }
 
 .ov-actions{ display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 0; }
+/* ==== Topic video: the briefing card (collapsed) and the player (open) =================
+   figure.topic-video[data-state="card"|"open"], markup in js/video-html.js, switching in js/video-player.js.
+   Card: poster thumbnail + title, hook and what it shows. Open: the video, then chapters and disclosures. */
 .topic-video{ margin: 0 0 24px; min-width: 0; }
 .topic-video video{ display: block; width: 100%; max-width: 100%; height: auto; aspect-ratio: 16 / 9; background: #000; border: 1px solid var(--rule); border-radius: 12px; }
-.topic-video video:focus-visible, .tv-watch input:focus-visible, .tv-transcript summary:focus-visible, .vl-item a:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
-.tv-cap{ margin-top: 10px; color: var(--ink); font-weight: 700; }
-.tv-dur{ color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
-.tv-actions{ display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 24px; margin-top: 8px; }
-.tv-watch{ display: inline-flex; align-items: center; gap: 8px; color: var(--muted); cursor: pointer; }
-.tv-transcript{ flex: 1 1 100%; min-width: 0; }
-.tv-transcript summary{ cursor: pointer; color: var(--muted); }
-.tv-transcript p{ margin: 0.5em 0; color: var(--text); overflow-wrap: anywhere; }
+.topic-video video[hidden]{ display: none; }
+.tv-frame{ min-width: 0; }
+.tv-info{ min-width: 0; }
+.topic-video button:focus-visible, .topic-video video:focus-visible, .tv-watch input:focus-visible, .tv-transcript summary:focus-visible, .tv-keys summary:focus-visible, .vl-item a:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+.tv-cap{ display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; color: var(--ink); font-weight: 700; }
+.tv-title{ font: 700 var(--fs-xl)/1.25 var(--display); }
+.tv-meta{ display: inline-flex; flex-wrap: wrap; gap: 2px 12px; color: var(--muted); font-size: var(--fs-sm); font-weight: 400; font-variant-numeric: tabular-nums; }
+.tv-state.is-resume{ color: var(--ink); font-weight: 700; }
+.tv-state.is-done::before{ content: ""; display: inline-block; width: .55em; height: .3em; margin: 0 .4em .2em 0; border-left: 2px solid var(--ok); border-bottom: 2px solid var(--ok); transform: rotate(-45deg); }
+.tv-hook{ margin: 8px 0 0; color: var(--text); }
+.tv-shows{ margin-top: 10px; }
+.tv-shows-h{ margin: 0 0 4px; color: var(--muted); font-size: var(--fs-sm); font-weight: 700; }
+.tv-shows ul{ display: flex; flex-wrap: wrap; gap: 3px 16px; margin: 0; padding: 0; list-style: none; font-size: var(--fs-sm); }
+.tv-shows li{ padding-left: 8px; border-left: 2px solid var(--accent); line-height: 1.3; }
+.tv-actions{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-top: 12px; }
+.tv-play{ gap: 8px; padding-inline: 20px; }
+.tv-play svg{ width: 1em; height: 1em; }
+.tv-watch{ display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: var(--fs-sm); cursor: pointer; }
+/* The chapter line under the open player: one segment per chapter (as long as the chapter), filled as it plays;
+   each segment and its title is a button. On a narrow player the titles go and one line names the current chapter. */
+.tv-frame{ container-type: inline-size; }
+.tv-chline ol{ display: flex; gap: 4px; margin: 8px 0 0; padding: 0; list-style: none; }
+.tv-chline li{ flex: 1 1 0; min-width: 0; }
+.tv-chline button{ display: block; width: 100%; padding: 6px 0 4px; font: inherit; font-size: var(--fs-sm); line-height: 1.3; text-align: left; color: var(--muted); background: none; border: 0; border-radius: 4px; cursor: pointer; }
+.tv-seg{ display: block; height: 6px; overflow: hidden; background: color-mix(in srgb, var(--ink) 16%, transparent); border-radius: var(--r-pill); }
+.tv-seg i{ display: block; width: 0; height: 100%; background: var(--accent); }
+.tv-chline button:hover .tv-seg{ background: color-mix(in srgb, var(--ink) 32%, transparent); }
+.tv-chline button:hover, .tv-chline button[aria-current]{ color: var(--ink); }
+.tv-chline button[aria-current]{ font-weight: 700; }
+.tv-seg-t{ display: -webkit-box; margin-top: 6px; padding-right: 8px; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
+.tv-jump-t{ font-weight: 400; font-variant-numeric: tabular-nums; opacity: .8; }
+.tv-chnow{ display: none; margin: 6px 0 0; color: var(--ink); font-size: var(--fs-sm); font-weight: 700; }
+@container (max-width: 560px){
+  .tv-chline button{ display: flex; align-items: center; min-height: 36px; padding: 0; }
+  .tv-chline .tv-seg{ flex: 1 1 auto; }
+  .tv-seg-t{ display: none; }
+  .tv-chnow{ display: block; }
+}
+.tv-more{ display: flex; flex-wrap: wrap; gap: 4px 24px; margin-top: 10px; }
+.tv-transcript, .tv-keys{ flex: 0 1 auto; min-width: 0; }
+.tv-transcript[open], .tv-keys[open]{ flex: 1 1 100%; }
+.tv-transcript summary, .tv-keys summary{ cursor: pointer; color: var(--muted); }
+.tv-transcript p{ margin: 0.5em 0; max-width: 78ch; color: var(--text); overflow-wrap: anywhere; }
+
+/* Open: the video on top, a quiet bar under it. */
+.topic-video[data-state="open"] .tv-thumb, .topic-video[data-state="open"] .tv-hook, .topic-video[data-state="open"] .tv-shows, .topic-video[data-state="open"] .tv-play{ display: none; }
+.topic-video[data-state="open"] .tv-info{ margin-top: 10px; }
+.topic-video[data-state="open"] .tv-title{ font-size: var(--fs-lg); }
+.topic-video[data-state="open"] .tv-actions{ margin-top: 8px; }
+.topic-video[data-state="open"] .tv-collapse{ min-height: 36px; padding: 4px 14px; font-size: var(--fs-sm); }
+
+/* Card: about 200 px tall at desktop width, the thumbnail flush left. */
+.topic-video[data-state="card"]{ display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); overflow: hidden; background: var(--surface); border: 1px solid var(--rule-strong); border-radius: var(--r-card); }
+.topic-video[data-state="card"] .tv-info{ display: flex; flex-direction: column; justify-content: center; padding: 14px 20px; }
+.topic-video[data-state="card"] .tv-chline, .topic-video[data-state="card"] .tv-next, .topic-video[data-state="card"] .tv-more, .topic-video[data-state="card"] .tv-collapse{ display: none; }
+.topic-video[data-state="card"] .tv-actions{ margin-top: 12px; }
+.tv-thumb{ position: relative; display: block; width: 100%; height: 100%; min-height: 150px; padding: 0; overflow: hidden; background: #000; border: 0; cursor: pointer; }
+.tv-thumb img{ display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .35s cubic-bezier(.2, .7, .2, 1); }
+.tv-thumb:hover img{ transform: scale(1.04); }
+.tv-thumb:focus-visible{ outline-offset: -4px; }
+.tv-glyph{ position: absolute; left: 14px; bottom: 20px; display: grid; place-items: center; width: 60px; height: 60px; color: var(--on-ink); background: var(--ink); border: 3px solid var(--accent); border-radius: 50%; box-shadow: var(--shadow); transition: transform .15s; }
+.tv-glyph svg{ width: 26px; height: 26px; margin-left: 3px; }
+.tv-thumb:hover .tv-glyph{ transform: scale(1.08); }
+.tv-bar{ position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: rgba(255, 255, 255, .4); }
+.tv-bar[hidden]{ display: none; }
+.tv-bar > span{ display: block; height: 100%; background: var(--accent); }
+@media (max-width: 640px){
+  .topic-video[data-state="card"]{ grid-template-columns: minmax(0, 1fr); }
+  .tv-thumb{ height: auto; aspect-ratio: 2 / 1; }
+  .topic-video[data-state="card"] .tv-info{ padding: 14px 16px 16px; }
+  .tv-play, .tv-watch{ min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce){ .tv-thumb img, .tv-glyph{ transition: none; } .tv-thumb:hover img, .tv-thumb:hover .tv-glyph{ transform: none; } }
+/* ==== end topic video ==== */
 .video-list{ margin: 0 0 20px; }
 .video-list h2{ margin: 0 0 10px; font: 700 var(--fs-xl)/1.25 var(--display); }
 .vl-items{ display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }

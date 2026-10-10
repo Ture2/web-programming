@@ -44,6 +44,8 @@ const VideoPlayer = (() => {
     watchedStore.save(w);
     const box = document.querySelector(`input[data-action="video-watched"][data-id="${CSS.escape(id)}"]`);
     if (box) box.checked = true;
+    const fig = document.querySelector(`.topic-video[data-video="${CSS.escape(id)}"]`);
+    if (fig) refreshBrief(fig);
   }
 
   /* What happens when a video ends: on the home page the next one starts after a short countdown
@@ -71,6 +73,104 @@ const VideoPlayer = (() => {
       clearInterval(timer);
       holder.innerHTML = `<p class="tv-next-text">${esc(t('Next: {title}', { title: v.title }))}</p><button type="button" class="btn" data-action="video-play" data-id="${esc(v.id)}">${esc(t('Play now'))}</button>`;
     });
+  }
+
+  /* ---- The briefing card (group pages): collapsed card <-> expanded player, in place ---- */
+  let VIDEOS_BY_ID = new Map();
+
+  /* Rewrite what the card says about this device's state: duration, "Resume at 1:12" or "Watched", the bar on the thumbnail. */
+  function refreshBrief(fig) {
+    const v = VIDEOS_BY_ID.get(fig.dataset.video);
+    if (!v) return;
+    const st = state();
+    const s = { watched: st.watched(v.id), rec: st.rec };
+    const meta = fig.querySelector('.tv-meta');
+    if (meta) meta.innerHTML = VideoHtml.metaHtml(v, s);
+    const bar = fig.querySelector('.tv-bar');
+    if (bar) {
+      const { pct } = VideoHtml.briefStatus(v, s);
+      bar.hidden = !pct;
+      bar.firstElementChild.style.width = `${pct}%`;
+    }
+    const box = fig.querySelector('input[data-action="video-watched"]');
+    if (box) box.checked = s.watched;
+    const play = fig.querySelector('.tv-play span');
+    if (play) play.textContent = VideoHtml.briefStatus(v, s).at ? t('Resume') : t('Play');
+  }
+
+  function expand(fig, play) {
+    const video = fig.querySelector('video');
+    fig.dataset.state = 'open';
+    video.hidden = false;
+    if (!reduceMotion && fig.animate) {
+      fig.querySelector('.tv-frame').animate([{ opacity: 0.4, transform: 'scale(.98)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.2, .7, .2, 1)' });
+      fig.querySelector('.tv-info').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 320, easing: 'ease-out' });
+    }
+    video.focus({ preventScroll: true });
+    if (play) { const p = video.play(); if (p && p.catch) p.catch(() => {}); }
+    fig.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+  }
+
+  function collapse(fig) {
+    const video = fig.querySelector('video');
+    video.pause();
+    if (Number.isFinite(video.duration) && video.currentTime > 0 && !video.ended) save(fig.dataset.video, video.currentTime, video.duration, false);   // the pause event comes too late for the card below
+    if (document.fullscreenElement) document.exitFullscreen();
+    fig.dataset.state = 'card';
+    video.hidden = true;
+    refreshBrief(fig);
+    if (!reduceMotion && fig.animate) fig.querySelector('.tv-info').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 240, easing: 'ease-out' });
+    const back = fig.querySelector('.tv-play');
+    if (back) back.focus({ preventScroll: true });
+  }
+
+  function wireCard(fig) {
+    if (fig.dataset.tvWired) return;
+    fig.dataset.tvWired = '1';
+    const video = fig.querySelector('video');
+    fig.addEventListener('click', (e) => {
+      const el = e.target.closest('[data-tv]');
+      if (!el || !fig.contains(el)) return;
+      if (el.dataset.tv === 'play') expand(fig, true);
+      else if (el.dataset.tv === 'collapse') collapse(fig);
+    });
+    video.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && fig.hasAttribute('data-collapsible') && !document.fullscreenElement) collapse(fig);
+    });
+  }
+
+  /* ---- The chapter line under the player: segments filled as it plays, the current chapter marked, a click jumps ---- */
+  function wireChapters(video, fig, id) {
+    const line = fig && fig.querySelector('.tv-chline');
+    if (!line) return;
+    const btns = [...line.querySelectorAll('button[data-tv="chapter"]')];
+    const chapters = btns.map((b) => ({ t: Number(b.dataset.t) || 0, title: b.querySelector('.tv-seg-t').lastChild.textContent.trim() }));
+    const fills = btns.map((b) => b.querySelector('.tv-seg i'));
+    const now = line.querySelector('.tv-chnow');
+    const total = () => (Number.isFinite(video.duration) && video.duration) || VideoHtml.parseDuration((VIDEOS_BY_ID.get(id) || {}).duration);
+    let current = -2;
+    function paint(time) {
+      const d = total();
+      if (d) VideoHtml.segments(chapters, d).forEach((sg, i) => { fills[i].style.width = `${(VideoHtml.segFill(sg, time) * 100).toFixed(1)}%`; });
+      const at = time > 0.5 ? VideoHtml.chapterAt(chapters, time) : -1;
+      if (at === current) return;
+      current = at;
+      btns.forEach((b, i) => { if (i === at) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); });
+      const k = Math.max(0, at);
+      if (now) now.textContent = t('Chapter {n} of {total}: {title}', { n: k + 1, total: chapters.length, title: chapters[k].title });
+    }
+    line.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-tv="chapter"]');
+      if (!b) return;
+      video.currentTime = Number(b.dataset.t) || 0;
+      paint(video.currentTime);
+      const p = video.play(); if (p && p.catch) p.catch(() => {});
+    });
+    video.addEventListener('timeupdate', () => paint(video.currentTime));
+    video.addEventListener('seeked', () => paint(video.currentTime));
+    video.addEventListener('ended', () => paint(total()));
+    /* Before it plays: the saved point shows in the segments. */
+    paint(VideoHtml.resumeAt(progressStore.load()[id], !!watchedStore.load()[id]));
   }
 
   function onShortcut(video, e) {
@@ -128,13 +228,17 @@ const VideoPlayer = (() => {
       if (holder) showNext(holder, id, onPlay);
     });
     video.addEventListener('keydown', (e) => onShortcut(video, e));
+    wireChapters(video, video.closest('.topic-video'), id);
   }
 
   /* Wire every topic video inside root. Call again with options (the home page stage) after adding one. */
   function mountAll(root, opts) {
+    if (!VIDEOS_BY_ID.size) VIDEOS_BY_ID = new Map(entries().map((e) => [e.video.id, e.video]));
     root.querySelectorAll('.topic-video[data-video]').forEach((fig) => {
       const video = fig.querySelector('video');
-      if (video) attach(video, fig.dataset.video, opts);
+      if (!video) return;
+      attach(video, fig.dataset.video, opts);
+      if (fig.hasAttribute('data-collapsible')) { wireCard(fig); refreshBrief(fig); }
     });
   }
 

@@ -16,7 +16,7 @@ const v = {
 test('figure: video, captions, caption, watched checkbox and transcript', () => {
   const h = VideoHtml.figure(v, { watched: false });
   assert.match(h, /^<figure class="topic-video"/);
-  assert.match(h, /<video controls preload="none" playsinline poster="assets\/video\/request-life\/request-life-poster\.jpg" aria-label="Video: The life of a &lt;request&gt;">/);
+  assert.match(h, /<video controls preload="none" playsinline poster="assets\/video\/request-life\/request-life-poster\.jpg" aria-label="Video: The life of a &lt;request&gt;" hidden>/);
   assert.match(h, /<source src="assets\/video\/request-life\/request-life\.mp4" type="video\/mp4">/);
   assert.match(h, /<track kind="captions" src="assets\/video\/request-life\/request-life\.vtt" srclang="en" label="English" default>/);
   assert.match(h, /<figcaption[^>]*>.*The life of a &lt;request&gt;.*3:12/);
@@ -111,7 +111,7 @@ test('upNext: after the current one, wrapping round, skipping watched ones', () 
 test('stage: the video, a close button and the next videos', () => {
   const es = [mk('a'), mk('b'), mk('c')];
   const h = VideoHtml.stage(es[0], { entries: es });
-  assert.match(h, /<figure class="topic-video" data-video="a">/);
+  assert.match(h, /<figure class="topic-video" data-video="a" data-state="open">/);
   assert.match(h, /<video controls preload="metadata"/);
   assert.match(h, /data-action="video-close"[^>]*>Close video</);
   assert.match(h, /<aside class="hv-next"[^>]*><h3 id="hvn-h">Up next<\/h3><ul>.*data-id="b".*data-id="c"/);
@@ -124,4 +124,65 @@ test('figure: keyboard shortcuts and the place for the next video', () => {
   assert.match(h, /<details class="tv-keys"><summary>Keyboard shortcuts<\/summary><dl><dt><kbd>k<\/kbd><\/dt><dd>play or pause<\/dd>/);
   assert.match(h, /<kbd>&lt; \/ &gt;<\/kbd>/);
   assert.match(h, /<video controls preload="none"/);
+});
+
+test('hook: the sentence after the colon, else the first sentence', () => {
+  assert.equal(VideoHtml.hook({ transcript: ['The life of a request: from the moment it arrives to the answer.', 'x'] }), 'From the moment it arrives to the answer.');
+  assert.equal(VideoHtml.hook({ transcript: ['Where your changes live. Saving a file is not saving it.'] }), 'Where your changes live.');
+  assert.equal(VideoHtml.hook({ transcript: ['No punctuation here'] }), 'No punctuation here');
+  assert.equal(VideoHtml.hook({}), '');
+});
+
+test('briefStatus and metaHtml: resume time, watched, bar', () => {
+  const part = VideoHtml.briefStatus(v, { rec: () => ({ t: 72, d: 192 }), watched: false });
+  assert.equal(part.at, 72);
+  assert.equal(part.pct, 38);
+  assert.match(part.text, /3:12, Resume at 1:12/);
+  assert.match(VideoHtml.metaHtml(v, { rec: () => ({ t: 72, d: 192 }), watched: false }), /Resume at 1:12/);
+  const done = VideoHtml.briefStatus(v, { rec: () => ({ t: 72, d: 192 }), watched: true });
+  assert.equal(done.pct, 0);
+  assert.match(VideoHtml.metaHtml(v, { watched: true }), /is-done">Watched/);
+  assert.doesNotMatch(VideoHtml.metaHtml(v, {}), /tv-state/);
+});
+
+test('figure on a group page is a collapsed briefing card with chapters and a play thumbnail', () => {
+  const withCh = { ...v, chapters: [{ t: 6, title: 'A corridor' }, { t: 72, title: 'The guard' }] };
+  const h = VideoHtml.figure(withCh, { rec: () => ({ t: 72, d: 192 }) });
+  assert.match(h, /data-state="card" data-collapsible/);
+  assert.match(h, /<video controls preload="none"[^>]* hidden>/);
+  assert.match(h, /class="tv-thumb" data-tv="play"[^>]*aria-label="Play video: The life of a &lt;request&gt;"/);
+  assert.match(h, /<p class="tv-hook">First &amp; second\.<\/p>/);
+  assert.match(h, /<li>A corridor<\/li><li>The guard<\/li>/);
+  assert.match(h, /data-tv="collapse"/);
+  assert.match(h, /style="width:38%"/);
+  const st = VideoHtml.figure(withCh, { stage: true });
+  assert.doesNotMatch(st, /data-collapsible|tv-thumb|data-tv="collapse"|data-tv="play"/);
+  assert.match(st, /class="tv-chline"/);
+});
+
+test('figure: the chapter line under the player, one segment per chapter, as long as the chapter', () => {
+  const withCh = { ...v, chapters: [{ t: 6, title: 'A corridor' }, { t: 72, title: 'The guard' }] };
+  const h = VideoHtml.figure(withCh, {});
+  assert.match(h, /<\/video><nav class="tv-chline" aria-label="Chapters"><ol>/);
+  assert.match(h, /<li style="flex-grow:72"><button type="button" data-tv="chapter" data-t="6" data-fid="video-chapter-request-life-0"><span class="tv-seg" aria-hidden="true"><i><\/i><\/span><span class="tv-seg-t"><span class="tv-jump-t">0:06<\/span> A corridor<\/span><\/button><\/li>/);
+  assert.match(h, /<li style="flex-grow:120"><button[^>]*data-t="72"/);
+  assert.match(h, /<p class="tv-chnow" aria-hidden="true"><\/p><\/nav>/);
+  assert.doesNotMatch(VideoHtml.figure(v, {}), /tv-chline/);
+});
+
+test('chapterAt: the chapter that has started, -1 before the first', () => {
+  const ch = [{ t: 5 }, { t: 20 }, { t: 40 }];
+  assert.equal(VideoHtml.chapterAt(ch, 0), -1);
+  assert.equal(VideoHtml.chapterAt(ch, 5), 0);
+  assert.equal(VideoHtml.chapterAt(ch, 19.9), 1);
+  assert.equal(VideoHtml.chapterAt(ch, 59), 2);
+  assert.equal(VideoHtml.chapterAt([], 3), -1);
+});
+
+test('segments and segFill: one per chapter, first from 0, last to the end', () => {
+  const s = VideoHtml.segments([{ t: 5 }, { t: 20 }, { t: 40 }], 60);
+  assert.deepEqual(s, [{ start: 0, end: 20 }, { start: 20, end: 40 }, { start: 40, end: 60 }]);
+  assert.equal(VideoHtml.segFill(s[1], 30), 0.5);
+  assert.equal(VideoHtml.segFill(s[1], 10), 0);
+  assert.equal(VideoHtml.segFill(s[1], 50), 1);
 });

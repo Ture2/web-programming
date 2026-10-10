@@ -233,13 +233,12 @@
 .hv-next-item:focus-visible, .hv-topic:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-card); }
 .hv-next-thumb { flex: none; width: 128px; height: auto; aspect-ratio: 16 / 9; object-fit: cover; background: #000; border-radius: var(--r-control); }
 .hv-next-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+/* ==== Topic video, continued (see the block in styles.css): next-video offer and the shortcut list ==== */
 .tv-next:empty { display: none; }
 .tv-next { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--rule-strong); border-radius: var(--r-card); }
 .tv-next-text { margin: 0 0 8px; font-weight: 700; }
 .tv-count { display: inline-block; min-width: 1.4em; padding: 0 6px; border-radius: var(--r-pill); background: var(--ink); color: var(--surface); text-align: center; font-variant-numeric: tabular-nums; }
 .tv-next-btns { display: flex; flex-wrap: wrap; gap: 8px; }
-.tv-keys { flex: 1 1 100%; min-width: 0; }
-.tv-keys summary { cursor: pointer; color: var(--muted); }
 .tv-keys dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 8px 0 0; }
 .tv-keys dt, .tv-keys dd { margin: 0; }
 @media (min-width: 900px) { .hv-stage-grid:has(.hv-next) { grid-template-columns: minmax(0, 1fr) 280px; } }
